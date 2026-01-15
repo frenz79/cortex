@@ -9,6 +9,7 @@ import javax.vecmath.Point3f;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
+import com.cortex.base.Synapse.PLASTICITY_RULE;
 import com.cortex.commons.Maths;
 import com.cortex.commons.Pair;
 
@@ -76,9 +77,9 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
     	    		pickFromNeighbourhood( minConn, maxConn, maxDistance, new Point3f(x,y,z), 0.0f);
     	    	
     	    	if ( incoming ) {
-    	    		connections += Synapse.create( neurons[rx][ry], nearestNeurons, true );
+    	    		connections += Synapse.create( neurons[rx][ry], nearestNeurons, PLASTICITY_RULE.EXICITATORY );
     	    	} else {
-    	    		connections += Synapse.create( nearestNeurons, neurons[rx][ry], true );
+    	    		connections += Synapse.create( nearestNeurons, neurons[rx][ry], PLASTICITY_RULE.EXICITATORY );
     	    	}
     	    }
     	}

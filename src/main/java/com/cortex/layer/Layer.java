@@ -13,6 +13,7 @@ import javax.vecmath.Point3f;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
+import com.cortex.base.Synapse.PLASTICITY_RULE;
 import com.cortex.commons.Pair;
 
 public abstract class Layer<C extends LayerConfig> {
@@ -59,7 +60,7 @@ public abstract class Layer<C extends LayerConfig> {
 		// Synapse creation made sync!
 		int connectionsCount = 0;
 		for ( Entry<AbstractNeuron, List<Pair<AbstractNeuron, Float>>> e : tmp.entrySet() ) {
-			Synapse.create(e.getKey(), e.getValue(), false);
+			Synapse.create(e.getKey(), e.getValue(), PLASTICITY_RULE.EXICITATORY);
 			connectionsCount += e.getValue().size();
 		}
 				

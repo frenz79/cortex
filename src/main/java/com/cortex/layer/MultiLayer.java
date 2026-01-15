@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
+import com.cortex.base.Synapse.PLASTICITY_RULE;
 import com.cortex.commons.IntPair;
 import com.cortex.commons.Pair;
 import com.cortex.layer.MultiLayerConfig.IntraLayersConnConfig;
@@ -67,7 +68,7 @@ public abstract class MultiLayer<MC extends MultiLayerConfig<C>, C extends Layer
 					srcNeuron,
 					getInhibProbability(srcLayer.id, dstLayer.id)
 				);
-				connections += Synapse.create((AbstractNeuron)srcNeuron, dstNeurons, e.getValue().immutable() );		
+				connections += Synapse.create((AbstractNeuron)srcNeuron, dstNeurons, PLASTICITY_RULE.EXICITATORY );		
 			//	System.out.println("L"+srcLayer.getId()+" N["+srcNeuron.getPosition()+"]-> "+dstNeurons.size()+" synapses");	
 			}			
 			System.out.println("L"+srcLayer.getId()+" -> L"+dstLayer.getId()+" : created "+connections+" synapses");
