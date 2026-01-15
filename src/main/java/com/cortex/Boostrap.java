@@ -13,6 +13,7 @@ import com.cortex.base.ExcitatorySynapticPlasticity.ExcitatorySynapticPlasticity
 import com.cortex.base.InhibitorySynapticPlasticity;
 import com.cortex.base.InhibitorySynapticPlasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.brain.Thinker;
+import com.cortex.classifiers.ocr.OCRClassifier;
 import com.cortex.layer.MultiLayerConfig.IntraLayersConnConfig;
 import com.cortex.layer.MultiSphericalLayer;
 import com.cortex.layer.MultiSphericalLayerConfig;
@@ -23,8 +24,8 @@ import com.cortex.sensors.retina.Retina;
 public class Boostrap {
 
 	public static void main(String[] args) throws IOException { 
-		int totalNeurons = 100_000;
-		int fanOut = 1000;
+		int totalNeurons = 1_000;
+		int fanOut = 500;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
 		// Create network layers and synapses
@@ -49,12 +50,12 @@ public class Boostrap {
 				new SynapsePlasticityConfig(
 						new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
 						new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
-						)	
+					)	
 				);
 
 		System.out.println("Number of Retina Synapses:"+retinaConn);
-		/*
-		// OCR Classifier
+		
+		// Connect OCR Classifier to L4
 		OCRClassifier ocr = new OCRClassifier();		
 		int ocrConn = layer.getLayers(3).connectSensor(
 				ocr.getNeurons(), 
@@ -64,27 +65,13 @@ public class Boostrap {
 				false,
 				SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
-					new ExcitatorySynapticPlasticity( 1.0f, 1.0f,
-						new ExcitatorySynapticPlasticityConfig(
-								0.01f,   		// A_PLUS,	
-								0.012f, 		// A_MINUS,				
-								20_000_000L, 	// TAU_PLUS,				
-								40_000_000L,	// TAU_MINUS	
-								0.05f, 			// W_MIN,	
-								2.0f,  			// W_MAX,		
-								0.2f,			// W_BASELINE,
-								0.95f,			// ELIGIBILITY_DECAY,
-								0.0005f,		// HOMEOSTATIC_RATE,
-								false,			// PLASTIC_DELAY,		
-								1f,				// DELAY_MIN,		
-								20f				// DELAY_MAX	
-								)
-				), null
-			)
-		);
-
+						new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
+						new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
+					)	
+				);
+			
 		System.out.println("Number of OCR Synapses:"+ocrConn);
-		 */
+
 		// This is the main processing loop
 		Thinker<?,?,?> thinker = new Thinker<>( layer );
 		thinker.attachSensor( retina );
@@ -312,8 +299,13 @@ public class Boostrap {
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
 		// L1 -> L3
 		cfg.addIntraLayerConfig(0, 2, new IntraLayersConnConfig(
-				(int)(0.3*connScale), (int)(0.8*connScale), 
+				(int)(0.6*connScale), (int)(1.2*connScale), 
 				0.85f, // max distance
+				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
+		// L2 -> L3
+		cfg.addIntraLayerConfig(1, 2, new IntraLayersConnConfig(
+				(int)(0.4*connScale), (int)(0.6*connScale), 
+				0.50f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
 		// L2 -> L4
 		cfg.addIntraLayerConfig(1, 3, new IntraLayersConnConfig(

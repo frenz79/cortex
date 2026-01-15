@@ -8,15 +8,15 @@ public class OCRClassifier implements Classifier<CharacterNeuron> {
 	private long lastApply = 0l; // 75 ms
     private final long windowNanos = 50_000_000l; // 75 ms
     
-	private final CharacterNeuron[] neurons;
+	private final CharacterNeuron[][] neurons;
 	
 	private CharacterNeuron result;
 	
 	public OCRClassifier() {
-		this.neurons = new CharacterNeuron[26];
+		this.neurons = new CharacterNeuron[1][26];
 		int i=0;
 		for (char c = 'A'; c <= 'Z'; c++) {
-			this.neurons[i++] = new CharacterNeuron(c);
+			this.neurons[0][i++] = new CharacterNeuron(c);
 		}
 	}
 	
@@ -27,14 +27,14 @@ public class OCRClassifier implements Classifier<CharacterNeuron> {
 	        float bestScore = 0.0f;
 	
 	        for (int i = 0; i < neurons.length; i++) {
-	            float spikes = neurons[i].scoreSpikes(now - windowNanos, now);
+	            float spikes = neurons[0][i].scoreSpikes(now - windowNanos, now);
 	            if (spikes > bestScore) {
 	                bestScore = spikes;
 	                best = i;
 	            }
 	        }
 	        this.lastApply = now;
-	        this.result = neurons[best];
+	        this.result = neurons[0][best];
 		}
     }
 
@@ -44,7 +44,7 @@ public class OCRClassifier implements Classifier<CharacterNeuron> {
 	}
 
 	@Override
-	public AbstractNeuron[] getNeurons() {
+	public AbstractNeuron[][] getNeurons() {
 		return neurons;
 	}
 }

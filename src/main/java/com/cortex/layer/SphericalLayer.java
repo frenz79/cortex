@@ -58,6 +58,7 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
     	    	connections += _connectExternal( 
     	    		neurons[rx][ry],
     	    		pointOnSphere,
+    	    		incoming,
     	    		minConn, 
     	    		maxConn, 
     	    		filter, 
@@ -77,10 +78,14 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
     	return Synapse.create( conns, n, synapsePlasticityConfig );
 	}
 	
-	private int _connectExternal( AbstractNeuron srcNeuron, Point3f n, int minConn, int maxConn, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synapsePlasticityConfig) {
+	private int _connectExternal( AbstractNeuron srcNeuron, Point3f n, boolean incoming, int minConn, int maxConn, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synapsePlasticityConfig) {
 		int connsCounter = random.nextInt(minConn, maxConn);
     	Collection<Neighbor> conns = findNearest(getNeurons(), n, connsCounter, filter);
-   		return Synapse.create( srcNeuron, conns, synapsePlasticityConfig );
+   		
+   		if ( incoming ) {
+    		return Synapse.create( srcNeuron, conns, synapsePlasticityConfig );
+    	}
+   		return Synapse.create( conns, srcNeuron, synapsePlasticityConfig );
 	}
 	
 	@Override

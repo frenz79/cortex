@@ -8,5 +8,5 @@ public interface Classifier<N extends AbstractNeuron> {
 
 	void classify(long now) throws InterruptedException;
 	
-	public AbstractNeuron[] getNeurons();
+	public AbstractNeuron[][] getNeurons();
 }
