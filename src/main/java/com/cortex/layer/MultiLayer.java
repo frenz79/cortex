@@ -5,11 +5,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Neuron;
-import com.cortex.base.Synapse;
-import com.cortex.base.Synapse.PLASTICITY_RULE;
 import com.cortex.commons.IntPair;
-import com.cortex.commons.Pair;
 import com.cortex.layer.MultiLayerConfig.IntraLayersConnConfig;
 
 public abstract class MultiLayer<MC extends MultiLayerConfig<C>, C extends LayerConfig, L extends Layer<C>> {
@@ -60,19 +56,18 @@ public abstract class MultiLayer<MC extends MultiLayerConfig<C>, C extends Layer
 			L dstLayer = this.layers.get( e.getKey().right() );
 			int connections = 0;
 			
-			for ( Neuron srcNeuron : srcLayer.getNeurons() ) {
-				List<Pair<AbstractNeuron, Float>> dstNeurons = dstLayer.pickFromNeighbourhood(
+				connections += dstLayer.connectExternalLayer(
+					srcLayer.getNeurons(), 
 					e.getValue().minConnections(), 
 					e.getValue().maxConnections(),
 					e.getValue().maxDistance(), 
-					srcNeuron,
-					getInhibProbability(srcLayer.id, dstLayer.id)
+					true,
+					e.getValue().filter(),
+					e.getValue().synapsePlasticityConfig()
 				);
-				connections += Synapse.create((AbstractNeuron)srcNeuron, dstNeurons, PLASTICITY_RULE.EXICITATORY );		
-			//	System.out.println("L"+srcLayer.getId()+" N["+srcNeuron.getPosition()+"]-> "+dstNeurons.size()+" synapses");	
-			}			
+				//	System.out.println("L"+srcLayer.getId()+" N["+srcNeuron.getPosition()+"]-> "+dstNeurons.size()+" synapses");	
 			System.out.println("L"+srcLayer.getId()+" -> L"+dstLayer.getId()+" : created "+connections+" synapses");
-		}		
+		}
 	}
 	
 	public List<L> getAllLayers() {

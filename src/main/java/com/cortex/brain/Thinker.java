@@ -10,6 +10,8 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Monitor;
+import com.cortex.base.Monitor.LayerStats;
 import com.cortex.layer.Layer;
 import com.cortex.layer.LayerConfig;
 import com.cortex.layer.MultiLayer;
@@ -34,21 +36,17 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 		// Neurons loop
 		new Thread(() -> {
 			try {
-				long statsTimer = 0;
 				Function<AbstractNeuron, Boolean> activeNeuronsConsumer = n -> {
 					try {
-						return n.process(statsTimer);
+						return n.process(clock.get());
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 					return true;
 				};
 				
-				while (true) {
-					// Update clock
-					long now = clock.get();				
+				while (true) {		
 					clock.set(System.nanoTime());
-					
 					AbstractNeuron.forEachActive( activeNeuronsConsumer );
 					LockSupport.parkNanos(50_000); // 50 µs			
 				}
@@ -80,7 +78,18 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 		scheduler.scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
-				System.out.println("STATS ActiveNeuronsCount:"+AbstractNeuron.getNeuronsCount());
+				try {
+					for ( L l : layer.getAllLayers() ) {
+						LayerStats stats = Monitor.getAndResetStats(l.getId());
+						if(stats!=null) {
+							System.out.println("Layer:"+l.getId()+" | ACT:"+stats.activeNeurons()+" | SYN_W:"+stats.averageSynapticWeight()+" | SPIKES:"+stats.spikesCount());
+						} else {
+							System.out.println("Layer:"+l.getId()+" NO STATS");
+						}
+					}
+				} catch(Exception ex) {
+					ex.printStackTrace();
+				}
 			}			
 		}, 3, 3, TimeUnit.SECONDS);
 	}

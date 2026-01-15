@@ -30,41 +30,60 @@ Concetto chiave: Eligibility Trace
  */
 public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 
-    // ==== PARAMETRI STDP ====
-    private static final float A_PLUS = 0.01f;
-    private static final float A_MINUS = 0.012f;
-    private static final float TAU_PLUS = 20;
-    private static final float TAU_MINUS = 20;
-
-    // ==== PESI ====
-    private static final float W_MIN = 0.0f;
-    private static final float W_MAX = 1.0f;
-    private static final float W_BASELINE = 0.2f;
-
-    // ==== ELIGIBILITY TRACE ====
-    private static final float ELIGIBILITY_DECAY = 0.95f;
+	public static record ExcitatorySynapticPlasticityConfig (
+			// STDP
+			float A_PLUS,				// 0.01f
+			float A_MINUS,				// 0.012
+			long TAU_PLUS,				// 20
+			long TAU_MINUS,			// 20
+			// WEIGHTS
+			float W_MIN,				// 0.0f
+			float W_MAX,				// 1.0f
+			float W_BASELINE,			// 0.2f
+			// ELIGIBILITY TRACE
+			float ELIGIBILITY_DECAY,	// 0.95f
+			// HOMEOSTASIS
+			float HOMEOSTATIC_RATE,		// 0.0005f
+			// DELAY PLASTICITY
+			boolean PLASTIC_DELAY,		// false
+			float DELAY_MIN,			// 1f
+			float DELAY_MAX				// 20f
+		) {
+			public ExcitatorySynapticPlasticityConfig with_W_BASELINE(float newW_BASELINE) {
+				return new ExcitatorySynapticPlasticityConfig(
+						A_PLUS,				// 0.01f
+						A_MINUS,				// 0.012
+						 TAU_PLUS,				// 20
+						 TAU_MINUS,			// 20
+						// WEIGHTS
+						 W_MIN,				// 0.0f
+						 W_MAX,				// 1.0f
+						 newW_BASELINE,			// 0.2f
+						// ELIGIBILITY TRACE
+						 ELIGIBILITY_DECAY,	// 0.95f
+						// HOMEOSTASIS
+						 HOMEOSTATIC_RATE,		// 0.0005f
+						// DELAY PLASTICITY
+						 PLASTIC_DELAY,		// false
+						 DELAY_MIN,			// 1f
+						 DELAY_MAX				// 20f	
+				);
+			}
+	}
+	
+	private final ExcitatorySynapticPlasticityConfig config;
+	
     private float eligibility = 0.0f;
-
-    // ==== HOMEOSTASI ====
-    private static final float HOMEOSTATIC_RATE = 0.0005f;
-
-    // ==== DELAY PLASTICITY ====
-    private boolean plasticDelay = false;
     private float delay;
-    private static final float DELAY_MIN = 1f;
-    private static final float DELAY_MAX = 20f;
-
-    // ==== STATO ====
     private float weight;
     private long lastPreSpike = -1;
     private long lastPostSpike = -1;
-
-    // ==== ENABLE FLAGS ====
     private boolean enabled = true;
 
-    public ExcitatorySynapticPlasticity(float initialWeight, float initialDelay) {
+    public ExcitatorySynapticPlasticity(float initialWeight, float initialDelay, ExcitatorySynapticPlasticityConfig config) {
         this.weight = initialWeight;
         this.delay = initialDelay;
+        this.config = config;
     }
 
 
@@ -94,9 +113,9 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
     private void updateEligibility(long dt) {
         float delta;
         if (dt > 0) {
-            delta = A_PLUS * (float)Math.exp(-dt / TAU_PLUS);
+            delta = config.A_PLUS * (float)Math.exp(-dt / config.TAU_PLUS);
         } else {
-            delta = -A_MINUS * (float)Math.exp(dt / TAU_MINUS);
+            delta = -config.A_MINUS * (float)Math.exp(dt / config.TAU_MINUS);
         }
         eligibility += delta;
         eligibility = Maths.clamp(eligibility, -1f, 1f);
@@ -109,7 +128,7 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
     public void applyReward(float reward, long now) {
         if (!enabled) return;
         weight += reward * eligibility;
-        weight = Maths.clamp(weight, W_MIN, W_MAX);
+        weight = Maths.clamp(weight, config.W_MIN, config.W_MAX);
         eligibility = 0f;
     }
 
@@ -119,11 +138,11 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 
     public void update(long now) {
         // decay eligibility
-        eligibility *= ELIGIBILITY_DECAY;
+        eligibility *= config.ELIGIBILITY_DECAY;
 
         // homeostasi verso baseline
-        weight += HOMEOSTATIC_RATE * (W_BASELINE - weight);
-        weight = Maths.clamp(weight, W_MIN, W_MAX);
+        weight += config.HOMEOSTATIC_RATE * (config.W_BASELINE - weight);
+        weight = Maths.clamp(weight, config.W_MIN, config.W_MAX);
     }
 
     // =========================================================
@@ -131,9 +150,9 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
     // =========================================================
 
     public void updateDelay(float reward) {
-        if (!plasticDelay) return;
+        if (!config.PLASTIC_DELAY) return;
         delay += reward * eligibility * 0.1f;
-        delay = Maths.clamp(delay, DELAY_MIN, DELAY_MAX);
+        delay = Maths.clamp(delay, config.DELAY_MIN, config.DELAY_MAX);
     }
 
     // =========================================================
@@ -147,15 +166,6 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
     public float getDelay() {
         return delay;
     }
-
-    public void setPlasticDelay(boolean enabled) {
-        this.plasticDelay = enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-   
+  
 }
 

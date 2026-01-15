@@ -6,7 +6,7 @@ public interface Classifier<N extends AbstractNeuron> {
 
 	public N getClassificationResult();
 
-	void classify(long now);
+	void classify(long now) throws InterruptedException;
 	
 	public AbstractNeuron[] getNeurons();
 }

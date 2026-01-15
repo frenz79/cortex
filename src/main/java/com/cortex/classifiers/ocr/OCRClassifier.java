@@ -21,7 +21,7 @@ public class OCRClassifier implements Classifier<CharacterNeuron> {
 	}
 	
 	@Override
-	public void classify(long now) {
+	public void classify(long now) throws InterruptedException {
 		if ( now-lastApply > windowNanos ) {
 			int best = -1;
 	        float bestScore = 0.0f;

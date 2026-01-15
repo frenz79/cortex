@@ -13,7 +13,7 @@ public class MultiSphericalLayer extends MultiLayer<MultiSphericalLayerConfig, S
 	public SphericalLayer buildLayer( SphericalLayerConfig cfg ) {
 		SphericalLayer l = new SphericalLayer(cfg);
 		l.generateNeurons();
-		l.generateInternalConnections();
+		l.connectInternal();
 		return l;
 	}
 	

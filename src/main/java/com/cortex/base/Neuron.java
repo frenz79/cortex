@@ -11,17 +11,17 @@ import javax.vecmath.Point3f;
  * */
 public class Neuron extends AbstractNeuron {
 
-	private static final float POTENTIAL_MAX = 300.0f;
-	private static final float POTENTIAL_MIN = -100.0f;
-	private static final short FIRING_THRESHOLD = 100;
+	private static final float POTENTIAL_MAX = 3.0f;
+	private static final float POTENTIAL_MIN = -2.0f;
+	private static final float FIRING_THRESHOLD = 0.6f;
 	private static final float POTENTIAL_ZERO = 0.0f;
 	private static final long REFRACTORY_PERIOD = 1_000_000L;
-
+	private static final float REPOLARIZATION_PER_NANOS = 0.001f;
+	private float potential = POTENTIAL_ZERO;
+	
 	private long lastProcessTime = System.nanoTime();
 	private long lastSpikeTime = 0l;
 
-	private float repolarizationPerNanos = 0.001f;
-	private float potential = POTENTIAL_ZERO;
 	private final int layerId;
 
 	public static Neuron build( int layerId, boolean inhibitor, float x, float y, float z) {
@@ -43,10 +43,10 @@ public class Neuron extends AbstractNeuron {
 	private void computeDecay( long deltaTime ) {
 		if (potential != POTENTIAL_ZERO) {
 			if (potential > POTENTIAL_ZERO) {
-				potential -= repolarizationPerNanos * deltaTime;
+				potential -= REPOLARIZATION_PER_NANOS * deltaTime;
 				if (potential < POTENTIAL_ZERO) potential = POTENTIAL_ZERO;
 			} else {
-				potential += repolarizationPerNanos * deltaTime;
+				potential += REPOLARIZATION_PER_NANOS * deltaTime;
 				if (potential > POTENTIAL_ZERO) potential = POTENTIAL_ZERO;
 			}
 		}
@@ -94,6 +94,7 @@ public class Neuron extends AbstractNeuron {
 			if (hasFired.get()) {
 				// Must be called once per synapse even if fired multiple times
 				synapse.onPostSpike(deltaTime, currTimeNanos);
+				synapse.update(deltaTime);
 			}
 		}
 
@@ -105,5 +106,15 @@ public class Neuron extends AbstractNeuron {
 
 	public int getLayerId() {
 		return layerId;
+	}
+
+	@Override
+	public void neuronFired( long time ) {
+		Monitor.traceNeuronFire( time, this, getLayerId() );
+	}
+
+	@Override
+	public void synapseUpdated( long time, Synapse synapse, float oldW, float newW) {
+		Monitor.traceSynapseWeightUpdated(time, getLayerId(), oldW, newW);
 	}
 }

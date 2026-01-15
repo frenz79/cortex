@@ -1,17 +1,14 @@
 package com.cortex.layer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import javax.vecmath.Point3f;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
-import com.cortex.base.Synapse.PLASTICITY_RULE;
-import com.cortex.commons.Maths;
-import com.cortex.commons.Pair;
 
 import net.jafama.FastMath;
 
@@ -22,39 +19,22 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
 	}
 
 	@Override
-	public int connect( AbstractNeuron[] neurons, int minConn, int maxConn, float maxDistance, boolean incoming ) {
-		int w = neurons.length;
+	public int connectExternalLayer( AbstractNeuron[] seonsorNeurons, int minConn, int maxConn, float maxDistance, boolean incoming, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synapsePlasticityConfig ) {
 		int connections = 0;
-		for (int rx = 0; rx < w; rx++) {
-			int connsCounter = random.nextInt(minConn, maxConn);
-			List<Pair<AbstractNeuron,Float>> conn = new ArrayList<>(connsCounter);
-			
-			int startIdx = random.nextInt(getNeurons().length);
-			
-			for ( int i=startIdx+1; i<getNeurons().length; i++ ) {
-				if ( evaluate(conn, connsCounter, getNeurons()[i], maxDistance, getNeurons()[startIdx], true)<0 ) {
-					conn.add(new Pair<>(getNeurons()[startIdx], 0.0f));
-					connections++; 
-				} else {
-					break;
-				}
-			}
-			if ( conn.size()<connsCounter) {
-				for ( int i=0; i<startIdx; i++ ) {
-					if ( evaluate(conn, connsCounter, getNeurons()[i], maxDistance, getNeurons()[startIdx], true)<0 ) {
-						conn.add(new Pair<>(getNeurons()[startIdx], 0.0f));
-						connections++; 
-					} else {
-						break;
-					}
-				}
-			}
+		for (int i = 0; i < seonsorNeurons.length; i++) {
+	    	connections += _connectExternal( 
+	    		seonsorNeurons[i], 
+	    		incoming, 
+	    		minConn, 
+	    		maxConn, 
+	    		filter, 
+	    		synapsePlasticityConfig);
 		}
 		return connections;
 	}
 	
 	@Override
-	public int connect( AbstractNeuron[][] neurons, int minConn, int maxConn, float maxDistance, boolean incoming ) {
+	public int connectSensor( AbstractNeuron[][] neurons, int minConn, int maxConn, float maxDistance, boolean incoming, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synapsePlasticityConfig ) {
 		int w = neurons.length;
 		int h = neurons[0].length;
 		int connections = 0;
@@ -73,18 +53,35 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
     	    	float y = (float)(cosPhi * FastMath.sin(theta) * config.getRadius());
     	    	float z = (float)(FastMath.sin(phi) * config.getRadius());
     	    	
-    	    	List<Pair<AbstractNeuron,Float>> nearestNeurons = 
-    	    		pickFromNeighbourhood( minConn, maxConn, maxDistance, new Point3f(x,y,z), 0.0f);
+    	    	Point3f pointOnSphere = new Point3f(x,y,z);
     	    	
-    	    	if ( incoming ) {
-    	    		connections += Synapse.create( neurons[rx][ry], nearestNeurons, PLASTICITY_RULE.EXICITATORY );
-    	    	} else {
-    	    		connections += Synapse.create( nearestNeurons, neurons[rx][ry], PLASTICITY_RULE.EXICITATORY );
-    	    	}
+    	    	connections += _connectExternal( 
+    	    		neurons[rx][ry],
+    	    		pointOnSphere,
+    	    		minConn, 
+    	    		maxConn, 
+    	    		filter, 
+    	    		synapsePlasticityConfig);
     	    }
     	}
     	return connections;
     }
+	
+	private int _connectExternal( AbstractNeuron n, boolean incoming, int minConn, int maxConn, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synapsePlasticityConfig) {
+		int connsCounter = random.nextInt(minConn, maxConn);
+    	Collection<Neighbor> conns = findNearest(getNeurons(), n.getPosition(), connsCounter, filter);
+		    	    	
+    	if ( incoming ) {
+    		return Synapse.create( n, conns, synapsePlasticityConfig );
+    	}
+    	return Synapse.create( conns, n, synapsePlasticityConfig );
+	}
+	
+	private int _connectExternal( AbstractNeuron srcNeuron, Point3f n, int minConn, int maxConn, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synapsePlasticityConfig) {
+		int connsCounter = random.nextInt(minConn, maxConn);
+    	Collection<Neighbor> conns = findNearest(getNeurons(), n, connsCounter, filter);
+   		return Synapse.create( srcNeuron, conns, synapsePlasticityConfig );
+	}
 	
 	@Override
 	public void generateNeurons() {
@@ -112,68 +109,5 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
 		
 		long endTime = System.nanoTime();
 		System.out.println("L"+getId()+" generated "+getNeuronsCount()+" neurons in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
-	}
-
-	@Override
-	public List<Pair<AbstractNeuron,Float>> pickFromNeighbourhood( int minConn, int maxConn, float maxDistance, Point3f src, float inhibProbability ){
-		int connsCounter = random.nextInt(minConn, maxConn);
-		List<Pair<AbstractNeuron,Float>> conn = new ArrayList<>(connsCounter);
-		
-		int startIdx = random.nextInt(getNeurons().length);
-		boolean skipInhibitors = inhibProbability==0.0f; 
-		
-		for ( int i=startIdx; i<getNeurons().length; i++ ) {
-			if ( evaluate(conn, connsCounter, getNeurons()[i], maxDistance, src, skipInhibitors)<0 ) {
-				return conn;
-			}
-		}		
-		for ( int i=0; i<startIdx; i++ ) {
-			if ( evaluate(conn, connsCounter, getNeurons()[i], maxDistance, src, skipInhibitors)<0 ) {
-				return conn;
-			}
-		}
-		return conn;
-	}
-		
-	@Override
-	public List<Pair<AbstractNeuron,Float>> pickFromNeighbourhood( int minConn, int maxConn, float maxDistance, AbstractNeuron src, float inhibProbability ){
-		int connsCounter = random.nextInt(minConn, maxConn);
-		List<Pair<AbstractNeuron,Float>> conn = new ArrayList<>(connsCounter);
-		
-		int startIdx = random.nextInt(getNeurons().length);
-		boolean skipInhibitors = inhibProbability==0.0f; 
-		for ( int i=startIdx; i<getNeurons().length; i++ ) {
-			if ( evaluate(conn, connsCounter, getNeurons()[i], maxDistance, src, skipInhibitors)<0 ) {
-				return conn;
-			}
-		}		
-		for ( int i=0; i<startIdx; i++ ) {
-			if ( evaluate(conn, connsCounter, getNeurons()[i], maxDistance, src, skipInhibitors)<0 ) {
-				return conn;
-			}
-		}
-		return conn;
-	}
-	
-	private int evaluate(List<Pair<AbstractNeuron,Float>> conn, int connsCounter, AbstractNeuron n, float maxDistance, AbstractNeuron src, boolean skipInhibitors){
-		float distance = Maths.distance(n.getPosition(), src.getPosition());
-		if ( src!=n && distance<maxDistance && (!skipInhibitors || n.isInhibitor()!=skipInhibitors)) {
-			conn.add(new Pair<>(n,distance));
-			if(conn.size()>=connsCounter) {
-				return -1;
-			}
-		}
-		return 1;
-	}
-	
-	private int evaluate(List<Pair<AbstractNeuron,Float>> conn, int connsCounter, AbstractNeuron n, float maxDistance, Point3f src, boolean skipInhibitors){
-		float distance = Maths.distance(n.getPosition(), src);
-		if ( distance<maxDistance && (!skipInhibitors || n.isInhibitor()!=skipInhibitors)) {
-			conn.add(new Pair<>(n,distance));
-			if(conn.size()>=connsCounter) {
-				return -1;
-			}
-		}
-		return 1;
 	}
 }

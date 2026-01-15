@@ -5,6 +5,9 @@ import java.util.List;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
+import com.cortex.base.Synapse;
+
+import net.jafama.FastMath;
 
 public class RetinaNeuron extends AbstractNeuron {
 
@@ -31,20 +34,18 @@ public class RetinaNeuron extends AbstractNeuron {
 	
 	public int process(long currTimeNanos, float luminance) {
 		float delta = luminance - this.lastLuminance;
-
-		// contrast sensitivity
-        float amplitude = Math.max(0f, delta);
-        
 		int spikeCount = 0;
+        float amplitude = 0f;
+        		
 		if (delta > THRESHOLD) { // ON channel
 			spikeCount = (int)(delta * ON_GAIN * 10);
-			amplitude *= -1;
+			amplitude = +delta;
 		} else if (delta < -THRESHOLD) { // OFF channel
 			spikeCount = (int)(-delta * OFF_GAIN * 10);
-			//amplitude *= +1;
+			amplitude = -delta;
 		}
 		for (int i = 0; i < spikeCount; i++) {
-			this.spikes.add(new Spike(amplitude, currTimeNanos, false));
+			this.spikes.add(new Spike(FastMath.abs(amplitude), currTimeNanos, false));
 		}
 		this.lastLuminance = luminance;
 		return spikeCount;
@@ -59,5 +60,17 @@ public class RetinaNeuron extends AbstractNeuron {
 	@Override
 	public boolean isInhibitor() {
 		return false;
+	}
+
+	@Override
+	public void synapseUpdated(long now, Synapse synapse, float oldValue, float weight) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void neuronFired(long now) {
+		// TODO Auto-generated method stub
+		
 	}
 }

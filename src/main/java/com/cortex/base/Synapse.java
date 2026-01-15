@@ -1,7 +1,9 @@
 package com.cortex.base;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
@@ -10,6 +12,8 @@ import java.util.function.Function;
 import com.cortex.commons.IPlasticSynapse;
 import com.cortex.commons.IPlasticityRule;
 import com.cortex.commons.Pair;
+import com.cortex.layer.Layer.Neighbor;
+import com.cortex.layer.SynapsePlasticityConfig;
 
 /**
  
@@ -24,13 +28,6 @@ import com.cortex.commons.Pair;
 */
 public final class Synapse implements IPlasticSynapse {
 
-	public static enum PLASTICITY_RULE {
-		EXICITATORY,
-		INHIBITORY,
-		NONE
-	}
-	
-	private final boolean immutable;
     private final AbstractNeuron pre;
     private final AbstractNeuron post;
     private final IPlasticityRule plasticityRule;
@@ -42,45 +39,41 @@ public final class Synapse implements IPlasticSynapse {
 	private static final ReadLock rLock = lock.readLock();
 	private static final WriteLock wLock = lock.writeLock();
 	
-	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, PLASTICITY_RULE plsticity) {
+	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, IPlasticityRule plasticityRule) {
 		super();
 		this.pre = pre;
 		this.post = post;
 		this.length = length;
-		this.immutable = PLASTICITY_RULE.NONE.equals(plsticity);
-		switch(plsticity) {
-		case EXICITATORY:
-			this.plasticityRule = new ExcitatorySynapticPlasticity(0.2f, 5f);
-			break;
-		case INHIBITORY:
-			this.plasticityRule = new InhibitorySynapticPlasticity(0.2f);
-			break;
-		default:
-			this.plasticityRule = NoSynapticPlasticity.SINGLETON_INSTANCE;
-			break;		
-		}
+		this.plasticityRule = plasticityRule;
 	}
 	
-	public static int create( AbstractNeuron srcNeuron, List<Pair<AbstractNeuron, Float>> toNeurons, PLASTICITY_RULE plsticity ) {
-		for (Pair<AbstractNeuron, Float> toNeuron : toNeurons) {
-			link( srcNeuron, toNeuron.left(), toNeuron.right() , plsticity );
+	public static int create( AbstractNeuron srcNeuron, Collection<Neighbor> toNeurons, SynapsePlasticityConfig plasticityCfg ) {
+		for (Neighbor toNeuron : toNeurons) {
+			link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), plasticityCfg );
 		}
 		return toNeurons.size();
 	}
 	
-	public static int create( List<Pair<AbstractNeuron, Float>> srcNeurons, AbstractNeuron toNeuron, PLASTICITY_RULE plsticity ) {
-		for (Pair<AbstractNeuron, Float> srcNeuron : srcNeurons) {
-			link( srcNeuron.left(), toNeuron, srcNeuron.right() , plsticity );
+	public static int create( Collection<Neighbor> srcNeurons, AbstractNeuron toNeuron, SynapsePlasticityConfig plasticityCfg ) {
+		for (Neighbor srcNeuron : srcNeurons) {
+			link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), plasticityCfg );
 		}
 		return srcNeurons.size();
 	}
 	
-	public static void create( AbstractNeuron srcNeuron, Pair<AbstractNeuron, Float> toNeuron, PLASTICITY_RULE plsticity) {
-		link( srcNeuron, toNeuron.left(), toNeuron.right() , plsticity );
+	public static void create( AbstractNeuron srcNeuron, Pair<AbstractNeuron, Float> toNeuron, SynapsePlasticityConfig plasticityCfg) {
+		link( srcNeuron, toNeuron.left(), toNeuron.right(), plasticityCfg );
 	}
 	
-	private static void link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, PLASTICITY_RULE plsticity) {
-		Synapse s = new Synapse( srcNeuron, toNeuron, distance, plsticity );
+	private static void link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, SynapsePlasticityConfig plasticityCfg) {
+		Synapse s = new Synapse( 
+			srcNeuron, 
+			toNeuron, 
+			distance, 
+			srcNeuron.isInhibitor() 
+				?plasticityCfg.inhibitorySynapticPlasticity()
+				:plasticityCfg.excitatorySynapticPlasticity()
+		);
 		toNeuron.addIncomingSynapse( s );
 		srcNeuron.addOutgoingSynapse( s ); 
 	}
@@ -89,20 +82,16 @@ public final class Synapse implements IPlasticSynapse {
 		return length;
 	}
 	
-	public void forEachSpike( Function<Spike, Boolean> consumer ) {
-		List<Integer> toBeRemoved = new ArrayList<>(spikes.size());
-		rLock.lock();
-		try {			
+	public void forEachSpike( Function<Spike, Boolean> consumer ) throws InterruptedException {
+		wLock.tryLock(1, TimeUnit.SECONDS);
+		try {
+			List<Integer> toBeRemoved = new ArrayList<>(spikes.size());
+		
 			for ( int i=0; i<spikes.size(); i++ ) {
 				if (!consumer.apply(spikes.get(i))) {
 					toBeRemoved.add(i);
 				}
 			}
-		} finally {
-			rLock.unlock();
-		}
-		wLock.lock();
-		try {
 			if (!toBeRemoved.isEmpty()) {
 				// inverse iteration
 				for ( int i=toBeRemoved.size()-1; i>=0 ; i-- ) {
@@ -114,8 +103,8 @@ public final class Synapse implements IPlasticSynapse {
 		}
 	}
 	
-	public void addSpike(Spike spike) {
-		wLock.lock();
+	public void addSpike(Spike spike) throws InterruptedException {
+		wLock.tryLock(1, TimeUnit.SECONDS);
 		try {
 			this.spikes.add(spike);
 		} finally {
@@ -127,10 +116,6 @@ public final class Synapse implements IPlasticSynapse {
 		return post;
 	}
 	
-	public boolean isImmutable() {
-		return immutable;
-	}
-
 	public boolean isEmpty() {
 		return spikes.isEmpty();
 	}
@@ -139,7 +124,7 @@ public final class Synapse implements IPlasticSynapse {
 	@Override
 	public void onPreSpike(long t) {
 		if (pre.isInhibitor()) {
-			
+			// NOP
 		} else {
 			this.plasticityRule.onPreSpike(t);
 		}
@@ -155,7 +140,9 @@ public final class Synapse implements IPlasticSynapse {
     }
 	@Override
     public void update(long t) {
-	//	this.plasticityRule.update(t);
+		float oldValue = this.plasticityRule.getWeight();
+		this.plasticityRule.update(t);
+		pre.synapseUpdated( t, this, oldValue, this.plasticityRule.getWeight() );
     }
 	@Override
     public float getWeight() {

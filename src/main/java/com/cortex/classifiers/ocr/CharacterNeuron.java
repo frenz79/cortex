@@ -25,7 +25,7 @@ public class CharacterNeuron extends AbstractNeuron {
 		return character;
 	}
 
-	public float scoreSpikes(long wnd, long currTimeNanos) {
+	public float scoreSpikes(long wnd, long currTimeNanos) throws InterruptedException {
 		AtomicDouble score = new AtomicDouble(0.0);
 		for ( Synapse synapse : getInSynapses() ) {
 			Function<Spike, Boolean> spikesConsumer = spike -> {
@@ -50,6 +50,18 @@ public class CharacterNeuron extends AbstractNeuron {
 	@Override
 	public String toString() {
 		return "CharacterNeuron [" + character + "]";
+	}
+
+	@Override
+	public void synapseUpdated(long now, Synapse synapse, float oldValue, float weight) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void neuronFired(long now) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

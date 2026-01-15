@@ -60,7 +60,6 @@ public class Retina implements Sensor {
         		if ( retinaNeurons[x][y].process(currTimeNanos, lum)>0 ) {
         			List<Spike> spikes = retinaNeurons[x][y].drainSpikes();
         			retinaNeurons[x][y].fire( spikes );
-        			System.out.println("Retina spikes["+spikes.size()+"]");
         		}
         	}
         }
@@ -129,7 +128,7 @@ public class Retina implements Sensor {
         }
 	}
 	
-	private float calculateLuminance(int x, int y, BufferedImage image) {
+	private static float calculateLuminance(int x, int y, BufferedImage image) {
 		int color = image.getRGB(x, y);
 		// extract each color component
 		int red   = (color >>> 16) & 0xFF;

@@ -35,4 +35,9 @@ public class Spike {
 	public float getAmplitude() {
 		return amplitude;
 	}
+
+	@Override
+	public String toString() {
+		return "Spike [ creationTimeNanos=" + creationTimeNanos + ", amplitude=" + amplitude + "]";
+	}
 }

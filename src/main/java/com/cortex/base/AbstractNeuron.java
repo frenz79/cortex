@@ -35,6 +35,9 @@ public abstract class AbstractNeuron implements IProcessable {
 		this.position = position;
 	}
 	
+	public abstract void synapseUpdated(long now, Synapse synapse, float oldValue, float weight);
+	public abstract void neuronFired(long now);
+	
 	public boolean isInhibitor() {
 		return spikeSign==-1;
 	}
@@ -66,15 +69,17 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 	
 	public void fire(Spike spike) throws InterruptedException {
+	//	System.out.println("Spike:"+spike);
 		for ( Synapse s : this.outSynapses  ) {
 			s.addSpike(spike);
 			activeNeurons.put( s.getTarget(), spike.getCreationTimeNanos() );
 			firingRate += 1.0f;
 		    lastRateUpdate = spike.getCreationTimeNanos();
+		    neuronFired(spike.getCreationTimeNanos());
 		}
 	}
 
-	public float getRecentFiringRate( long now) {
+	public float getRecentFiringRate( long now ) {
 		long dt = now - lastRateUpdate;
 		if (dt > RATE_WINDOW) {
 			firingRate *= RATE_DECAY;
@@ -97,5 +102,9 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public static int getNeuronsCount() {
 		return activeNeurons.size();
+	}
+
+	public List<Synapse> getOutSynapses() {
+		return outSynapses;
 	}
 }
