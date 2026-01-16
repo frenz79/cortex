@@ -9,23 +9,25 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
-import com.cortex.actuators.Actuator;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Monitor;
 import com.cortex.base.Monitor.LayerStats;
-import com.cortex.classifiers.Classifier;
+import com.cortex.commons.modules.IActuator;
+import com.cortex.commons.modules.IClassifier;
+import com.cortex.commons.modules.ISensor;
+import com.cortex.commons.modules.ISupervisor;
 import com.cortex.layer.Layer;
 import com.cortex.layer.LayerConfig;
 import com.cortex.layer.MultiLayer;
 import com.cortex.layer.MultiLayerConfig;
-import com.cortex.sensors.Sensor;
 
 public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L extends Layer<C>> {
 
 	private final MultiLayer<MC,C,L> layer;
-	private final List<Sensor> sensors;
-	private final List<Actuator> actuators;
-	private final List<Classifier<?>> classifiers;
+	private final List<ISensor> sensors;
+	private final List<IActuator> actuators;
+	private final List<IClassifier<?>> classifiers;
+	private final List<ISupervisor<?>> supervisors;
 	
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	
@@ -35,6 +37,7 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 		this.sensors = new ArrayList<>();
 		this.actuators = new ArrayList<>();
 		this.classifiers = new ArrayList<>();
+		this.supervisors = new ArrayList<>();
 	}
 	
 	public void start() {
@@ -62,29 +65,30 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 			}
 		}).start();
 		
-		// Sensors and actuators		
+		// Sensors / actuators / classifiers / supervisors		
 		new Thread(() -> {
 			try {
 				while (true) {
 					long now = clock.get();
-					for (Sensor s : sensors ) {
+					for (ISensor s : sensors ) {
 						if (s.isActive() && (now-s.getLastProcessTime())>s.getWaitTime()) {
 							s.process(now);
 						}
-					}
-					
-					for (Actuator a : actuators ) {
+					}					
+					for (IActuator a : actuators ) {
 						if (a.isActive() && (now-a.getLastProcessTime())>a.getWaitTime()) {
 							a.process(now);
 						}
 					}
-					for (Classifier<?> c : classifiers ) {
+					for (IClassifier<?> c : classifiers ) {
 						AbstractNeuron result = c.classify(now);
 						if (result!=null) {
 							System.out.println("Classifier result:"+result.toString());
 						}
 					}					
-					
+					for (ISupervisor<?> s : supervisors ) {
+						s.process(now);
+					}
 					LockSupport.parkNanos(50_000); // 50 µs
 				}
 				
@@ -112,15 +116,19 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 		}, 3, 3, TimeUnit.SECONDS);
 	}
 	
-	public void attachSensor( Sensor s ) {
+	public void attachSensor( ISensor s ) {
 		this.sensors.add( s );
 	}
 	
-	public void attachActuator( Actuator a ) {
+	public void attachActuator( IActuator a ) {
 		this.actuators.add( a );
 	}
 	
-	public void attachClassifier( Classifier<?> c ) {
+	public void attachClassifier( IClassifier<?> c ) {
 		this.classifiers.add( c );
+	}
+	
+	public void attachSupervisor( ISupervisor<?> s ) {
+		this.supervisors.add( s );
 	}
 }

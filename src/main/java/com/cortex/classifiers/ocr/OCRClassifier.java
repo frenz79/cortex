@@ -1,12 +1,12 @@
 package com.cortex.classifiers.ocr;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.classifiers.Classifier;
+import com.cortex.commons.modules.IClassifier;
 
-public class OCRClassifier implements Classifier<CharacterNeuron> {
+public class OCRClassifier implements IClassifier<CharacterNeuron> {
 	
 	private long lastApply = 0l; // 75 ms
-    private final long windowNanos = 50_000_000l; // 75 ms
+    private final long windowNanos = 75_000_000l; // 75 ms
     
 	private final CharacterNeuron[][] neurons;
 	
@@ -18,6 +18,10 @@ public class OCRClassifier implements Classifier<CharacterNeuron> {
 		for (char c = 'A'; c <= 'Z'; c++) {
 			this.neurons[0][i++] = new CharacterNeuron(c);
 		}
+	}
+	
+	public CharacterNeuron getCharacterNeuronForLetter(char c) {
+		return this.neurons[0][c-'A'];
 	}
 	
 	@Override

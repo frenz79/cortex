@@ -1,9 +1,9 @@
-package com.cortex.sensors;
+package com.cortex.commons.modules;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.IProcessable;
 
-public interface Sensor extends IProcessable {
+public interface IActuator extends IProcessable {
 
 	public long getWaitTime();
 	

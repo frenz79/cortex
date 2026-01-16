@@ -1,8 +1,8 @@
-package com.cortex.classifiers;
+package com.cortex.commons.modules;
 
 import com.cortex.base.AbstractNeuron;
 
-public interface Classifier<N extends AbstractNeuron> {
+public interface IClassifier<N extends AbstractNeuron> {
 
 	public N getClassificationResult();
 

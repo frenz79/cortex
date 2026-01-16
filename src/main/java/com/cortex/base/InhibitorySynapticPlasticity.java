@@ -42,7 +42,16 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
 	@Override
 	public void update(long now) {
 		// TODO Auto-generated method stub
-		
+	}
+
+	@Override
+	public void applyReward(float r, long t) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void updateDelay(float r) {
+		// TODO Auto-generated method stub
 	}
 
 }

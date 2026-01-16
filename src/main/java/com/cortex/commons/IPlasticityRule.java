@@ -7,4 +7,6 @@ public interface IPlasticityRule {
 	 void onPreSpike( long dt );
 	 void onPostSpike( Synapse s, long dt, long now );
 	 float getWeight();
+	 void applyReward(float r, long t);
+	 void updateDelay(float r);
 }

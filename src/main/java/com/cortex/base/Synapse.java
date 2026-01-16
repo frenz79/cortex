@@ -132,10 +132,11 @@ public final class Synapse implements IPlasticSynapse {
 	@Override
     public void onPostSpike(long t, long now) {
 		this.plasticityRule.onPostSpike(this, t, now);
+		this.plasticityRule.updateDelay(t);
     }
 	@Override
     public void applyReward(float r, long t) {
-	//	this.plasticityRule.applyReward(r, t);
+		this.plasticityRule.applyReward(r, t);
 	//	this.plasticityRule.updateDelay(r);
     }
 	@Override

@@ -14,6 +14,7 @@ import com.cortex.base.InhibitorySynapticPlasticity;
 import com.cortex.base.InhibitorySynapticPlasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.brain.Thinker;
 import com.cortex.classifiers.ocr.OCRClassifier;
+import com.cortex.classifiers.ocr.OCRSupervisor;
 import com.cortex.layer.MultiLayerConfig.IntraLayersConnConfig;
 import com.cortex.layer.MultiSphericalLayer;
 import com.cortex.layer.MultiSphericalLayerConfig;
@@ -24,7 +25,7 @@ import com.cortex.sensors.retina.Retina;
 public class Boostrap {
 
 	public static void main(String[] args) throws IOException { 
-		int totalNeurons = 1_000;
+		int totalNeurons = 100_000;
 		int fanOut = 500;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
@@ -56,9 +57,9 @@ public class Boostrap {
 		System.out.println("Number of Retina Synapses:"+retinaConn);
 		
 		// Connect OCR Classifier to L4
-		OCRClassifier ocr = new OCRClassifier();		
+		OCRClassifier ocrClassifier = new OCRClassifier();		
 		int ocrConn = layer.getLayers(3).connectSensor(
-				ocr.getNeurons(), 
+				ocrClassifier.getNeurons(), 
 				10, 
 				40, 
 				0.5f, 
@@ -69,13 +70,16 @@ public class Boostrap {
 						new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
 					)	
 				);
-			
+		OCRSupervisor ocrSupervisor = new OCRSupervisor( ocrClassifier );
+		ocrSupervisor.setExpected(ocrClassifier.getCharacterNeuronForLetter('A'));
+		
 		System.out.println("Number of OCR Synapses:"+ocrConn);
 
 		// This is the main processing loop
 		Thinker<?,?,?> thinker = new Thinker<>( layer );
 		thinker.attachSensor( retina );
-		thinker.attachClassifier( ocr );
+		thinker.attachClassifier( ocrClassifier );
+		thinker.attachSupervisor( ocrSupervisor );
 
 		// Open UI
 		// new SimpleViewer( layer, true, false );

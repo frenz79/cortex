@@ -6,9 +6,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
-import com.cortex.sensors.Sensor;
+import com.cortex.commons.modules.ISensor;
 
-public class Retina implements Sensor {
+public class Retina implements ISensor {
 
 	private static final String SENSOR_ID = "RETINA";
 	
