@@ -72,7 +72,7 @@ public abstract class AbstractNeuron implements IProcessable {
 	//	System.out.println("Spike:"+spike);
 		for ( Synapse s : this.outSynapses  ) {
 			s.addSpike(spike);
-			activeNeurons.put( s.getTarget(), spike.getCreationTimeNanos() );
+			activeNeurons.replace( s.getTarget(), spike.getCreationTimeNanos() );
 			firingRate += 1.0f;
 		    lastRateUpdate = spike.getCreationTimeNanos();
 		    neuronFired(spike.getCreationTimeNanos());

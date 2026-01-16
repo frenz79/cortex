@@ -9,9 +9,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
+import com.cortex.actuators.Actuator;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Monitor;
 import com.cortex.base.Monitor.LayerStats;
+import com.cortex.classifiers.Classifier;
 import com.cortex.layer.Layer;
 import com.cortex.layer.LayerConfig;
 import com.cortex.layer.MultiLayer;
@@ -22,12 +24,17 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 
 	private final MultiLayer<MC,C,L> layer;
 	private final List<Sensor> sensors;
+	private final List<Actuator> actuators;
+	private final List<Classifier<?>> classifiers;
+	
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	
 	public Thinker(MultiLayer<MC,C,L> layer) {
 		super();
 		this.layer = layer;
 		this.sensors = new ArrayList<>();
+		this.actuators = new ArrayList<>();
+		this.classifiers = new ArrayList<>();
 	}
 	
 	public void start() {
@@ -61,12 +68,23 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 				while (true) {
 					long now = clock.get();
 					for (Sensor s : sensors ) {
-						if (s.isActive()) {
-							if ((now-s.getLastProcessTime())>s.getWaitTime()) {
-								s.process(now);
-							}
+						if (s.isActive() && (now-s.getLastProcessTime())>s.getWaitTime()) {
+							s.process(now);
 						}
 					}
+					
+					for (Actuator a : actuators ) {
+						if (a.isActive() && (now-a.getLastProcessTime())>a.getWaitTime()) {
+							a.process(now);
+						}
+					}
+					for (Classifier<?> c : classifiers ) {
+						AbstractNeuron result = c.classify(now);
+						if (result!=null) {
+							System.out.println("Classifier result:"+result.toString());
+						}
+					}					
+					
 					LockSupport.parkNanos(50_000); // 50 µs
 				}
 				
@@ -94,7 +112,15 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 		}, 3, 3, TimeUnit.SECONDS);
 	}
 	
-	public void attachSensor( Sensor sensor ) {
-		this.sensors.add( sensor );
+	public void attachSensor( Sensor s ) {
+		this.sensors.add( s );
+	}
+	
+	public void attachActuator( Actuator a ) {
+		this.actuators.add( a );
+	}
+	
+	public void attachClassifier( Classifier<?> c ) {
+		this.classifiers.add( c );
 	}
 }

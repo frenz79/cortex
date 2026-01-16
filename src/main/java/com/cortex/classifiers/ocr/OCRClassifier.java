@@ -21,21 +21,25 @@ public class OCRClassifier implements Classifier<CharacterNeuron> {
 	}
 	
 	@Override
-	public void classify(long now) throws InterruptedException {
+	public CharacterNeuron classify(long now) throws InterruptedException {
 		if ( now-lastApply > windowNanos ) {
 			int best = -1;
 	        float bestScore = 0.0f;
 	
-	        for (int i = 0; i < neurons.length; i++) {
+	        for (int i = 0; i < neurons[0].length; i++) {
 	            float spikes = neurons[0][i].scoreSpikes(now - windowNanos, now);
 	            if (spikes > bestScore) {
 	                bestScore = spikes;
 	                best = i;
 	            }
 	        }
-	        this.lastApply = now;
-	        this.result = neurons[0][best];
+	        if(best>=0) {
+		        this.lastApply = now;
+		        this.result = neurons[0][best];
+		        return this.result;
+	        }
 		}
+		return null;
     }
 
 	@Override

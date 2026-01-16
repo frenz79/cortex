@@ -75,6 +75,7 @@ public class Boostrap {
 		// This is the main processing loop
 		Thinker<?,?,?> thinker = new Thinker<>( layer );
 		thinker.attachSensor( retina );
+		thinker.attachClassifier( ocr );
 
 		// Open UI
 		// new SimpleViewer( layer, true, false );
