@@ -35,19 +35,19 @@ public class OCRCharacterNeuron extends Neuron {
 	public float scoreSpikes(long wnd, long currTimeNanos) throws InterruptedException {
 		AtomicDouble score = new AtomicDouble(0.0);
 		for ( Synapse synapse : getInSynapses() ) {
-			Function<Spike, Boolean> spikesConsumer = spike -> {
+			Function<Spike, Spike> spikesConsumer = spike -> {
 				try {
 					long deltaTimeNanos = currTimeNanos - spike.getCreationTimeNanos();
 					long travelTimeNanos = (long)(synapse.getLength() / spike.getSpeed());
 
 					if ( deltaTimeNanos>=travelTimeNanos ) {
 						score.addAndGet(spike.getAmplitude());
-						return false;
+						return null;
 					} 
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				return true;
+				return spike;
 			};
 			synapse.forEachSpike( spikesConsumer );	
 		}

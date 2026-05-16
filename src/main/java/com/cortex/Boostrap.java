@@ -3,6 +3,7 @@ package com.cortex;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
 
 import javax.imageio.ImageIO;
@@ -25,8 +26,8 @@ import com.cortex.sensors.retina.Retina;
 
 public class Boostrap {
 
-	public static void main(String[] args) throws IOException { 
-		int totalNeurons = 20_000;
+	public static void main(String[] args) throws IOException, InterruptedException { 
+		int totalNeurons = 40_000;
 		int fanOut = 150;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
@@ -82,12 +83,29 @@ public class Boostrap {
 		thinker.attachClassifier( ocrClassifier );
 		thinker.attachSupervisor( ocrSupervisor );
 
+		 CountDownLatch keepAlive = new CountDownLatch(1);
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+		    System.out.println("Shutting down...");
+		    try {
+		        retina.stop(); // se disponibile
+		    } catch (Exception ignored) {}
+		    try {
+		        thinker.stop();
+		    } catch (Exception ignored) {}
+		    keepAlive.countDown();
+		}));
+		
 		// Open UI
 		// new SimpleViewer( layer, true, false );
 
 		// ..give the life!
-		retina.start();
 		thinker.start();
+		Thread.sleep(200); // breve delay per garantire che il thinker sia operativo
+		
+		retina.start();
+		
+	    keepAlive.await();
+	    System.out.println("Main exiting");
 	}
 
 	private static BufferedImage loadImage(String path) throws IOException {

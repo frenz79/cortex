@@ -1,12 +1,8 @@
 package com.cortex.base;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 
 import com.cortex.brain.GlobalContext;
@@ -34,11 +30,10 @@ public final class Synapse implements IPlasticSynapse {
     private final IPlasticityRule plasticityRule;
 	private final float length;
 	
-	private final List<Spike> spikes = new ArrayList<>();
+	//private final List<Spike> spikes = new LinkedList<>();
+	//private final ReentrantLock lock = new ReentrantLock(false);
 	
-	private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(false);
-	private static final ReadLock rLock = lock.readLock();
-	private static final WriteLock wLock = lock.writeLock();
+	private final Queue<Spike> spikes = new ConcurrentLinkedQueue<>();
 	
 	public Synapse(Neuron pre, Neuron post, float length, IPlasticityRule plasticityRule) {
 		super();
@@ -83,33 +78,44 @@ public final class Synapse implements IPlasticSynapse {
 		return length;
 	}
 	
-	public void forEachSpike( Function<Spike, Boolean> consumer ) throws InterruptedException {
-		wLock.tryLock(1, TimeUnit.SECONDS);
-		try {
-			List<Integer> toBeRemoved = new ArrayList<>(spikes.size());
-		
-			for ( int i=0; i<spikes.size(); i++ ) {
-				if (!consumer.apply(spikes.get(i))) {
-					toBeRemoved.add(i);
-				}
-			}
-			if (!toBeRemoved.isEmpty()) {
-				// inverse iteration
-				for ( int i=toBeRemoved.size()-1; i>=0 ; i-- ) {
-					spikes.remove(i);
-				}
-			}
-		} finally {
-			wLock.unlock();
-		}
-	}
+	 /**
+     * Iterate spikes in FIFO order.
+     *
+     * Consumer contract:
+     *  - return the same Spike instance to keep it (not yet arrived)
+     *  - return any other value (including null) to remove the head spike
+     *
+     * The consumer must be fast and non-blocking; heavy work should be deferred.
+     */
+	public void forEachSpike(Function<Spike, Spike> consumer) {
+        while (true) {
+            Spike head = spikes.peek();
+            if (head == null) break;
+            Spike result;
+            try {
+                result = consumer.apply(head);
+            } catch (RuntimeException ex) {
+                // Protect the processing loop from consumer exceptions.
+                // Log and break to avoid busy-looping on a problematic consumer.
+                ex.printStackTrace();
+                break;
+            }
+            if (result == head) {
+                // keep head and stop processing further (still in flight)
+                break;
+            } else {
+                // remove head and continue to next
+                spikes.poll();
+            }
+        }
+    }
 	
 	public void addSpike(Spike spike) throws InterruptedException {
-		wLock.tryLock(1, TimeUnit.SECONDS);
+	//	lock.tryLock(1, TimeUnit.SECONDS);
 		try {
 			this.spikes.add(spike);
 		} finally {
-			wLock.unlock();
+	//		lock.unlock();
 		}
 	}
 	
@@ -124,14 +130,13 @@ public final class Synapse implements IPlasticSynapse {
 	// IPlasticSynapse
 	@Override
 	public void onPreSpike(long t) {
-		if (pre.isInhibitor()) {
-			// NOP
-		} else {
-			if ( this.plasticityRule.onPreSpike(t)) {
-				GlobalContext.addRecentlyActiveSynapses(this);
-			}
-		}
+		if (!pre.isInhibitor()) {
+            if (this.plasticityRule.onPreSpike(t)) {
+                GlobalContext.addRecentlyActiveSynapses(this);
+            }
+        }
     }
+	
 	@Override
     public void onPostSpike(long t, long now) {
 		if ( this.plasticityRule.onPostSpike(this, t, now) ) {

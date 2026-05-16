@@ -9,7 +9,6 @@ import com.cortex.classifiers.ocr.OCRCharacterNeuron;
 
 public class GlobalNeuromodulator {
 
-
 	public static void broadcastReward(
 			float reward,
 			long now,

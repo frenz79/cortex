@@ -2,29 +2,31 @@ package com.cortex.brain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.DoubleAdder;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
 import javax.vecmath.Point3f;
 
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
-import com.google.common.util.concurrent.AtomicDouble;
 
 public class GlobalContext {
 
-	private static NeuronEntry[] neurons;
+	private static volatile NeuronEntry[] neurons;
 	
 	public static class NeuronEntry {
 		public final Neuron neuron;
-		public boolean active;
+		public volatile boolean active;
 
 		public NeuronEntry(Neuron neuron) {
 			super();
@@ -52,9 +54,10 @@ public class GlobalContext {
 		}		
 	}
 	
-	private static int processCounter = 0;
-	private static long processDeltaTimeMicros = 0;
-	private static NeuronFactory neuronFactory;
+    // Process timing: keep nanos internally
+    private static final AtomicLong processCounter = new AtomicLong(0);
+    private static final LongAdder processTimeNanos = new LongAdder();
+	private static volatile NeuronFactory neuronFactory;
 	
 	public static void initialize( int neuronsCount ) {
 		neuronFactory = new NeuronFactory(neuronsCount);
@@ -64,27 +67,44 @@ public class GlobalContext {
 		return neuronFactory;
 	}
 	
-	public static void streamActiveNeuron( Function<Neuron, Boolean> consumer ) {
-		long startTime = System.nanoTime();
-		for (int i=0; i<neurons.length; i++) {
-			if (neurons[i].active) {
-				consumer.apply(neurons[i].neuron);
-			}
-		}
-		long endTime = System.nanoTime();
-		processDeltaTimeMicros += TimeUnit.NANOSECONDS.toMillis(endTime-startTime);
-		processCounter++;
-	}
+	/**
+     * Iterate active neurons and call consumer. Consumer returns true to keep active flag true,
+     * false to clear it. This method is safe to call concurrently.
+     */
+    public static void streamActiveNeuron(Function<Neuron, Boolean> consumer) {
+        long start = System.nanoTime();
+        NeuronEntry[] snapshot = neurons; // volatile read
+        if (snapshot == null) return;
+        for (int i = 0; i < snapshot.length; i++) {
+            NeuronEntry entry = snapshot[i];
+            if (entry == null) continue;
+            if (entry.active) {
+                Boolean stay = Boolean.TRUE;
+                try {
+                    stay = consumer.apply(entry.neuron);
+                } catch (RuntimeException ex) {
+                    ex.printStackTrace();
+                    // on exception, keep neuron active to be retried later
+                    stay = Boolean.TRUE;
+                }
+                entry.active = Boolean.TRUE.equals(stay);
+            }
+        }
+        long end = System.nanoTime();
+        processTimeNanos.add(end - start);
+        processCounter.incrementAndGet();
+    }
 
-	public static long getAverageProcessTime() {
-		if (processCounter>0) {
-			long avgTime = processDeltaTimeMicros / processCounter;
-			processCounter = 0;
-			processDeltaTimeMicros = 0l;
-			return avgTime;
-		}
-		return 0;
-	}
+	/**
+     * Returns average process time in milliseconds since last call and resets counters.
+     */
+    public static long getAverageProcessTimeMillis() {
+        long count = processCounter.getAndSet(0);
+        if (count == 0) return 0L;
+        long totalNanos = processTimeNanos.sumThenReset();
+        // convert to milliseconds
+        return TimeUnit.NANOSECONDS.toMillis(totalNanos / count);
+    }
 	
 	public static int getNeuronsCount() {
 		return neurons.length;
@@ -94,32 +114,37 @@ public class GlobalContext {
 		neurons[n.getIndex()].active = true;
 	}
 	
-	private static final List<Synapse> recentlyActiveSynapses = new ArrayList<>();
-	private static final ReentrantLock synLock = new ReentrantLock(false);
+	private static final Queue<Synapse> recentlyActiveSynapses = new ConcurrentLinkedQueue<>();
 	
 	public static void addRecentlyActiveSynapses(Synapse synapse) {
-		synLock.lock();
-		try {
-			recentlyActiveSynapses.add(synapse);
-		} finally {
-			synLock.unlock();
-		}
-	}
+        Objects.requireNonNull(synapse);
+        recentlyActiveSynapses.add(synapse);
+    }
 	
-	public static void forEachActiveSynapse( Function<Synapse, Boolean> consumer ) {
-		synLock.lock();
-		try {
-		    Iterator<Synapse> it = GlobalContext.recentlyActiveSynapses.iterator();
-	
-		    while (it.hasNext()) {
-		        Synapse s = it.next();
-		        if ( !consumer.apply(s)) {
-		        	it.remove();
-		        }
-		    }
-		} finally {
-			synLock.unlock();
-		}
+	/**
+     * Drain the queue and apply consumer to each. Consumer returns true to keep it in the queue,
+     * false to drop it. Implementation drains into a temporary list to avoid holding locks.
+     */
+	public static void forEachActiveSynapse(Function<Synapse, Boolean> consumer) {
+	    Objects.requireNonNull(consumer, "consumer");
+	    List<Synapse> drained = new ArrayList<>(recentlyActiveSynapses.size());
+	    Synapse s;
+	    while ((s = recentlyActiveSynapses.poll()) != null) {
+	        drained.add(s);
+	    }
+	    for (Synapse syn : drained) {
+	        boolean keep = true;
+	        try {
+	            keep = Boolean.TRUE.equals(consumer.apply(syn));
+	        } catch (RuntimeException ex) {
+	            ex.printStackTrace();
+	            // on exception, keep the synapse for retry
+	            keep = true;
+	        }
+	        if (keep) {
+	            recentlyActiveSynapses.add(syn);
+	        }
+	    }
 	}	
 	
 	public static record LayerStats( 
@@ -129,48 +154,46 @@ public class GlobalContext {
 	) {	
 	}
 	public static class IntLayerStats {
-		private final AtomicDouble weight = new AtomicDouble(0.0);
-		private final AtomicInteger spikeCounter = new AtomicInteger(0);
-		private final AtomicInteger synapsesWeightCounter = new AtomicInteger(0);
-		private final Set<Neuron> activeNeurons = new HashSet<>();
+	    private final DoubleAdder weightSum = new DoubleAdder(); // sum of weight deltas
+        private final LongAdder synapseWeightCount = new LongAdder(); // number of weight contributions
+        private final LongAdder spikeCounter = new LongAdder();
+        private final Set<Neuron> activeNeurons = ConcurrentHashMap.newKeySet();
 		
-	    public void neuronFired( Neuron neuron ) {
-	        this.spikeCounter.incrementAndGet();
-	        this.activeNeurons.add(neuron);
-	    }
-	    
-	    public void sumSynapticWeights(float val) {
-	    	this.weight.addAndGet(val);
-	    	this.synapsesWeightCounter.incrementAndGet();
-	    }
-	    
-	    public LayerStats getStatsAndReset() {
-	    	LayerStats ret = new LayerStats(
-	    		(float)synapsesWeightCounter.getAndSet(0) / (float)weight.getAndSet(0),
-	    		activeNeurons.size(),
-	    		spikeCounter.getAndSet(0)
-	    	);
-	    	
-	    	activeNeurons.clear();
-	    	return ret;
-	    }
-	}
-	
-	private static final Map<Integer,IntLayerStats> layersStats = new HashMap<>();
-	
-	public static void traceNeuronFire(long time, Neuron neuron, int layerId ) {
-		layersStats.compute( layerId, (k, v) -> (v == null) ? new IntLayerStats() : v)
-			.neuronFired( neuron );
-	}
+        public void neuronFired(Neuron neuron) {
+            spikeCounter.increment();
+            activeNeurons.add(neuron);
+        }
 
-	public static void traceSynapseWeightUpdated(long time, int layerId, float oldW, float newW) {
-		layersStats.compute( layerId, (k, v) -> (v == null) ? new IntLayerStats() : v)
-		.sumSynapticWeights(newW-oldW);
+        public void sumSynapticWeights(double val) {
+            weightSum.add(val);
+            synapseWeightCount.increment();
+        }
+
+        public LayerStats getStatsAndReset() {
+            long spikes = spikeCounter.sumThenReset();
+            long count = synapseWeightCount.sumThenReset();
+            double sum = weightSum.sumThenReset();
+            int active = activeNeurons.size();
+            activeNeurons.clear();
+            float avgWeight = (count == 0) ? 0.0f : (float) (sum / (double) count);
+            return new LayerStats(avgWeight, active, (int) spikes);
+        }
 	}
 	
-	public static LayerStats getAndResetStats( int layerId ) {
-		IntLayerStats ret = layersStats.get( layerId );
-		return (ret!=null)?ret.getStatsAndReset():null;
-	}
+	private static final ConcurrentHashMap<Integer, IntLayerStats> layersStats = new ConcurrentHashMap<>();	
+	
+	public static void traceNeuronFire(long time, Neuron neuron, int layerId) {
+        layersStats.computeIfAbsent(layerId, k -> new IntLayerStats()).neuronFired(neuron);
+    }
+
+    public static void traceSynapseWeightUpdated(long time, int layerId, float oldW, float newW) {
+        double delta = (double) newW - (double) oldW;
+        layersStats.computeIfAbsent(layerId, k -> new IntLayerStats()).sumSynapticWeights(delta);
+    }
+
+    public static LayerStats getAndResetStats(int layerId) {
+        IntLayerStats s = layersStats.get(layerId);
+        return (s != null) ? s.getStatsAndReset() : null;
+    }
 	
 }
