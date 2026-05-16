@@ -74,6 +74,7 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 	private final ExcitatorySynapticPlasticityConfig config;
 	
     private float eligibility = 0.0f;
+    private long lastEligibilityUpdate = 0l;
     private float delay;
     private float weight;
     private long lastPreSpike = -1;
@@ -89,28 +90,30 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 
     // IPlasticityRule
     @Override
-    public void onPreSpike(long time) {
+    public boolean onPreSpike(long time) {
         lastPreSpike = time;
         if (lastPostSpike >= 0) {
             long dt = lastPostSpike - time;
-            updateEligibility(dt);
+            return updateEligibility(dt);
         }
+        return false;
     }
  // IPlasticityRule
     @Override
-    public void onPostSpike(Synapse s, long time, long now) {
+    public boolean onPostSpike(Synapse s, long time, long now) {
         lastPostSpike = time;
         if (lastPreSpike >= 0) {
             long dt = time - lastPreSpike;
-            updateEligibility(dt);
+            return updateEligibility(dt);
         }
+        return false;
     }
 
     // =========================================================
     // CORE STDP (eligibility, non peso diretto!)
     // =========================================================
 
-    private void updateEligibility(long dt) {
+    private boolean updateEligibility(long dt) {
         float delta;
         if (dt > 0) {
             delta = config.A_PLUS * (float)Math.exp(-dt / config.TAU_PLUS);
@@ -119,6 +122,8 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
         }
         eligibility += delta;
         eligibility = Maths.clamp(eligibility, -1f, 1f);
+        
+       return (delta != 0f);
     }
 
     // =========================================================
@@ -131,7 +136,17 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
         weight = Maths.clamp(weight, config.W_MIN, config.W_MAX);
         eligibility = 0f;
     }
-
+    
+    @Override
+    public boolean isEligible(long now, long window) {
+        return eligibility != 0f && (now - lastEligibilityUpdate) <= window;
+    }
+    
+    public void onEligibilityUpdate(float delta, long now) {
+        eligibility += delta;
+        lastEligibilityUpdate = now;
+    }
+    
     // =========================================================
     // HOMEOSTASI + DECAY
     // =========================================================

@@ -4,9 +4,10 @@ import com.cortex.base.Synapse;
 
 public interface IPlasticityRule {
 	 void update(long now);
-	 void onPreSpike( long dt );
-	 void onPostSpike( Synapse s, long dt, long now );
+	 boolean onPreSpike( long dt );
+	 boolean onPostSpike( Synapse s, long dt, long now );
 	 float getWeight();
 	 void applyReward(float r, long t);
 	 void updateDelay(float r);
+	 boolean isEligible(long now, long window);
 }

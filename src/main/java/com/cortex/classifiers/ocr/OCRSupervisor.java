@@ -1,12 +1,13 @@
 package com.cortex.classifiers.ocr;
 
 import com.cortex.base.Synapse;
+import com.cortex.brain.GlobalNeuromodulator;
 import com.cortex.commons.modules.ISupervisor;
 
-public class OCRSupervisor implements ISupervisor<CharacterNeuron> {
+public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 
 	private final OCRClassifier classifier;
-	private CharacterNeuron expected;
+	private OCRCharacterNeuron expected;
 
 	public OCRSupervisor(OCRClassifier classifier) {
 		super();
@@ -15,7 +16,7 @@ public class OCRSupervisor implements ISupervisor<CharacterNeuron> {
 
 	@Override
 	public void process(long now) {
-		CharacterNeuron winner = classifier.getClassificationResult();
+		OCRCharacterNeuron winner = classifier.getClassificationResult();
 		if (winner == null) {
 			return;
 		}
@@ -25,20 +26,26 @@ public class OCRSupervisor implements ISupervisor<CharacterNeuron> {
 		if (winner != getExpected()){
 			reward( now, -1.5f, winner );
 		}
+		
+		GlobalNeuromodulator.broadcastReward(
+			(winner == getExpected()) ? +0.5f : -0.5f,
+		    now,
+		    50_000_000L // 50 ms
+		);
 	}
 
-	private static final void reward( long now, float reward, CharacterNeuron n ) {
+	private static final void reward( long now, float reward, OCRCharacterNeuron n ) {
 		for (Synapse s : n.getInSynapses()) {
 			s.applyReward(reward, now);
 		}
 	}
 	
-	public CharacterNeuron getExpected() {
+	public OCRCharacterNeuron getExpected() {
 		return expected;
 	}
 
 	@Override
-	public void setExpected(CharacterNeuron expected) {
+	public void setExpected(OCRCharacterNeuron expected) {
 		this.expected = expected;
 	}
 }

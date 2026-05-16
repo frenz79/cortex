@@ -3,13 +3,13 @@ package com.cortex.sensors.retina;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Neuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
 
 import net.jafama.FastMath;
 
-public class RetinaNeuron extends AbstractNeuron {
+public class RetinaNeuron extends Neuron {
 
 	private float lastLuminance = 0.0f;
 
@@ -19,8 +19,15 @@ public class RetinaNeuron extends AbstractNeuron {
 	private static final float OFF_GAIN = 1.0f;
 	private static final float THRESHOLD = 0.01f;
 
-	public RetinaNeuron() {
-		super(false, true, false, null);
+	public RetinaNeuron(int index) {
+		super(
+			index,	
+			-1,	    // layerId
+			false, 	// hasIncoming
+			true, 	// hasOutgoing
+			false, 	// inhibitor
+			null	// position
+		);
 	}
 
 	public List<Spike> getSpikes() {
@@ -64,12 +71,6 @@ public class RetinaNeuron extends AbstractNeuron {
 
 	@Override
 	public void synapseUpdated(long now, Synapse synapse, float oldValue, float weight) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void neuronFired(long now) {
 		// TODO Auto-generated method stub
 		
 	}

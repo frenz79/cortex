@@ -9,9 +9,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
-import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Monitor;
-import com.cortex.base.Monitor.LayerStats;
+import com.cortex.base.Neuron;
+import com.cortex.brain.GlobalContext.LayerStats;
 import com.cortex.commons.modules.IActuator;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
@@ -46,7 +45,7 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 		// Neurons loop
 		new Thread(() -> {
 			try {
-				Function<AbstractNeuron, Boolean> activeNeuronsConsumer = n -> {
+				final Function<Neuron, Boolean> activeNeuronsConsumer = n -> {
 					try {
 						return n.process(clock.get());
 					} catch (InterruptedException e) {
@@ -57,8 +56,8 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 				
 				while (true) {		
 					clock.set(System.nanoTime());
-					AbstractNeuron.forEachActive( activeNeuronsConsumer );
-					LockSupport.parkNanos(50_000); // 50 µs			
+					GlobalContext.streamActiveNeuron(activeNeuronsConsumer);
+					LockSupport.parkNanos(50_000); // 50 µs	
 				}
 			} catch ( Exception ex ) {
 				ex.printStackTrace();
@@ -81,7 +80,7 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 						}
 					}
 					for (IClassifier<?> c : classifiers ) {
-						AbstractNeuron result = c.classify(now);
+						Neuron result = c.classify(now);
 						if (result!=null) {
 							System.out.println("Classifier result:"+result.toString());
 						}
@@ -101,13 +100,14 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 			@Override
 			public void run() {
 				try {
+					System.out.println("== Avg Process Time:"+GlobalContext.getAverageProcessTime()+"ms ===========");
 					for ( L l : layer.getAllLayers() ) {
-						LayerStats stats = Monitor.getAndResetStats(l.getId());
+						LayerStats stats = GlobalContext.getAndResetStats(l.getId());
 						if(stats!=null) {
 							System.out.println("Layer:"+l.getId()+" | ACT:"+stats.activeNeurons()+" | SYN_W:"+stats.averageSynapticWeight()+" | SPIKES:"+stats.spikesCount());
 						} else {
 							System.out.println("Layer:"+l.getId()+" NO STATS");
-						}
+						}						
 					}
 				} catch(Exception ex) {
 					ex.printStackTrace();

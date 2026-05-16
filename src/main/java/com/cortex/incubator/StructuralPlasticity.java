@@ -1,12 +1,5 @@
 package com.cortex.incubator;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
-import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Synapse;
-
 /**
  PLASTICITÀ STRUTTURALE
  (pruning + growth)

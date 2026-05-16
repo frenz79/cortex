@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Neuron;
 import com.cortex.commons.IntPair;
 
 public class MultiLayerConfig<C extends LayerConfig> {
 	
 	private final Map<IntPair,IntraLayersConnConfig> layer2layerConns = new HashMap<>();
 	
-	public static record IntraLayersConnConfig(int minConnections, int maxConnections, float maxDistance, SynapsePlasticityConfig synapsePlasticityConfig, Predicate<AbstractNeuron> filter) {
+	public static record IntraLayersConnConfig(int minConnections, int maxConnections, float maxDistance, SynapsePlasticityConfig synapsePlasticityConfig, Predicate<Neuron> filter) {
 	}
 	
 	private final List<C> configs = new ArrayList<>();

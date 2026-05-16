@@ -2,17 +2,24 @@ package com.cortex.classifiers.ocr;
 
 import java.util.function.Function;
 
-import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Neuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
 import com.google.common.util.concurrent.AtomicDouble;
 
-public class CharacterNeuron extends AbstractNeuron {
+public class OCRCharacterNeuron extends Neuron {
 
 	private final char character;
 	
-	public CharacterNeuron(char character) {
-		super(true, false, false, null);
+	public OCRCharacterNeuron(int index, char character) {
+		super(
+			index,	
+			-1,	    // layerId
+			true, 	// hasIncoming
+			false, 	// hasOutgoing
+			false, 	// inhibitor
+			null	// position
+		);
 		this.character = character;
 	}
 
@@ -57,11 +64,4 @@ public class CharacterNeuron extends AbstractNeuron {
 		// TODO Auto-generated method stub
 		
 	}
-
-	@Override
-	public void neuronFired(long now) {
-		// TODO Auto-generated method stub
-		
-	}
-
 }

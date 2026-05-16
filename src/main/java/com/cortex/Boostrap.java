@@ -7,11 +7,12 @@ import java.util.function.Predicate;
 
 import javax.imageio.ImageIO;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.ExcitatorySynapticPlasticity;
 import com.cortex.base.ExcitatorySynapticPlasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.InhibitorySynapticPlasticity;
 import com.cortex.base.InhibitorySynapticPlasticity.InhibitorySynapticPlasticityConfig;
+import com.cortex.base.Neuron;
+import com.cortex.brain.GlobalContext;
 import com.cortex.brain.Thinker;
 import com.cortex.classifiers.ocr.OCRClassifier;
 import com.cortex.classifiers.ocr.OCRSupervisor;
@@ -25,10 +26,12 @@ import com.cortex.sensors.retina.Retina;
 public class Boostrap {
 
 	public static void main(String[] args) throws IOException { 
-		int totalNeurons = 100_000;
-		int fanOut = 500;
+		int totalNeurons = 20_000;
+		int fanOut = 150;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
+		GlobalContext.initialize(totalNeurons);
+		
 		// Create network layers and synapses
 		MultiSphericalLayerConfig cfg = buildMultiSphericalLayerConfig( totalNeurons, connScale );
 		MultiSphericalLayer layer = new MultiSphericalLayer( cfg );
@@ -41,12 +44,11 @@ public class Boostrap {
 		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
 
 		// Connect retina to L1
-		int retinaConn = layer.getLayers(0).connectSensor(
-				retina.getNeurons(), 
+		int retinaConn = layer.getLayers(0).link(
+				retina, 
 				10, 
 				40, 
 				0.5f, 
-				true,
 				SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
 						new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
@@ -58,12 +60,11 @@ public class Boostrap {
 		
 		// Connect OCR Classifier to L4
 		OCRClassifier ocrClassifier = new OCRClassifier();		
-		int ocrConn = layer.getLayers(3).connectSensor(
-				ocrClassifier.getNeurons(), 
+		int ocrConn = layer.getLayers(3).link(
+				ocrClassifier, 
 				10, 
 				40, 
 				0.5f, 
-				false,
 				SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
 						new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
@@ -93,23 +94,23 @@ public class Boostrap {
 		return ImageIO.read(new File(path));
 	}
 
-	private static final Predicate<AbstractNeuron> ALWAYS_CONNECT_PREDICATE = new Predicate<AbstractNeuron>() {
+	private static final Predicate<Neuron> ALWAYS_CONNECT_PREDICATE = new Predicate<Neuron>() {
 		@Override
-		public boolean test(AbstractNeuron n) {
+		public boolean test(Neuron n) {
 			return true;
 		}
 	};
 
-	private static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = new Predicate<AbstractNeuron>() {
+	private static final Predicate<Neuron> SKIP_INHIBITOR_CONNECT_PREDICATE = new Predicate<Neuron>() {
 		@Override
-		public boolean test(AbstractNeuron n) {
+		public boolean test(Neuron n) {
 			return !n.isInhibitor();
 		}
 	};
 
-	private static final Predicate<AbstractNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = new Predicate<AbstractNeuron>() {
+	private static final Predicate<Neuron> ONLY_INHIBITOR_CONNECT_PREDICATE = new Predicate<Neuron>() {
 		@Override
-		public boolean test(AbstractNeuron n) {
+		public boolean test(Neuron n) {
 			return n.isInhibitor();
 		}
 	};
@@ -242,7 +243,7 @@ public class Boostrap {
 
 		// L1 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.15), 0.15f,  5*connScale, 7*connScale, 0.60f, 1.00f,
+				new SphericalLayerConfig((int)(totN*0.15), 0.15f,  5*connScale, 7*connScale, 0.60f, 1.00f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
 								new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
@@ -251,7 +252,7 @@ public class Boostrap {
 						));
 		// L2 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.20), 0.25f,  8*connScale, 12*connScale, 0.50f, 0.85f,
+				new SphericalLayerConfig((int)(totN*0.20), 0.25f,  8*connScale, 12*connScale, 0.50f, 0.85f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
 								new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
@@ -260,7 +261,7 @@ public class Boostrap {
 						));
 		// L3 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.25), 0.15f, 10*connScale, 15*connScale, 0.40f, 0.65f,
+				new SphericalLayerConfig((int)(totN*0.25), 0.15f, 10*connScale, 15*connScale, 0.40f, 0.65f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
 								new ExcitatorySynapticPlasticity(0.2f, 5.0f, STABLE_EXCITATORY),
@@ -269,7 +270,7 @@ public class Boostrap {
 						));
 		// L4 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.20), 0.30f, 12*connScale, 18*connScale, 0.30f, 0.45f,
+				new SphericalLayerConfig((int)(totN*0.20), 0.30f, 12*connScale, 18*connScale, 0.30f, 0.45f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
 								new ExcitatorySynapticPlasticity(0.2f, 5.0f, STABLE_EXCITATORY),
@@ -278,7 +279,7 @@ public class Boostrap {
 						));
 		// L5 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.12), 0.10f, 7*connScale, 10*connScale, 0.20f, 0.30f,
+				new SphericalLayerConfig((int)(totN*0.12), 0.10f, 7*connScale, 10*connScale, 0.20f, 0.30f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
 								new ExcitatorySynapticPlasticity(0.35f, 5.0f, VERY_SLOW_EXCITATORY),
@@ -287,7 +288,7 @@ public class Boostrap {
 						));
 		// L6 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.08), 0.20f, 8*connScale, 12*connScale, 0.10f, 0.15f,
+				new SphericalLayerConfig((int)(totN*0.08), 0.20f, 8*connScale, 12*connScale, 0.10f, 0.15f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
 								new ExcitatorySynapticPlasticity(0.35f, 5.0f, VERY_SLOW_EXCITATORY),

@@ -19,7 +19,8 @@ import javax.swing.JScrollPane;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Neuron;
+import com.cortex.brain.GlobalContext;
 import com.cortex.layer.Layer;
 import com.cortex.layer.LayerConfig;
 import com.cortex.layer.MultiLayer;
@@ -141,10 +142,10 @@ public class SimpleViewer<MC extends MultiLayerConfig<C>, C extends LayerConfig,
 */
 	private Shape3D buildNeuronsShape( Layer layer, Color3f color ) {
 		// Neurons
-		Point3f[] plaPts = new Point3f[AbstractNeuron.getNeuronsCount()];
+		Point3f[] plaPts = new Point3f[GlobalContext.getNeuronsCount()];
 		int i = 0;
 
-		for ( AbstractNeuron n : layer.getNeurons() ) {
+		for ( Neuron n : layer.getNeurons() ) {
 			plaPts[i++] = n.getPosition();
 		}
 

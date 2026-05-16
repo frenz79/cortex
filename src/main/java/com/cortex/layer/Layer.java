@@ -12,9 +12,10 @@ import java.util.function.Predicate;
 
 import javax.vecmath.Point3f;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
+import com.cortex.commons.modules.IClassifier;
+import com.cortex.commons.modules.ISensor;
 
 import net.jafama.FastMath;
 
@@ -38,36 +39,47 @@ public abstract class Layer<C extends LayerConfig> {
 		return random.nextFloat(0.0f, 1.0f)<=trueProbability;
 	}
 	
-	public static record Neighbor(AbstractNeuron neuron, float distance) { 
+	protected boolean isInhibitor( ) {
+		return randomBoolean( config.getInhibitorFreq() );
+	}
+	
+	public static record Neighbor(Neuron neuron, float distance) { 
 		
 		public float getRealDistance() {
 			return (float)FastMath.sqrtQuick(distance);
 		}		
 	}
 	
-	public abstract void generateNeurons();
+	public abstract void generateNeurons( );
 	
-	public abstract int connectExternalLayer(
-		AbstractNeuron[] neurons, 
+	public abstract int link( 
+		Layer<?> layer,
 		int minConn, 
 		int maxConn, 
 		float maxDistance, 
-		boolean incoming,
-		Predicate<AbstractNeuron> filter, 
+		Predicate<Neuron> filter, 
 		SynapsePlasticityConfig synapsePlasticityConfig );
-
-	public abstract int connectSensor( 
-		AbstractNeuron[][] neurons, 
+	
+	public abstract int link( 
+		ISensor sensor,
 		int minConn, 
 		int maxConn, 
 		float maxDistance, 
-		boolean incoming,
-		Predicate<AbstractNeuron> filter, 
+		Predicate<Neuron> filter, 
 		SynapsePlasticityConfig synapsePlasticityConfig );
+	
+	public abstract int link( 
+		IClassifier<? extends Neuron> classifier,
+		int minConn, 
+		int maxConn, 
+		float maxDistance, 
+		Predicate<Neuron> filter, 
+		SynapsePlasticityConfig synapsePlasticityConfig );	
+	
 	
 	public void connectInternal( ) {
 		long startTime = System.nanoTime();
-		Map<AbstractNeuron,Collection<Neighbor>> tmp = new ConcurrentHashMap<>();
+		Map<Neuron,Collection<Neighbor>> tmp = new ConcurrentHashMap<>();
 		
 		Arrays.stream(getNeurons()).parallel().forEach( n -> {	
 			int connsCounter = random.nextInt(config.getMinConnections(), config.getMaxConnections());
@@ -81,7 +93,7 @@ public abstract class Layer<C extends LayerConfig> {
 		
 		// Synapse creation made sync!
 		int connectionsCount = 0;
-		for ( Entry<AbstractNeuron, Collection<Neighbor>> e : tmp.entrySet() ) {
+		for ( Entry<Neuron, Collection<Neighbor>> e : tmp.entrySet() ) {
 			Synapse.create(e.getKey(), e.getValue(), config.getSynapsePlasticityConfig());
 			connectionsCount += e.getValue().size();
 		}
@@ -91,12 +103,32 @@ public abstract class Layer<C extends LayerConfig> {
 		this.synapsesCount += connectionsCount;
 	}
 
-	public Collection<Neighbor> findNearest( AbstractNeuron[] neurons, Point3f target, int N, Predicate<AbstractNeuron> filter ) {
+	public Collection<Neighbor> findNearest( Neuron[] neurons, Point3f target, int N, Predicate<Neuron> filter ) {
+		/*
+		PriorityBlockingQueue<Neighbor> pq = 
+				new PriorityBlockingQueue<Neighbor>(N,(a,b) -> Float.compare(b.distance(), a.distance()));
+		
+		Arrays.stream(getNeurons()).parallel().forEach( n -> {	
+			if (filter.test(n)) {			
+				float dx = n.getPosition().x - target.x;
+				float dy = n.getPosition().y - target.y;
+				float dz = n.getPosition().z - target.z;
+				float dist = dx*dx + dy*dy + dz*dz;
+	
+				if (pq.size() < N) {
+					pq.add(new Neighbor(n, dist));
+				} else if (dist < pq.peek().distance()) {
+					pq.poll();
+					pq.add(new Neighbor(n, dist));
+				}
+			}
+		});
+		*/
 		PriorityQueue<Neighbor> pq =
 			new PriorityQueue<>((a,b) -> Float.compare(b.distance(), a.distance()));
 
 		for (int i = 0; i < neurons.length; i++) {
-			AbstractNeuron n = neurons[i];
+			Neuron n = neurons[i];
 			if (filter.test(n)) {			
 				float dx = n.getPosition().x - target.x;
 				float dy = n.getPosition().y - target.y;
@@ -114,7 +146,7 @@ public abstract class Layer<C extends LayerConfig> {
 		return pq;
 	}
 	
-	public AbstractNeuron[] getNeurons() {
+	public Neuron[] getNeurons() {
 		return neurons;
 	}
 	

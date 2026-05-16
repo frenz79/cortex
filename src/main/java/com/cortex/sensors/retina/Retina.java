@@ -4,7 +4,7 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Neuron;
 import com.cortex.base.Spike;
 import com.cortex.commons.modules.ISensor;
 
@@ -38,9 +38,10 @@ public class Retina implements ISensor {
     	this.retinaW = retinaW;
     	this.retinaH = retinaH;
     	this.retinaNeurons = new RetinaNeuron[retinaW][retinaH];
+    	int counter = 0;
     	for (int x = 0; x < retinaW; x++) {
     	    for (int y = 0; y < retinaH; y++) {
-    	        retinaNeurons[x][y] = new RetinaNeuron();
+    	        retinaNeurons[x][y] = new RetinaNeuron(counter++);
     	    }
     	}
     }
@@ -126,6 +127,8 @@ public class Retina implements ISensor {
         		sourceLuminance[x][y] = calculateLuminance(x,y, image) + randomGaussian() * 0.002f;
         	}
         }
+		
+		System.out.println("Image loaded into retina");
 	}
 	
 	private static float calculateLuminance(int x, int y, BufferedImage image) {
@@ -159,7 +162,7 @@ public class Retina implements ISensor {
 	}
 
 	@Override
-	public AbstractNeuron[][] getNeurons() {
+	public Neuron[][] getNeurons() {
 		return retinaNeurons;
 	}
 }

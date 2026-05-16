@@ -1,7 +1,5 @@
 package com.cortex.incubator;
 
-import com.cortex.base.AbstractNeuron;
-
 /*
  
   Layer 5 – OUTPUT MOTORIO / DECISIONALE

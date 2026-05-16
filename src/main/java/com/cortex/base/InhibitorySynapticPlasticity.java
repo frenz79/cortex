@@ -22,11 +22,12 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
     }
     
 	@Override
-	public void onPostSpike(Synapse s, long dt, long now) {
+	public boolean onPostSpike(Synapse s, long dt, long now) {
 		float postRate = s.getTarget().getRecentFiringRate(now);
         float error = postRate - config.TARGET_FIRING_RATE;
         float dw = config.LEARNING_RATE * error;
         this.weight = Maths.clamp(this.weight + dw, config.W_MIN, config.W_MAX);
+        return false;
 	}
 
 	@Override
@@ -35,8 +36,9 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
 	}
 
 	@Override
-	public void onPreSpike(long dt) {
+	public boolean onPreSpike(long dt) {
 		// inibitori NON rinforzano su pre
+		return false;
 	}
 
 	@Override
@@ -52,6 +54,12 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
 	@Override
 	public void updateDelay(float r) {
 		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public boolean isEligible(long now, long window) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

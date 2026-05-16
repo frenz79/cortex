@@ -1,15 +1,21 @@
 package com.cortex.base;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import javax.vecmath.Point3f;
 
+import com.cortex.brain.GlobalContext;
+import com.cortex.commons.IProcessable;
+
 /**
  *  Event-driven, analog-spike, delayed, plastic Neuron
  * 
  * */
-public class Neuron extends AbstractNeuron {
+public class Neuron implements IProcessable {
 
 	private static final float POTENTIAL_MAX = 3.0f;
 	private static final float POTENTIAL_MIN = -2.0f;
@@ -23,19 +29,25 @@ public class Neuron extends AbstractNeuron {
 	private long lastSpikeTime = 0l;
 
 	private final int layerId;
-
-	public static Neuron build( int layerId, boolean inhibitor, float x, float y, float z) {
-		return build(layerId, inhibitor, new Point3f(x,y,z));
-	}
-
-	public static Neuron build( int layerId, boolean inhibitor, Point3f position) {
-		Neuron ret = new Neuron(layerId, inhibitor, position);
-		AbstractNeuron.register(ret);
-		return ret;
-	}
-
-	Neuron(int layerId, boolean inhibitor, Point3f position) {
-		super(true, true, inhibitor, position);
+	private final int index;
+	private final Point3f position;	
+	private final List<Synapse> inSynapses;
+	private final List<Synapse> outSynapses;
+	private final int spikeSign;
+	
+	private static final long RATE_WINDOW = 100_000_000L; // 100 ms
+	private static final float RATE_DECAY = 0.95f;
+    private float firingRate = 0.0f;
+    private long lastRateUpdate = 0;
+	    
+	public Neuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position) {
+		this.inSynapses = (hasIncoming)
+			? new ArrayList<>():Collections.emptyList();
+		this.outSynapses = (hasOutgoing)
+			? new ArrayList<>():Collections.emptyList();
+		this.spikeSign = (inhibitor)?-1:1;
+		this.position = position;
+		this.index = index;
 		this.layerId = layerId;
 	}
 
@@ -108,13 +120,75 @@ public class Neuron extends AbstractNeuron {
 		return layerId;
 	}
 
-	@Override
-	public void neuronFired( long time ) {
-		Monitor.traceNeuronFire( time, this, getLayerId() );
+	public void synapseUpdated( long time, Synapse synapse, float oldW, float newW) {
+		GlobalContext.traceSynapseWeightUpdated(time, getLayerId(), oldW, newW);
+	}
+	
+	public boolean isInhibitor() {
+		return spikeSign==-1;
+	}
+	
+	public int getSpikeSign() {
+		return spikeSign;
+	}
+	
+	public Point3f getPosition() {
+		return position;
 	}
 
-	@Override
-	public void synapseUpdated( long time, Synapse synapse, float oldW, float newW) {
-		Monitor.traceSynapseWeightUpdated(time, getLayerId(), oldW, newW);
+	public void addIncomingSynapse(Synapse s) {
+		try {
+			this.inSynapses.add(s);
+		} catch (Exception ex) {
+			System.out.println("Failed to add incoming synapse to:"+this.toString());
+			throw ex;
+		}
+	}
+
+	public void addOutgoingSynapse(Synapse s) {
+		try {
+			this.outSynapses.add(s);
+		} catch (Exception ex) {
+			System.out.println("Failed to add incoming synapse to:"+this.toString());
+			throw ex;
+		}
+	}
+
+	public List<Synapse> getInSynapses() {
+		return inSynapses;
+	}
+
+	public void fire(List<Spike> spikes) throws InterruptedException {
+		for ( Spike spike : spikes ) {
+			fire( spike );
+		}
+	}
+	
+	public void fire(Spike spike) throws InterruptedException {
+	//	System.out.println("Spike:"+spike);
+		for ( Synapse s : this.outSynapses  ) {
+			s.addSpike(spike);
+			firingRate += 1.0f;
+		    lastRateUpdate = spike.getCreationTimeNanos();
+		    GlobalContext.setActive( s.getTarget() );
+		    GlobalContext.traceNeuronFire( lastRateUpdate, this, getLayerId() );
+		}
+	}
+
+	public float getRecentFiringRate( long now ) {
+		long dt = now - lastRateUpdate;
+		if (dt > RATE_WINDOW) {
+			firingRate *= RATE_DECAY;
+			lastRateUpdate = now;
+		}
+		return firingRate;
+	}
+
+	public List<Synapse> getOutSynapses() {
+		return outSynapses;
+	}
+
+	public int getIndex() {
+		return index;
 	}
 }
