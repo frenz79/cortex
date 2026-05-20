@@ -14,7 +14,7 @@ public class OCRCharacterNeuron extends Neuron {
 	public OCRCharacterNeuron(int index, char character) {
 		super(
 			index,	
-			-1,	    // layerId
+			8,	    // layerId
 			true, 	// hasIncoming
 			false, 	// hasOutgoing
 			false, 	// inhibitor
@@ -33,25 +33,25 @@ public class OCRCharacterNeuron extends Neuron {
 	}
 
 	public float scoreSpikes(long wnd, long currTimeNanos) throws InterruptedException {
-		AtomicDouble score = new AtomicDouble(0.0);
-		for ( Synapse synapse : getInSynapses() ) {
-			Function<Spike, Spike> spikesConsumer = spike -> {
-				try {
-					long deltaTimeNanos = currTimeNanos - spike.getCreationTimeNanos();
-					long travelTimeNanos = (long)(synapse.getLength() / spike.getSpeed());
-
-					if ( deltaTimeNanos>=travelTimeNanos ) {
-						score.addAndGet(spike.getAmplitude());
-						return null;
-					} 
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				return spike;
-			};
-			synapse.forEachSpike( spikesConsumer );	
-		}
-		return score.floatValue();
+		 AtomicDouble score = new AtomicDouble(0.0);
+		    for (Synapse synapse : getInSynapses()) {
+		        Function<Spike, Spike> spikesConsumer = spike -> {
+		            try {
+		                long deltaTimeNanos = currTimeNanos - spike.getCreationTimeNanos();
+		                // usa il metodo del record Spike che calcola il tempo di viaggio in nanos
+		                long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
+		                if (deltaTimeNanos >= travelTimeNanos) {
+		                    score.addAndGet(spike.getAmplitude() * spike.getSign()); // opzionale: considerare segno
+		                    return null; // rimuovi lo spike dopo averlo consumato
+		                }
+		            } catch (Exception e) {
+		                e.printStackTrace();
+		            }
+		            return spike; // tieni lo spike se non ancora arrivato
+		        };
+		        synapse.forEachSpike(spikesConsumer);
+		    }
+		    return score.floatValue();
 	}
 
 	@Override
@@ -61,7 +61,6 @@ public class OCRCharacterNeuron extends Neuron {
 
 	@Override
 	public void synapseUpdated(long now, Synapse synapse, float oldValue, float weight) {
-		// TODO Auto-generated method stub
-		
+		// opzionale: traccia o adatta plasticità locale
 	}
 }

@@ -3,9 +3,7 @@ package com.cortex.base;
 public record Spike(
 		float amplitude,
 		long creationTimeNanos,
-		boolean inhibitor
-	
-		) {
+		boolean inhibitor ) {
 	
 	private static final float MAX_AMPLITUDE = 200.0f;
 	private static final float DEFAULT_AMPLITUDE = 100.0f;
@@ -20,6 +18,11 @@ public record Spike(
 	public Spike(long creationTimeNanos, boolean inhibitor) {
 		this(DEFAULT_AMPLITUDE,creationTimeNanos,inhibitor);
 	}
+	
+	private static float clampAmplitude(float a) {
+        if (Float.isNaN(a) || a <= 0f) return 0f;
+        return Math.min(a, MAX_AMPLITUDE);
+    }
 	
 	public long getCreationTimeNanos() {
 		return creationTimeNanos;
@@ -36,6 +39,16 @@ public record Spike(
 	public float getAmplitude() {
 		return amplitude;
 	}
+	
+	/**
+     * Calcola il tempo di viaggio in nanosecondi per una distanza (same units as speed).
+     * Assumiamo speed in unità/secondo; conversione a nanos effettuata qui.
+     */
+    public long travelTimeNanos(float length) {
+        if (length <= 0f) return 0L;
+        double seconds = length / getSpeed();
+        return (long) (seconds * 1_000_000_000L);
+    }
 
 	@Override
 	public String toString() {

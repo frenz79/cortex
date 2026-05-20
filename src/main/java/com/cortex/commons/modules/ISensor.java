@@ -1,5 +1,7 @@
 package com.cortex.commons.modules;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import com.cortex.base.Neuron;
 import com.cortex.commons.IProcessable;
 
@@ -18,4 +20,8 @@ public interface ISensor extends IProcessable {
 	public long getLastProcessTime();
 	
 	public Neuron[][] getNeurons();
+	
+	public static float randomGaussian() {
+		return (float)ThreadLocalRandom.current().nextGaussian();
+	}
 }

@@ -12,26 +12,12 @@ import com.cortex.commons.Pair;
 import com.cortex.layer.Layer.Neighbor;
 import com.cortex.layer.SynapsePlasticityConfig;
 
-/**
- 
-  🧪 Policy consigliate (importantissime)
-	Tipo sinapsi		STDP	Reward	Delay	Decay
-	Retina → L1			❌		❌		❌		❌
-	L1 → L4				✅		❌		❌		✅
-	L4 → L_out			✅		✅		❌		✅
-	Feedback L_out → L4	❌		✅		❌		❌
-	Inibitori locali	❌		❌		❌		❌
-  
-*/
 public final class Synapse implements IPlasticSynapse {
 
     private final Neuron pre;
     private final Neuron post;
     private final IPlasticityRule plasticityRule;
 	private final float length;
-	
-	//private final List<Spike> spikes = new LinkedList<>();
-	//private final ReentrantLock lock = new ReentrantLock(false);
 	
 	private final Queue<Spike> spikes = new ConcurrentLinkedQueue<>();
 	
@@ -111,12 +97,7 @@ public final class Synapse implements IPlasticSynapse {
     }
 	
 	public void addSpike(Spike spike) throws InterruptedException {
-	//	lock.tryLock(1, TimeUnit.SECONDS);
-		try {
-			this.spikes.add(spike);
-		} finally {
-	//		lock.unlock();
-		}
+		this.spikes.add(spike);
 	}
 	
 	public Neuron getTarget() {
@@ -145,10 +126,10 @@ public final class Synapse implements IPlasticSynapse {
 		this.plasticityRule.updateDelay(t);
     }
 	@Override
-    public void applyReward(float r, long t) {
-		this.plasticityRule.applyReward(r, t);
-	//	this.plasticityRule.updateDelay(r);
-    }
+    public void applyReward(float deltaW, long now, float neuromodulator) {
+		this.plasticityRule.applyReward(deltaW, now, neuromodulator);
+	}
+	
 	@Override
     public void update(long t) {
 		float oldValue = this.plasticityRule.getWeight();

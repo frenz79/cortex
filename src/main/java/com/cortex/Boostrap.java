@@ -111,27 +111,9 @@ public class Boostrap {
 	private static BufferedImage loadImage(String path) throws IOException {
 		return ImageIO.read(new File(path));
 	}
-
-	private static final Predicate<Neuron> ALWAYS_CONNECT_PREDICATE = new Predicate<Neuron>() {
-		@Override
-		public boolean test(Neuron n) {
-			return true;
-		}
-	};
-
-	private static final Predicate<Neuron> SKIP_INHIBITOR_CONNECT_PREDICATE = new Predicate<Neuron>() {
-		@Override
-		public boolean test(Neuron n) {
-			return !n.isInhibitor();
-		}
-	};
-
-	private static final Predicate<Neuron> ONLY_INHIBITOR_CONNECT_PREDICATE = new Predicate<Neuron>() {
-		@Override
-		public boolean test(Neuron n) {
-			return n.isInhibitor();
-		}
-	};
+	private static final Predicate<Neuron> ALWAYS_CONNECT_PREDICATE = n -> true;
+	private static final Predicate<Neuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
+	private static final Predicate<Neuron> ONLY_INHIBITOR_CONNECT_PREDICATE = Neuron::isInhibitor;
 	
 	private static final InhibitorySynapticPlasticityConfig GENERIC_INHIBITORY = new InhibitorySynapticPlasticityConfig(
 			0.0005f,        // LEARNING_RATE

@@ -133,11 +133,10 @@ public class Neuron implements IProcessable {
 				newSpikes.clear();
 				// Must be called once per synapse even if fired multiple times
 				synapse.onPostSpike(deltaTime, currTimeNanos);
-				synapse.update(deltaTime);
-			}else {
-	            // still call update even if no new spikes were fired to keep plasticity timing consistent
-	            synapse.update(deltaTime);
-	        }
+			}
+
+	        // still call update even if no new spikes were fired to keep plasticity timing consistent
+	        synapse.update(deltaTime);
 		}
 
 		this.potential = Math.min(POTENTIAL_MAX, potential);

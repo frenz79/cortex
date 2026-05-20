@@ -5,49 +5,37 @@ import java.util.function.Function;
 
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
-import com.cortex.classifiers.ocr.OCRCharacterNeuron;
 
 public class GlobalNeuromodulator {
 
 	public static void broadcastReward(
 			float reward,
 			long now,
-			long window
-			) {
+			long window,
+			float neuromodulator,
+			boolean keepAfterApply
+	) {
 		AtomicInteger appliedCount = new AtomicInteger(0);
-		
+
 		Function<Synapse, Boolean> activeSynapseConsumer = s -> {
 			try {
 				if (!s.isEligible(now, window)) {
 					return false;
 				}
-				int sign = 1;
-				int layerId = -1;
 
-				if ( s.getTarget() instanceof Neuron ) {
-					Neuron n = (Neuron)s.getTarget();
-
-					if ( n.isInhibitor() ) {
-						sign = -1;
-					}
-
-					layerId = n.getLayerId();
-				} else  if ( s.getTarget() instanceof OCRCharacterNeuron ) {
-					layerId = 8;
+				Neuron n = s.getTarget();
+				int sign = (n.isInhibitor())?-1:1;
+				float scaledReward = scaleReward(((Neuron)(s.getTarget())).getLayerId(),reward);
+				
+				if ( scaledReward>0.0f ) {
+					s.applyReward( scaledReward*sign, now, neuromodulator);
+					appliedCount.incrementAndGet();
 				}
 
-				if ( layerId>=0 ) {
-					float scaledReward = scaleReward(((Neuron)(s.getTarget())).getLayerId(),reward);
-					if ( scaledReward>0.0f ) {
-						s.applyReward( scaledReward*sign, now);
-						appliedCount.incrementAndGet();
-					}
-				}
-				return false;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			return false;
+			return keepAfterApply;
 		};
 
 		GlobalContext.forEachActiveSynapse( activeSynapseConsumer );

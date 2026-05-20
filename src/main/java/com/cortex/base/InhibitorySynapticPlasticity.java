@@ -47,11 +47,6 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
 	}
 
 	@Override
-	public void applyReward(float r, long t) {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
 	public void updateDelay(float r) {
 		// TODO Auto-generated method stub
 	}
@@ -60,6 +55,11 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
 	public boolean isEligible(long now, long window) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public void applyReward(float r, long t, float neuromodulator) {
+		// TODO Auto-generated method stub	
 	}
 
 }

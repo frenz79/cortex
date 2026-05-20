@@ -6,7 +6,7 @@ public interface IPlasticSynapse {
 
 	void onPostSpike(long t, long now);
 
-	void applyReward(float r, long t);
+	void applyReward(float r, long t, float neuromodulator);
 
 	void update(long t);
 

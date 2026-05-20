@@ -16,7 +16,7 @@ public class Retina implements ISensor {
 	private final int retinaW;
 	private final int retinaH;
 
-	private float[][] sourceLuminance;
+	private volatile float[][] sourceLuminance;
 	private int sourceWidth;
 	private int sourceHeight;
 	private float sourceScaleX;
@@ -24,9 +24,9 @@ public class Retina implements ISensor {
 	
     private float microDx = 0;
     private float microDy = 0;
-    private boolean active;
-    private long lastSaccadeTime = 0;
-    private long lastProcessTime = 0;
+    private volatile boolean active;
+    private volatile long lastSaccadeTime = System.nanoTime();
+    private volatile long lastProcessTime = 0;
 
     private static final long SAMPLING_PERIOD = 20_000_000; // 20 ms
     private static final long MICROSACCADE_PERIOD = 40_000_000; // 40 ms
@@ -69,8 +69,8 @@ public class Retina implements ISensor {
     
     private boolean updateMicrosaccades(long timeNanos) {
         if (timeNanos - lastSaccadeTime > (MICROSACCADE_PERIOD + ThreadLocalRandom.current().nextInt(1_000_000, 5_000_000))) {
-            microDx = randomGaussian() * MICROSACCADE_AMPLITUDE;
-            microDy = randomGaussian() * MICROSACCADE_AMPLITUDE;
+            microDx = ISensor.randomGaussian() * MICROSACCADE_AMPLITUDE;
+            microDy = ISensor.randomGaussian() * MICROSACCADE_AMPLITUDE;
             lastSaccadeTime = timeNanos;
             return true;
         }
@@ -101,10 +101,6 @@ public class Retina implements ISensor {
         return Math.max(min, Math.min(max, v));
     }
 
-    private static float randomGaussian() {
-        return (float)ThreadLocalRandom.current().nextGaussian();
-    }
-
 	@Override
 	public long getWaitTime() {
 		return SAMPLING_PERIOD;
@@ -124,7 +120,7 @@ public class Retina implements ISensor {
 		
 		for (int x=0; x<sourceLuminance.length; x++) {
         	for (int y=0; y<sourceLuminance[x].length; y++) {
-        		sourceLuminance[x][y] = calculateLuminance(x,y, image) + randomGaussian() * 0.002f;
+        		sourceLuminance[x][y] = calculateLuminance(x,y, image) + ISensor.randomGaussian() * 0.002f;
         	}
         }
 		
