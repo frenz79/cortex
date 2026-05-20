@@ -28,10 +28,7 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 	private final List<IActuator> actuators;
 	private final List<IClassifier<?>> classifiers;
 	private final List<ISupervisor<?>> supervisors;
-	
-	//private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-	
-    // single scheduler for all periodic work
+
     private final ScheduledExecutorService scheduler;
 
     // scheduling parameters (tunable)
@@ -40,18 +37,7 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 
     private ScheduledFuture<?> neuronTask;
     private ScheduledFuture<?> ioTask;
-    
-    /*
-	public Thinker(MultiLayer<MC,C,L> layer) {
-		super();
-		this.layer = layer;
-		this.sensors = new ArrayList<>();
-		this.actuators = new ArrayList<>();
-		this.classifiers = new ArrayList<>();
-		this.supervisors = new ArrayList<>();
-	}
-	*/
-    
+       
     public Thinker(MultiLayer<MC,C,L> layer) {
         this.layer = Objects.requireNonNull(layer);
         // CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
@@ -69,91 +55,15 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
         // single-thread scheduler is fine; increase pool size if tasks are heavy
         this.scheduler = Executors.newScheduledThreadPool(2, tf);
     }
-    
-    /*
-	public void start() {
-		AtomicLong clock = new AtomicLong(System.nanoTime());
-		
-		// Neurons loop
-		new Thread(() -> {
-			try {
-				final Function<Neuron, Boolean> activeNeuronsConsumer = n -> {
-					try {
-						return n.process(clock.get());
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					return true;
-				};
-				
-				while (true) {		
-					clock.set(System.nanoTime());
-					GlobalContext.streamActiveNeuron(activeNeuronsConsumer);
-					LockSupport.parkNanos(50_000); // 50 µs	
-				}
-			} catch ( Exception ex ) {
-				ex.printStackTrace();
-			}
-		}).start();
-		
-		// Sensors / actuators / classifiers / supervisors		
-		new Thread(() -> {
-			try {
-				while (true) {
-					long now = clock.get();
-					for (ISensor s : sensors ) {
-						if (s.isActive() && (now-s.getLastProcessTime())>s.getWaitTime()) {
-							s.process(now);
-						}
-					}					
-					for (IActuator a : actuators ) {
-						if (a.isActive() && (now-a.getLastProcessTime())>a.getWaitTime()) {
-							a.process(now);
-						}
-					}
-					for (IClassifier<?> c : classifiers ) {
-						Neuron result = c.classify(now);
-						if (result!=null) {
-							System.out.println("Classifier result:"+result.toString());
-						}
-					}					
-					for (ISupervisor<?> s : supervisors ) {
-						s.process(now);
-					}
-					LockSupport.parkNanos(50_000); // 50 µs
-				}
-				
-			} catch ( Exception ex ) {
-				ex.printStackTrace();
-			}
-		}).start();
-		
-		scheduler.scheduleAtFixedRate(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					System.out.println("== Avg Process Time:"+GlobalContext.getAverageProcessTimeMillis()+"ms ===========");
-					for ( L l : layer.getAllLayers() ) {
-						LayerStats stats = GlobalContext.getAndResetStats(l.getId());
-						if(stats!=null) {
-							System.out.println("Layer:"+l.getId()+" | ACT:"+stats.activeNeurons()+" | SYN_W:"+stats.averageSynapticWeight()+" | SPIKES:"+stats.spikesCount());
-						} else {
-							System.out.println("Layer:"+l.getId()+" NO STATS");
-						}						
-					}
-				} catch(Exception ex) {
-					ex.printStackTrace();
-				}
-			}			
-		}, 3, 3, TimeUnit.SECONDS);
-	}
-	*/
+   
     public synchronized void start() {
         if (neuronTask != null && !neuronTask.isDone()) return; // already started
 
         // Neuron processing loop scheduled at fixed rate
         Runnable neuronRunnable = () -> {
-            long now = System.nanoTime();
+        	long now = System.nanoTime();
+        	GlobalContext.tick(now);
+        	
             try {
                 // Stream active neurons; pass the current time to each process call
                 final long timestamp = now;
@@ -176,7 +86,7 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
 
         // IO loop for sensors/actuators/classifiers/supervisors
         Runnable ioRunnable = () -> {
-            long now = System.nanoTime();
+            long now = GlobalContext.now();
             try {
                 for (ISensor s : sensors) {
                     if (s.isActive() && (now - s.getLastProcessTime()) > s.getWaitTime()) {

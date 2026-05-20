@@ -1,9 +1,7 @@
 package com.cortex.brain;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -22,6 +20,16 @@ import com.cortex.base.Synapse;
 
 public class GlobalContext {
 
+	 private static final AtomicLong GLOBAL_TIME = new AtomicLong();
+
+	    public static long now() {
+	        return GLOBAL_TIME.get();
+	    }
+
+	    public static void tick(long t) {
+	        GLOBAL_TIME.set(t);
+	    }
+	    
 	private static volatile NeuronEntry[] neurons;
 	
 	public static class NeuronEntry {
@@ -89,6 +97,19 @@ public class GlobalContext {
                 }
                 entry.active = Boolean.TRUE.equals(stay);
             }
+        }
+        long end = System.nanoTime();
+        processTimeNanos.add(end - start);
+        processCounter.incrementAndGet();
+    }
+    
+    public static void streamAllNeurons(Function<Neuron, Boolean> consumer) {
+    	long start = System.nanoTime();
+        NeuronEntry[] snapshot = neurons; // volatile read
+        if (snapshot == null) return;
+        for (int i = 0; i < snapshot.length; i++) {
+            NeuronEntry entry = snapshot[i];
+            consumer.apply(entry.neuron);
         }
         long end = System.nanoTime();
         processTimeNanos.add(end - start);

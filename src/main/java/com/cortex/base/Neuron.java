@@ -19,14 +19,14 @@ public class Neuron implements IProcessable {
 
 	private static final float POTENTIAL_MAX = 3.0f;
 	private static final float POTENTIAL_MIN = -2.0f;
-	private static final float FIRING_THRESHOLD = 0.6f;
+	private static final float FIRING_THRESHOLD = 0.1f;
 	private static final float POTENTIAL_ZERO = 0.0f;
-	private static final long REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(10);
+	private static final long REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
 	private static final float REPOLARIZATION_PER_SECOND  = 0.1f; // potential units per second
 	private float potential = POTENTIAL_ZERO;
 	
-	private long lastProcessTime = System.nanoTime();
-	private long lastSpikeTime = Long.MIN_VALUE;
+	private long lastProcessTime = 0l;
+	private long lastSpikeTime = 0l;
 
 	private final int layerId;
 	private final int index;
@@ -76,10 +76,13 @@ public class Neuron implements IProcessable {
 	 */
 	private Spike integrateInputAndFire(long currTimeNanos, long deltaTimeNanos, Spike spike, Synapse synapse) {
 	    long ageNanos = currTimeNanos - spike.getCreationTimeNanos();
-	    long travelTimeNanos = (long)((synapse.getLength() / spike.getSpeed()) * 1_000_000_000L); // if speed is units/sec
+	    long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
+	    if (ageNanos < 0) {
+	        System.out.println("Spike nel futuro: age=" + ageNanos);
+	    }
 	    if (ageNanos >= travelTimeNanos) {
-	        synapse.onPreSpike(deltaTimeNanos);
-	        potential += spike.getSign() * synapse.getWeight() * spike.getAmplitude();
+	        synapse.onPreSpike(currTimeNanos);
+	        potential += spike.getSign() * synapse.getWeight() * spike.getAmplitude() * 5f;
 	        if (currTimeNanos - lastSpikeTime > REFRACTORY_PERIOD_NANOS && potential > FIRING_THRESHOLD) {
 	            lastSpikeTime = currTimeNanos;
 	            potential = POTENTIAL_ZERO;
@@ -132,7 +135,8 @@ public class Neuron implements IProcessable {
 				fire(newSpikes);
 				newSpikes.clear();
 				// Must be called once per synapse even if fired multiple times
-				synapse.onPostSpike(deltaTime, currTimeNanos);
+				// TODO: first param should be affected by travel time
+				synapse.onPostSpike(currTimeNanos, currTimeNanos);
 			}
 
 	        // still call update even if no new spikes were fired to keep plasticity timing consistent

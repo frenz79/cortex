@@ -39,7 +39,7 @@ public class GlobalNeuromodulator {
 		};
 
 		GlobalContext.forEachActiveSynapse( activeSynapseConsumer );
-		System.out.println("Reward applied to " + appliedCount.get() + " synapses");
+	//	System.out.println("Reward applied to " + appliedCount.get() + " synapses");
 	}
 
 	private static float scaleReward( int layerId, float reward ) {

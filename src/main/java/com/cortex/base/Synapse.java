@@ -119,12 +119,13 @@ public final class Synapse implements IPlasticSynapse {
     }
 	
 	@Override
-    public void onPostSpike(long t, long now) {
-		if ( this.plasticityRule.onPostSpike(this, t, now) ) {
+    public void onPostSpike(long postSpikeTime, long now) {
+		if ( this.plasticityRule.onPostSpike(this, postSpikeTime, now) ) {
 			GlobalContext.addRecentlyActiveSynapses(this);
 		}
-		this.plasticityRule.updateDelay(t);
+		this.plasticityRule.updateDelay(postSpikeTime);
     }
+	
 	@Override
     public void applyReward(float deltaW, long now, float neuromodulator) {
 		this.plasticityRule.applyReward(deltaW, now, neuromodulator);

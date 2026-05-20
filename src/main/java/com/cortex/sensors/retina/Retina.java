@@ -55,15 +55,24 @@ public class Retina implements ISensor {
     	
     	updateMicrosaccades( currTimeNanos );
     	
+    	int totalSpikes = 0;
+    	
     	for (int x = 0; x < retinaW; x++) {
     	    for (int y = 0; y < retinaH; y++) {
         		float lum = sampleLuminanceFromSource(x, y);
-        		if ( retinaNeurons[x][y].process(currTimeNanos, lum)>0 ) {
-        			List<Spike> spikes = retinaNeurons[x][y].drainSpikes();
-        			retinaNeurons[x][y].fire( spikes );
-        		}
+        		 int c = retinaNeurons[x][y].process(currTimeNanos, lum);
+        	        if (c > 0) {
+        	            totalSpikes += c;
+        	            List<Spike> spikes = retinaNeurons[x][y].drainSpikes();
+        	            for (Spike s : spikes) {
+        	                retinaNeurons[x][y].fire(s);
+        	            }
+        	        }
         	}
         }
+    //	if (totalSpikes > 0) {
+    //	    System.out.println("Retina spikes this frame: " + totalSpikes);
+    //	}
     	return true;
    	}
     

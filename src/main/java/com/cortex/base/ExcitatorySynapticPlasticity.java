@@ -35,9 +35,9 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 			float A_PLUS,				// 0.01f
 			float A_MINUS,				// 0.012
 			long TAU_PLUS,				// 20
-			long TAU_MINUS,			// 20
+			long TAU_MINUS,				// 20
 			// WEIGHTS
-			float W_MIN,				// 0.0f
+			float W_MIN,				// 0.001f
 			float W_MAX,				// 1.0f
 			float W_BASELINE,			// 0.2f
 			// ELIGIBILITY TRACE
