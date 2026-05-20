@@ -1,5 +1,6 @@
 package com.cortex.classifiers.ocr;
 
+import com.cortex.base.Synapse;
 import com.cortex.brain.GlobalNeuromodulator;
 import com.cortex.commons.modules.ISupervisor;
 
@@ -25,7 +26,7 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 	    if (winner == null || expected == null) return;
 
 	    boolean correct = (winner == expected);
-
+	    
 	    // calcolo neuromodulator (esempio)
 	    float neuromod = computeNeuromodulator(
 	    	winner, 
@@ -34,7 +35,16 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 	    	classifier.getLastClassificationTime(), 
 	    	now
 	    );
-
+	    
+	    for (Synapse s : expected.getInSynapses()) {
+	        s.applyReward(+1.0f, now, neuromod);
+	    }
+	    if (!correct) {
+		    for (Synapse s : winner.getInSynapses()) {
+		        s.applyReward(-1.0f, now, neuromod);
+		    }
+	    }
+	    /*
 	    // reward globale (consuma eligibility)
 	    GlobalNeuromodulator.broadcastReward(
 	        correct ? +0.5f : -0.5f,
@@ -43,6 +53,7 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 	        neuromod,
 	        true
 	    );
+	    */
 	}
 	
 	public OCRCharacterNeuron getExpected() {

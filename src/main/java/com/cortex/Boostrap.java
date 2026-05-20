@@ -125,19 +125,19 @@ public class Boostrap {
 	
 	// FEED-FORWARD CORTICALE (L1–L4)
 	private static final ExcitatorySynapticPlasticityConfig FF_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.005f,        // A_PLUS
-			0.006f,        // A_MINUS
-			40_000_000L,   // TAU_PLUS
-			80_000_000L,   // TAU_MINUS
-			0.1f,          // W_MIN
-			3.0f,          // W_MAX
-			0.4f,          // W_BASELINE
-			0.97f,         // ELIGIBILITY_DECAY
-			0.0002f,       // HOMEOSTATIC_RATE
-			false,         // PLASTIC_DELAY
-			5f,            // DELAY_MIN
-			40f            // DELAY_MAX
-			);
+		        0.01f,        // A_PLUS  ↑
+		        0.004f,       // A_MINUS ↓
+		        40_000_000L,  // TAU_PLUS
+		        80_000_000L,  // TAU_MINUS
+		        0.2f,         // W_MIN   ↑
+		        1.0f,         // W_MAX
+		        0.05f,        // W_BASELINE
+		        0.97f,        // ELIGIBILITY_DECAY
+		        0.00005f,     // HOMEOSTATIC_RATE ↓
+		        false,
+		        5f,
+		        40f
+		    );
 
 	// FEEDBACK / CONTESTUALE (L2↔L4, L4→L1)
 	private static final ExcitatorySynapticPlasticityConfig FB_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
@@ -173,16 +173,23 @@ public class Boostrap {
 					);
 
 	public static SynapsePlasticityConfig ffPlasticity() {
-		return new SynapsePlasticityConfig(
-				new ExcitatorySynapticPlasticity(0.2f, 5.0f, FF_EXCITATORY),
-				new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
-				);
+	    return new SynapsePlasticityConfig(
+	        new ExcitatorySynapticPlasticity(
+	            0.08f,      // densità eccitatoria più bassa
+	            1.2f,       // guadagno moderato
+	            STABLE_EXCITATORY
+	        ),
+	        new InhibitorySynapticPlasticity(
+	            0.4f,       // meno inibizione, più stabilità
+	            GENERIC_INHIBITORY
+	        )
+	    );
 	}
 
 	public static SynapsePlasticityConfig fbPlasticity() {
 		return new SynapsePlasticityConfig(
-				new ExcitatorySynapticPlasticity(0.15f, 4.0f, FB_EXCITATORY),
-				new InhibitorySynapticPlasticity(0.85f, GENERIC_INHIBITORY)
+				new ExcitatorySynapticPlasticity(0.05f, 1.0f, FB_EXCITATORY),
+				new InhibitorySynapticPlasticity(0.5f, GENERIC_INHIBITORY)
 				);
 	}
 
@@ -194,50 +201,65 @@ public class Boostrap {
 	}
 
 	public static ExcitatorySynapticPlasticityConfig FAST_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.01f,   		// A_PLUS,	
-			0.012f, 		// A_MINUS,				
-			20_000_000L, 	// TAU_PLUS,				
-			40_000_000L,	// TAU_MINUS	
-			0.05f, 			// W_MIN,	
+			0.02f,   		// A_PLUS,	
+			0.005f, 		// A_MINUS,				
+			50_000_000L, 	// TAU_PLUS,				
+			50_000_000L,	// TAU_MINUS	
+			0.1f, 			// W_MIN,	
 			2.0f,  			// W_MAX,		
-			0.2f,			// W_BASELINE,
+			0.4f,			// W_BASELINE,
 			0.99f,			// ELIGIBILITY_DECAY,
-			0.0005f,		// HOMEOSTATIC_RATE,
+			0.002f,			// HOMEOSTATIC_RATE,
 			false,			// PLASTIC_DELAY,		
 			1f,				// DELAY_MIN,		
 			20f				// DELAY_MAX	
 			);
 
 	public static ExcitatorySynapticPlasticityConfig STABLE_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.01f 	* 0.4f, // A_PLUS,	
-			0.012f  * 0.4f, // A_MINUS,				
-			20_000_000L *2, // TAU_PLUS,				
-			40_000_000L,	// TAU_MINUS	
-			0.05f, 			// W_MIN,	
+			0.05f, 			// A_PLUS,	
+			0.008f, 		// A_MINUS,				
+			50_000_000L *2, // TAU_PLUS,				
+			50_000_000L *2,	// TAU_MINUS	
+			0.1f, 			// W_MIN,	
 			2.0f,  			// W_MAX,		
-			0.2f + 0.2f,	// W_BASELINE,
+			0.4f,			// W_BASELINE,
 			0.99f,			// ELIGIBILITY_DECAY,
-			0.0005f *0.2f,	// HOMEOSTATIC_RATE,
+			0.005f,			// HOMEOSTATIC_RATE,
 			false,			// PLASTIC_DELAY,		
 			1f,				// DELAY_MIN,		
 			20f				// DELAY_MAX	
 			);
 
 	public static ExcitatorySynapticPlasticityConfig VERY_SLOW_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.01f 	* 0.1f, // A_PLUS,	
-			0.012f  * 0.1f, // A_MINUS,				
-			20_000_000L *4, // TAU_PLUS,				
-			40_000_000L,	// TAU_MINUS	
-			0.05f, 			// W_MIN,	
+			0.05f, 			// A_PLUS,	
+			0.008f,			// A_MINUS,				
+			50_000_000L *4, // TAU_PLUS,				
+			50_000_000L *4,	// TAU_MINUS	
+			0.1f, 			// W_MIN,	
 			2.0f,  			// W_MAX,		
-			0.2f + 0.2f,	// W_BASELINE,
+			0.4f,			// W_BASELINE,
 			0.99f,			// ELIGIBILITY_DECAY,
-			0.0005f *0.05f,	// HOMEOSTATIC_RATE,
+			0.005f,			// HOMEOSTATIC_RATE,
 			false,			// PLASTIC_DELAY,		
 			1f,				// DELAY_MIN,		
 			20f				// DELAY_MAX	
 			);
 
+	public static ExcitatorySynapticPlasticityConfig L2_SOFT = new ExcitatorySynapticPlasticityConfig(
+		    0.005f,        // A_PLUS molto piccolo
+		    0.004f,        // A_MINUS simile o leggermente minore
+		    50_000_000L*2, // TAU_PLUS più lungo
+		    50_000_000L*2, // TAU_MINUS
+		    0.1f,          // W_MIN
+		    1.5f,          // W_MAX
+		    0.3f,          // W_BASELINE
+		    0.995f,        // ELIGIBILITY_DECAY più lento
+		    0.00005f,      // HOMEOSTATIC_RATE molto più basso
+		    false,
+		    5f,
+		    40f
+		);
+	
 	private static MultiSphericalLayerConfig buildMultiSphericalLayerConfig( int totN, int connScale) {
 		MultiSphericalLayerConfig cfg = new MultiSphericalLayerConfig();
 
@@ -246,8 +268,8 @@ public class Boostrap {
 				new SphericalLayerConfig((int)(totN*0.15), 0.15f,  5*connScale, 7*connScale, 0.60f, 1.00f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
+								new ExcitatorySynapticPlasticity(0.10f, 1.5f, STABLE_EXCITATORY),
+								new InhibitorySynapticPlasticity(0.5f, GENERIC_INHIBITORY)
 								)	
 						));
 		// L2 
@@ -255,8 +277,8 @@ public class Boostrap {
 				new SphericalLayerConfig((int)(totN*0.20), 0.25f,  8*connScale, 12*connScale, 0.50f, 0.85f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
+								new ExcitatorySynapticPlasticity(0.08f, 1.2f, L2_SOFT),
+								new InhibitorySynapticPlasticity(0.3f, GENERIC_INHIBITORY)
 								)	
 						));
 		// L3 
@@ -264,7 +286,7 @@ public class Boostrap {
 				new SphericalLayerConfig((int)(totN*0.25), 0.15f, 10*connScale, 15*connScale, 0.40f, 0.65f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.2f, 5.0f, STABLE_EXCITATORY),
+								new ExcitatorySynapticPlasticity(0.08f, 1.5f, STABLE_EXCITATORY),
 								new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
 								)	
 						));
@@ -273,8 +295,8 @@ public class Boostrap {
 				new SphericalLayerConfig((int)(totN*0.20), 0.30f, 12*connScale, 18*connScale, 0.30f, 0.45f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.2f, 5.0f, STABLE_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
+								new ExcitatorySynapticPlasticity(0.06f, 1.2f, STABLE_EXCITATORY),
+								new InhibitorySynapticPlasticity(0.6f, GENERIC_INHIBITORY)
 								)	
 						));
 		// L5 
@@ -282,7 +304,7 @@ public class Boostrap {
 				new SphericalLayerConfig((int)(totN*0.12), 0.10f, 7*connScale, 10*connScale, 0.20f, 0.30f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.35f, 5.0f, VERY_SLOW_EXCITATORY),
+								new ExcitatorySynapticPlasticity(0.15f, 1.5f, VERY_SLOW_EXCITATORY),
 								new InhibitorySynapticPlasticity(0.80f, GENERIC_INHIBITORY)
 								)	
 						));
@@ -291,8 +313,8 @@ public class Boostrap {
 				new SphericalLayerConfig((int)(totN*0.08), 0.20f, 8*connScale, 12*connScale, 0.10f, 0.15f, true, true,
 						ALWAYS_CONNECT_PREDICATE,
 						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.35f, 5.0f, VERY_SLOW_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.80f, GENERIC_INHIBITORY)
+								new ExcitatorySynapticPlasticity(0.15f, 1.5f, VERY_SLOW_EXCITATORY),
+								new InhibitorySynapticPlasticity(0.6f, GENERIC_INHIBITORY)
 								)	
 						));
 

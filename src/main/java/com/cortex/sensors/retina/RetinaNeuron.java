@@ -19,8 +19,8 @@ public class RetinaNeuron extends Neuron {
 
 	private static final float ON_GAIN  = 1.0f;
 	private static final float OFF_GAIN = 1.0f;
-	private static final float THRESHOLD = 0.01f;
-	private static final int MAX_SPIKES_PER_SAMPLE = 8; // limite pratico per evitare esplosioni
+	private static final float THRESHOLD = 0.05f;
+	private static final int MAX_SPIKES_PER_SAMPLE = 3; // limite pratico per evitare esplosioni
 
 	public RetinaNeuron(int index) {
 		super(
@@ -55,7 +55,7 @@ public class RetinaNeuron extends Neuron {
 
 	    if (amplitude > 0f) {
 	        // mapping robusto
-	        float raw = amplitude * 10f; // più sensibile
+	        float raw = amplitude * 0.3f; // più sensibile
 	        spikeCount = (int)raw;
 
 	        float fractional = raw - spikeCount;

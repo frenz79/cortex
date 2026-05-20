@@ -19,10 +19,10 @@ public class Neuron implements IProcessable {
 
 	private static final float POTENTIAL_MAX = 3.0f;
 	private static final float POTENTIAL_MIN = -2.0f;
-	private static final float FIRING_THRESHOLD = 0.1f;
+	private static final float FIRING_THRESHOLD = 0.3f;
 	private static final float POTENTIAL_ZERO = 0.0f;
-	private static final long REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(1);
-	private static final float REPOLARIZATION_PER_SECOND  = 0.1f; // potential units per second
+	private static final long REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(5);
+	private static final float REPOLARIZATION_PER_SECOND  = 0.2f; // potential units per second
 	private float potential = POTENTIAL_ZERO;
 	
 	private long lastProcessTime = 0l;
@@ -82,7 +82,7 @@ public class Neuron implements IProcessable {
 	    }
 	    if (ageNanos >= travelTimeNanos) {
 	        synapse.onPreSpike(currTimeNanos);
-	        potential += spike.getSign() * synapse.getWeight() * spike.getAmplitude() * 5f;
+	        potential += spike.getSign() * synapse.getWeight() * spike.getAmplitude();
 	        if (currTimeNanos - lastSpikeTime > REFRACTORY_PERIOD_NANOS && potential > FIRING_THRESHOLD) {
 	            lastSpikeTime = currTimeNanos;
 	            potential = POTENTIAL_ZERO;

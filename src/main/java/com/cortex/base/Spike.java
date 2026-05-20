@@ -44,11 +44,11 @@ public record Spike(
      * Calcola il tempo di viaggio in nanosecondi per una distanza (same units as speed).
      * Assumiamo speed in unità/secondo; conversione a nanos effettuata qui.
      */
-    public long travelTimeNanos(float length) {
-        if (length <= 0f) return 0L;
-        double seconds = length / getSpeed();
-        return (long) (seconds * 1_000_000_000L);
-    }
+	public long travelTimeNanos(float length) {
+	    if (length <= 0f) return 0L;
+	    double microseconds = (length / getSpeed()) * 1_000.0; // 1 unità = 1 µs
+	    return (long)(microseconds * 1_000L); // µs → ns
+	}
 
 	@Override
 	public String toString() {
