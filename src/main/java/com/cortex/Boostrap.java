@@ -133,7 +133,7 @@ public class Boostrap {
 	    return new SynapsePlasticityConfig(
 	    	ExcitatorySynapticPlasticityConfig.newBuilder()
 				.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
-				.withWeights(0.10f, 0.30f, 0.09f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+				.withWeights(0.20f, 0.30f, 0.09f, 0.25f)// INITIAL, W_MAX, W_MIN, W_BASELINE
 				.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
 				.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 				.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
@@ -176,9 +176,9 @@ public class Boostrap {
 				.withInitialDelay(1.2f)
 				.build(),
 			InhibitorySynapticPlasticityConfig.newBuilder()
-				.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+				.withWeights(0.80f, 1.5f, 0.2f)			// INITIAL, W_MAX, W_MIN,
 				.withLearningRate(0.00005f)				// LEARNING_RATE
-				.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+				.withTargetFiringRate(4.0f)				// TARGET_FIRING_RATE
 				.build()
 		   );
 	}
@@ -310,8 +310,8 @@ public class Boostrap {
 
 		// L0 -> L1		
 		cfg.addIntraLayerConfig(0, 1, new IntraLayersConnConfig(
-				(int)(1.0*connScale), (int)(3.0*connScale), 
-				0.30f, // max distance
+				(int)(1.5*connScale), (int)(3.0*connScale), 
+				0.45f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
 		// L0 -> L2
 		cfg.addIntraLayerConfig(0, 2, new IntraLayersConnConfig(
@@ -325,8 +325,8 @@ public class Boostrap {
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
 		// L1 -> L3
 		cfg.addIntraLayerConfig(1, 3, new IntraLayersConnConfig(
-				(int)(0.1*connScale), (int)(0.4*connScale), 
-				0.60f, // max distance
+				(int)(0.5*connScale), (int)(0.80*connScale), 
+				0.9f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
 		// L1 -> L4
 		cfg.addIntraLayerConfig(1, 4, new IntraLayersConnConfig(
@@ -335,7 +335,7 @@ public class Boostrap {
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
 		// L1 -> L0
 		cfg.addIntraLayerConfig(1, 0, new IntraLayersConnConfig(
-				(int)(0.2*connScale), (int)(0.8*connScale), 
+				(int)(0.3*connScale), (int)(0.5*connScale), 
 				0.50f, // max distance
 				fbPlasticity(),	ALWAYS_CONNECT_PREDICATE));
 		// L2 -> L3
@@ -374,10 +374,10 @@ public class Boostrap {
 				0.40f,
 				ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
 		// L4 -> L3
-		cfg.addIntraLayerConfig(4, 3, new IntraLayersConnConfig(
-				(int)(0.3*connScale), (int)(1.0*connScale), 
-				0.50f, // max distance
-				ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
+		//cfg.addIntraLayerConfig(4, 3, new IntraLayersConnConfig(
+		//		(int)(0.3*connScale), (int)(1.0*connScale), 
+		//		0.50f, // max distance
+		//		ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
 		// L4 -> L2
 		cfg.addIntraLayerConfig(4, 2, new IntraLayersConnConfig(
 				(int)(0.2*connScale), (int)(0.8*connScale), 
@@ -415,6 +415,11 @@ public class Boostrap {
 				(int)(0.2*connScale), (int)(0.8*connScale), 
 				0.40f,
 				ffPlasticity(), ALWAYS_CONNECT_PREDICATE));
+		// L3 -> L3
+		cfg.addIntraLayerConfig(3, 3, new IntraLayersConnConfig(
+			    (int)(0.2*connScale), (int)(0.6*connScale),
+			    0.40f,
+			    ffPlasticity(), ALWAYS_CONNECT_PREDICATE));
 		
 		return cfg;
 	}
