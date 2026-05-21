@@ -53,8 +53,8 @@ public final class Synapse implements IPlasticSynapse {
 			toNeuron, 
 			distance, 
 			srcNeuron.isInhibitor() 
-				?plasticityCfg.inhibitorySynapticPlasticity()
-				:plasticityCfg.excitatorySynapticPlasticity()
+				?new InhibitorySynapticPlasticity( plasticityCfg.inhibitorySynapticPlasticityConfig())
+				:new ExcitatorySynapticPlasticity( plasticityCfg.excitatorySynapticPlasticityConfig())
 		);
 		toNeuron.addIncomingSynapse( s );
 		srcNeuron.addOutgoingSynapse( s ); 
@@ -134,7 +134,7 @@ public final class Synapse implements IPlasticSynapse {
 	@Override
     public void update(long t) {
 		float oldValue = this.plasticityRule.getWeight();
-		this.plasticityRule.update(t);
+		this.plasticityRule.update(t, this);
 		pre.synapseUpdated( t, this, oldValue, this.plasticityRule.getWeight() );
     }
 	@Override

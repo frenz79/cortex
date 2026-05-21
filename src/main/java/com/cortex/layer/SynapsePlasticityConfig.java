@@ -1,10 +1,11 @@
 package com.cortex.layer;
 
-import com.cortex.base.ExcitatorySynapticPlasticity;
-import com.cortex.base.InhibitorySynapticPlasticity;
+import com.cortex.base.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.InhibitorySynapticPlasticityConfig;
 
 public record SynapsePlasticityConfig(
-	ExcitatorySynapticPlasticity excitatorySynapticPlasticity,
-	InhibitorySynapticPlasticity inhibitorySynapticPlasticity
-){	
+	ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
+	InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig
+) {
+	
 }

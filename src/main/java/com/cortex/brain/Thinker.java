@@ -12,6 +12,7 @@ import java.util.function.Function;
 
 import com.cortex.base.Neuron;
 import com.cortex.brain.GlobalContext.LayerStats;
+import com.cortex.brain.GlobalContext.LayerStatsRec;
 import com.cortex.commons.modules.IActuator;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
@@ -140,10 +141,22 @@ public class Thinker<MC extends MultiLayerConfig<C>, C extends LayerConfig, L ex
             try {
                 System.out.println("== Avg Process Time:" + GlobalContext.getAverageProcessTimeMillis() + "ms ===========");
                 for (L l : layer.getAllLayers()) {
-                    LayerStats stats = GlobalContext.getAndResetStats(l.getId());
+                    LayerStatsRec stats = GlobalContext.getAndResetStats(l.getId());
                     if (stats != null) {
-                        System.out.println("Layer:" + l.getId() + " | ACT:" + stats.activeNeurons()
-                            + " | SYN_W:" + stats.averageSynapticWeight() + " | SPIKES:" + stats.spikesCount());
+                        System.out.println(
+                        	  "L:" + l.getId() 
+                        	+ " | ACT:" + stats.activeNeurons()
+                            + " | SYN_W:" + String.format("%,.2f",stats.averageSynapticWeight() )
+                            + " | SYN_W_STD:" + String.format("%,.2f",stats.synapticWeightStdDev() )
+                            + " | FIRE_ACT:" + String.format("%,.2f",stats.avgFiringRateActive() )
+                            + " | FIRE_ALL:" + String.format("%,.2f",stats.avgFiringRateAll() )
+                            + " | EN:" + String.format("%,.2f",stats.energy() )
+                            + " | SAT_MAX:" + String.format("%,.2f",stats.saturatedMaxRatio() )
+                            + " | SAT_MIN:" + String.format("%,.2f",stats.saturatedMinRatio() )
+                            + " | SPARSE:" + String.format("%,.2f",stats.sparsity() )
+                            + " | NEU:" + stats.totalNeurons() 
+                            + " | PLAST:" + String.format("%,.2f",stats.totalPlasticity())
+                        );
                     } else {
                         System.out.println("Layer:" + l.getId() + " NO STATS");
                     }

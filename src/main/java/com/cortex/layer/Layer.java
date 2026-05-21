@@ -238,4 +238,8 @@ public abstract class Layer<C extends LayerConfig> {
         }
         return out;
     }
+
+	public C getConfig() {
+		return config;
+	}
 }

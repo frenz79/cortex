@@ -4,35 +4,28 @@ import com.cortex.commons.IPlasticityRule;
 import com.cortex.commons.Maths;
 
 public class InhibitorySynapticPlasticity implements IPlasticityRule {
-
-	public static record InhibitorySynapticPlasticityConfig( 
-		float LEARNING_RATE,
-		float TARGET_FIRING_RATE,
-		float W_MIN,
-		float W_MAX,
-		long RATE_WINDOW){
-	}
-
+	
+    private float currentWeight;
+    
 	private final InhibitorySynapticPlasticityConfig config;
-    private float weight;
-    
-    public InhibitorySynapticPlasticity(float initialWeight, InhibitorySynapticPlasticityConfig config) {
-        this.weight = initialWeight;
-        this.config = config;
-    }
-    
+
+	public InhibitorySynapticPlasticity(InhibitorySynapticPlasticityConfig config) {
+		this.config = config;
+		this.currentWeight = config.INITIAL_WEIGHT;
+	}
+	
 	@Override
 	public boolean onPostSpike(Synapse s, long dt, long now) {
 		float postRate = s.getTarget().getRecentFiringRate(now);
         float error = postRate - config.TARGET_FIRING_RATE;
         float dw = config.LEARNING_RATE * error;
-        this.weight = Maths.clamp(this.weight + dw, config.W_MIN, config.W_MAX);
+        this.currentWeight = Maths.clamp(this.currentWeight + dw, config.W_MIN, config.W_MAX);
         return false;
 	}
 
 	@Override
 	public float getWeight() {
-		return weight;
+		return currentWeight;
 	}
 
 	@Override
@@ -42,24 +35,21 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
 	}
 
 	@Override
-	public void update(long now) {
-		// TODO Auto-generated method stub
-	}
+    public void update(long now, Synapse s) {
+        float postRate = s.getTarget().getRecentFiringRate(now);
+        float error = postRate - config.TARGET_FIRING_RATE;
+        float dw = config.LEARNING_RATE * error;
+        currentWeight = Maths.clamp(currentWeight + dw, config.W_MIN, config.W_MAX);
+    }
 
 	@Override
-	public void updateDelay(float r) {
-		// TODO Auto-generated method stub
-	}
+	public void updateDelay(float r) {}
 
 	@Override
 	public boolean isEligible(long now, long window) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public void applyReward(float r, long t, float neuromodulator) {
-		// TODO Auto-generated method stub	
-	}
-
+	public void applyReward(float r, long t, float neuromodulator) {}
 }

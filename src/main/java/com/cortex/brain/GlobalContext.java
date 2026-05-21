@@ -1,6 +1,7 @@
 package com.cortex.brain;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
@@ -15,8 +16,11 @@ import java.util.function.Function;
 
 import javax.vecmath.Point3f;
 
+import com.cortex.base.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
+import com.cortex.layer.MultiSphericalLayer;
+import com.cortex.layer.SphericalLayer;
 
 public class GlobalContext {
 
@@ -168,53 +172,166 @@ public class GlobalContext {
 	    }
 	}	
 	
-	public static record LayerStats( 
-		float averageSynapticWeight,
-		int activeNeurons,
-		int spikesCount
+	public static record LayerStatsRec( 
+		    double averageSynapticWeight,
+		    
+		    // if 0     -> collapsing
+		    // if W_MAX -> saturating
+            // oscillating -> layer is learning
+		    double synapticWeightStdDev,
+		    
+		    long activeNeurons,
+		    long totalNeurons,
+		    long spikesCount,
+		    
+		    // How fast are active neurons
+		    double avgFiringRateActive,
+		    // How much the layer is alive
+		    double avgFiringRateAll,
+		    
+		    // if too dense -> noise
+		    // if too sparse -> dead
+		    double sparsity,
+		    double saturatedMinRatio,
+		    
+		    // Should not be > 1 : % synapses that reached W_MAX
+		    double saturatedMaxRatio,
+		    
+		    // Actives tournover
+		    // if fixed -> attractor
+		    // 
+		    double activationStability,
+		    
+		    double totalPlasticity,
+		    
+		    double energy
 	) {	
 	}
-	public static class IntLayerStats {
-	    private final DoubleAdder weightSum = new DoubleAdder(); // sum of weight deltas
-        private final LongAdder synapseWeightCount = new LongAdder(); // number of weight contributions
-        private final LongAdder spikeCounter = new LongAdder();
-        private final Set<Neuron> activeNeurons = ConcurrentHashMap.newKeySet();
-		
-        public void neuronFired(Neuron neuron) {
-            spikeCounter.increment();
-            activeNeurons.add(neuron);
-        }
+	public static class LayerStats {
 
-        public void sumSynapticWeights(double val) {
-            weightSum.add(val);
-            synapseWeightCount.increment();
-        }
+	    private final SphericalLayer layer;
 
-        public LayerStats getStatsAndReset() {
-            long spikes = spikeCounter.sumThenReset();
-            long count = synapseWeightCount.sumThenReset();
-            double sum = weightSum.sumThenReset();
-            int active = activeNeurons.size();
-            activeNeurons.clear();
-            float avgWeight = (count == 0) ? 0.0f : (float) (sum / (double) count);
-            return new LayerStats(avgWeight, active, (int) spikes);
-        }
+	    private final LongAdder spikeCounter = new LongAdder();
+	    private final Set<Neuron> activeNeurons = ConcurrentHashMap.newKeySet();
+	    private Set<Neuron> prevActive = ConcurrentHashMap.newKeySet();
+
+	    private final DoubleAdder absWeightSum = new DoubleAdder();
+
+	    public LayerStats(SphericalLayer layer) {
+	        this.layer = layer;
+	    }
+
+	    public void neuronFired(Neuron neuron) {
+	        spikeCounter.increment();
+	        activeNeurons.add(neuron);
+	    }
+
+	    public void sumSynapticWeights(double oldW, double newW) {
+	        absWeightSum.add(Math.abs(newW - oldW));
+	    }
+
+	    public LayerStatsRec getStatsAndReset() {
+
+	        long spikesCount = spikeCounter.sumThenReset();
+	        int activeCount = activeNeurons.size();
+	        int totalNeurons = layer.getNeuronsCount();
+
+	        double avgFiringRateActive = activeCount == 0 ? 0.0 :
+	                (double) spikesCount / activeCount;
+
+	        double avgFiringRateAll = (double) spikesCount / totalNeurons;
+	        double sparsity = 1.0 - ((double) activeCount / totalNeurons);
+
+	        // ---------------------------------------------------------
+	        //  SCANSIONE COMPLETA DEI PESI REALI
+	        // ---------------------------------------------------------
+	        double sum = 0.0;
+	        double sum2 = 0.0;
+	        long count = 0;
+
+	        long saturatedMin = 0;
+	        long saturatedMax = 0;
+
+	        ExcitatorySynapticPlasticityConfig cfg = layer.getConfig()
+	                       .getSynapsePlasticityConfig()
+	                       .excitatorySynapticPlasticityConfig();
+	        
+	        for (Neuron n : layer.getNeurons()) {
+	        	for ( Synapse s : n.getInSynapses() ) {
+		            float w = s.getWeight();
+		            sum += w;
+		            sum2 += w * w;
+		            count++;
+	
+		            if (w <= cfg.W_MIN + 1e-6) saturatedMin++;
+		            if (w >= cfg.W_MAX - 1e-6) saturatedMax++;
+	        	}
+	        }
+
+	        double averageSynapticWeight = count == 0 ? 0.0 : sum / count;
+	        double variance = count == 0 ? 0.0 : (sum2 / count) - (averageSynapticWeight * averageSynapticWeight);
+	        double synapticWeightStdDev = Math.sqrt(Math.max(variance, 0.0));
+
+	        double saturatedMinRatio = count == 0 ? 0.0 : (double) saturatedMin / count;
+	        double saturatedMaxRatio = count == 0 ? 0.0 : (double) saturatedMax / count;
+
+	        double totalPlasticity = absWeightSum.sumThenReset();
+	        double energy = spikesCount * Math.abs(averageSynapticWeight + synapticWeightStdDev);
+
+	        // ---------------------------------------------------------
+	        //  STABILITÀ ATTIVAZIONE
+	        // ---------------------------------------------------------
+	        int overlap = 0;
+	        for (Neuron n : activeNeurons) {
+	            if (prevActive.contains(n)) overlap++;
+	        }
+
+	        double activationStability = activeCount == 0 ? 0.0 :
+	                (double) overlap / activeCount;
+
+	        prevActive = new HashSet<>(activeNeurons);
+	        activeNeurons.clear();
+
+	        return new LayerStatsRec(
+	                averageSynapticWeight,
+	                synapticWeightStdDev,
+	                activeCount,
+	                totalNeurons,
+	                spikesCount,
+	                avgFiringRateActive,
+	                avgFiringRateAll,
+	                sparsity,
+	                saturatedMinRatio,
+	                saturatedMaxRatio,
+	                activationStability,
+	                totalPlasticity,
+	                energy
+	        );
+	    }
 	}
 	
-	private static final ConcurrentHashMap<Integer, IntLayerStats> layersStats = new ConcurrentHashMap<>();	
-	
 	public static void traceNeuronFire(long time, Neuron neuron, int layerId) {
-        layersStats.computeIfAbsent(layerId, k -> new IntLayerStats()).neuronFired(neuron);
+		if (layerId<0) return;
+        layersStats.computeIfAbsent(layerId, k -> new LayerStats(layer.getLayers(layerId))).neuronFired(neuron);
     }
 
     public static void traceSynapseWeightUpdated(long time, int layerId, float oldW, float newW) {
-        double delta = (double) newW - (double) oldW;
-        layersStats.computeIfAbsent(layerId, k -> new IntLayerStats()).sumSynapticWeights(delta);
+    	if (layerId<0) return;
+        layersStats.computeIfAbsent(layerId, k -> new LayerStats(layer.getLayers(layerId))).sumSynapticWeights(oldW, newW);
     }
+    
+    
+	private static final ConcurrentHashMap<Integer, LayerStats> layersStats = new ConcurrentHashMap<>();	
 
-    public static LayerStats getAndResetStats(int layerId) {
-        IntLayerStats s = layersStats.get(layerId);
+    public static LayerStatsRec getAndResetStats(int layerId) {
+        LayerStats s = layersStats.get(layerId);
         return (s != null) ? s.getStatsAndReset() : null;
     }
+
+    private static MultiSphericalLayer layer;
+    
+	public static void setMultiSphericalLayer(MultiSphericalLayer l) {
+		layer = l;
+	}
 	
 }

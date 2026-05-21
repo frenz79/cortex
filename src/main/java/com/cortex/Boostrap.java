@@ -8,10 +8,8 @@ import java.util.function.Predicate;
 
 import javax.imageio.ImageIO;
 
-import com.cortex.base.ExcitatorySynapticPlasticity;
-import com.cortex.base.ExcitatorySynapticPlasticity.ExcitatorySynapticPlasticityConfig;
-import com.cortex.base.InhibitorySynapticPlasticity;
-import com.cortex.base.InhibitorySynapticPlasticity.InhibitorySynapticPlasticityConfig;
+import com.cortex.base.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.Neuron;
 import com.cortex.brain.GlobalContext;
 import com.cortex.brain.Thinker;
@@ -40,38 +38,54 @@ public class Boostrap {
 		System.out.println("Number of Neurons:"+layer.getNeuronsCount());
 		System.out.println("Number of Synapses:"+layer.getSynapsesCount());
 
+		GlobalContext.setMultiSphericalLayer(layer);
+		
 		// Create sensors
 		Retina retina = new Retina(70 , 70);
 		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
 
 		// Connect retina to L1
-		int retinaConn = layer.getLayers(0).link(
-				retina, 
-				10, 
-				40, 
-				0.5f, 
-				SKIP_INHIBITOR_CONNECT_PREDICATE, 
-				new SynapsePlasticityConfig(
-						new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
-						new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
-					)	
-				);
+		int retinaConn = layer.getLayers(0).link(retina, 10, 40, 0.5f, 
+			SKIP_INHIBITOR_CONNECT_PREDICATE, 
+			new SynapsePlasticityConfig(
+				ExcitatorySynapticPlasticityConfig.newBuilder()
+					.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+					.withWeights(0.11f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+					.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+					.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+					.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+					.withInitialDelay(1.2f)
+					.build(),
+				InhibitorySynapticPlasticityConfig.newBuilder()
+					.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+					.withLearningRate(0.005f)				// LEARNING_RATE
+					.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+					.build()
+			    )	
+			);
 
 		System.out.println("Number of Retina Synapses:"+retinaConn);
 		
 		// Connect OCR Classifier to L4
 		OCRClassifier ocrClassifier = new OCRClassifier();		
-		int ocrConn = layer.getLayers(3).link(
-				ocrClassifier, 
-				10, 
-				40, 
-				0.5f, 
-				SKIP_INHIBITOR_CONNECT_PREDICATE, 
-				new SynapsePlasticityConfig(
-						new ExcitatorySynapticPlasticity(0.2f, 5.0f, FAST_EXCITATORY),
-						new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
-					)	
-				);
+		int ocrConn = layer.getLayers(3).link( ocrClassifier, 10, 40, 0.5f, 
+			SKIP_INHIBITOR_CONNECT_PREDICATE, 
+			new SynapsePlasticityConfig(
+			   	ExcitatorySynapticPlasticityConfig.newBuilder()
+					.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+					.withWeights(0.11f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+					.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+					.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+					.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+					.withInitialDelay(1.2f)
+					.build(),
+				InhibitorySynapticPlasticityConfig.newBuilder()
+					.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+					.withLearningRate(0.005f)				// LEARNING_RATE
+					.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+					.build()
+			    )	
+			);
 		OCRSupervisor ocrSupervisor = new OCRSupervisor( ocrClassifier );
 		ocrSupervisor.setExpected(ocrClassifier.getCharacterNeuronForLetter('A'));
 		
@@ -115,307 +129,293 @@ public class Boostrap {
 	private static final Predicate<Neuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
 	private static final Predicate<Neuron> ONLY_INHIBITOR_CONNECT_PREDICATE = Neuron::isInhibitor;
 	
-	private static final InhibitorySynapticPlasticityConfig GENERIC_INHIBITORY = new InhibitorySynapticPlasticityConfig(
-			0.0005f,        // LEARNING_RATE
-			3.0f,           // TARGET_FIRING_RATE
-			0.2f,           // W_MIN
-			6.0f,           // W_MAX
-			300_000_000L    // RATE_WINDOW
-			);
-	
-	// FEED-FORWARD CORTICALE (L1–L4)
-	private static final ExcitatorySynapticPlasticityConfig FF_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-		        0.01f,        // A_PLUS  ↑
-		        0.004f,       // A_MINUS ↓
-		        40_000_000L,  // TAU_PLUS
-		        80_000_000L,  // TAU_MINUS
-		        0.2f,         // W_MIN   ↑
-		        1.0f,         // W_MAX
-		        0.05f,        // W_BASELINE
-		        0.97f,        // ELIGIBILITY_DECAY
-		        0.00005f,     // HOMEOSTATIC_RATE ↓
-		        false,
-		        5f,
-		        40f
-		    );
-
-	// FEEDBACK / CONTESTUALE (L2↔L4, L4→L1)
-	private static final ExcitatorySynapticPlasticityConfig FB_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.002f,        // A_PLUS ↓
-			0.002f,        // A_MINUS
-			80_000_000L,   // TAU_PLUS ↑
-			150_000_000L,  // TAU_MINUS
-			0.2f,
-			2.5f,
-			0.6f,
-			0.985f,
-			0.00005f,
-			false,
-			10f,
-			80f
-			);
-
-	// CONTROLLO / DECISIONE (L5–L6)
-	private static final ExcitatorySynapticPlasticityConfig CTRL_EXCITATORY =
-			new ExcitatorySynapticPlasticityConfig(
-					0.0005f,
-					0.0005f,
-					150_000_000L,
-					300_000_000L,
-					0.5f,
-					5.0f,
-					1.5f,
-					0.995f,
-					0.00002f,
-					false,
-					20f,
-					150f
-					);
-
 	public static SynapsePlasticityConfig ffPlasticity() {
 	    return new SynapsePlasticityConfig(
-	        new ExcitatorySynapticPlasticity(
-	            0.08f,      // densità eccitatoria più bassa
-	            1.2f,       // guadagno moderato
-	            STABLE_EXCITATORY
-	        ),
-	        new InhibitorySynapticPlasticity(
-	            0.4f,       // meno inibizione, più stabilità
-	            GENERIC_INHIBITORY
-	        )
+	    	ExcitatorySynapticPlasticityConfig.newBuilder()
+				.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+				.withWeights(0.10f, 0.30f, 0.09f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+				.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+				.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+				.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+				.withInitialDelay(1.2f)
+				.build(),
+			InhibitorySynapticPlasticityConfig.newBuilder()
+				.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+				.withLearningRate(0.005f)				// LEARNING_RATE
+				.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+				.build()
 	    );
 	}
 
 	public static SynapsePlasticityConfig fbPlasticity() {
 		return new SynapsePlasticityConfig(
-				new ExcitatorySynapticPlasticity(0.05f, 1.0f, FB_EXCITATORY),
-				new InhibitorySynapticPlasticity(0.5f, GENERIC_INHIBITORY)
-				);
+			ExcitatorySynapticPlasticityConfig.newBuilder()
+				.withSTDP(0.004f, 0.003f, 80_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+				.withWeights(0.11f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+				.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+				.withPlasticity(80f, 10f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+				.withHomeostaticRate(0.001f) 			// HOMEOSTATIC_RATE
+				.withInitialDelay(1.2f)
+				.build(),
+			InhibitorySynapticPlasticityConfig.newBuilder()
+				.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+				.withLearningRate(0.00005f)				// LEARNING_RATE
+				.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+				.build()
+	    );
 	}
 
 	public static SynapsePlasticityConfig ctrlPlasticity() {
 		return new SynapsePlasticityConfig(
-				new ExcitatorySynapticPlasticity(0.1f, 3.0f, CTRL_EXCITATORY),
-				new InhibitorySynapticPlasticity(0.9f, GENERIC_INHIBITORY)
-				);
+			ExcitatorySynapticPlasticityConfig.newBuilder()
+				.withSTDP(0.004f, 0.003f, 150_000_000L, 300_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+				.withWeights(0.11f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+				.withEligibility(0.995f) 				// ELIGIBILITY_DECAY
+				.withPlasticity(150f, 20f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+				.withHomeostaticRate(0.001f) 			// HOMEOSTATIC_RATE
+				.withInitialDelay(1.2f)
+				.build(),
+			InhibitorySynapticPlasticityConfig.newBuilder()
+				.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+				.withLearningRate(0.00005f)				// LEARNING_RATE
+				.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+				.build()
+		   );
 	}
-
-	public static ExcitatorySynapticPlasticityConfig FAST_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.02f,   		// A_PLUS,	
-			0.005f, 		// A_MINUS,				
-			50_000_000L, 	// TAU_PLUS,				
-			50_000_000L,	// TAU_MINUS	
-			0.1f, 			// W_MIN,	
-			2.0f,  			// W_MAX,		
-			0.4f,			// W_BASELINE,
-			0.99f,			// ELIGIBILITY_DECAY,
-			0.002f,			// HOMEOSTATIC_RATE,
-			false,			// PLASTIC_DELAY,		
-			1f,				// DELAY_MIN,		
-			20f				// DELAY_MAX	
-			);
-
-	public static ExcitatorySynapticPlasticityConfig STABLE_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.05f, 			// A_PLUS,	
-			0.008f, 		// A_MINUS,				
-			50_000_000L *2, // TAU_PLUS,				
-			50_000_000L *2,	// TAU_MINUS	
-			0.1f, 			// W_MIN,	
-			2.0f,  			// W_MAX,		
-			0.4f,			// W_BASELINE,
-			0.99f,			// ELIGIBILITY_DECAY,
-			0.005f,			// HOMEOSTATIC_RATE,
-			false,			// PLASTIC_DELAY,		
-			1f,				// DELAY_MIN,		
-			20f				// DELAY_MAX	
-			);
-
-	public static ExcitatorySynapticPlasticityConfig VERY_SLOW_EXCITATORY = new ExcitatorySynapticPlasticityConfig(
-			0.05f, 			// A_PLUS,	
-			0.008f,			// A_MINUS,				
-			50_000_000L *4, // TAU_PLUS,				
-			50_000_000L *4,	// TAU_MINUS	
-			0.1f, 			// W_MIN,	
-			2.0f,  			// W_MAX,		
-			0.4f,			// W_BASELINE,
-			0.99f,			// ELIGIBILITY_DECAY,
-			0.005f,			// HOMEOSTATIC_RATE,
-			false,			// PLASTIC_DELAY,		
-			1f,				// DELAY_MIN,		
-			20f				// DELAY_MAX	
-			);
-
-	public static ExcitatorySynapticPlasticityConfig L2_SOFT = new ExcitatorySynapticPlasticityConfig(
-		    0.005f,        // A_PLUS molto piccolo
-		    0.004f,        // A_MINUS simile o leggermente minore
-		    50_000_000L*2, // TAU_PLUS più lungo
-		    50_000_000L*2, // TAU_MINUS
-		    0.1f,          // W_MIN
-		    1.5f,          // W_MAX
-		    0.3f,          // W_BASELINE
-		    0.995f,        // ELIGIBILITY_DECAY più lento
-		    0.00005f,      // HOMEOSTATIC_RATE molto più basso
-		    false,
-		    5f,
-		    40f
-		);
 	
 	private static MultiSphericalLayerConfig buildMultiSphericalLayerConfig( int totN, int connScale) {
 		MultiSphericalLayerConfig cfg = new MultiSphericalLayerConfig();
 
+		// L0 
+		cfg.addLayerConfig( 
+			new SphericalLayerConfig((int)(totN*0.15), 0.15f,  5*connScale, 7*connScale, 0.60f, 1.00f, true, true,
+				ALWAYS_CONNECT_PREDICATE,
+				new SynapsePlasticityConfig(
+					ExcitatorySynapticPlasticityConfig.newBuilder()
+						.withSTDP(0.004f, 0.003f, 80_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+						.withWeights(0.20f, 0.3f, 0.1f, 0.2f)	// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withEligibility(0.99f) 				// ELIGIBILITY_DECAY
+						.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+						.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+						.withInitialDelay(1.2f)
+						.build(),			
+					InhibitorySynapticPlasticityConfig.newBuilder()
+						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+						.withLearningRate(0.005f)				// LEARNING_RATE
+						.withTargetFiringRate(2.5f)				 // TARGET_FIRING_RATE
+						.build()
+		)));
+		
 		// L1 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.15), 0.15f,  5*connScale, 7*connScale, 0.60f, 1.00f, true, true,
-						ALWAYS_CONNECT_PREDICATE,
-						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.10f, 1.5f, STABLE_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.5f, GENERIC_INHIBITORY)
-								)	
-						));
+			new SphericalLayerConfig((int)(totN*0.20), 0.25f,  8*connScale, 12*connScale, 0.50f, 0.85f, true, true,
+				ALWAYS_CONNECT_PREDICATE,
+				new SynapsePlasticityConfig(
+					ExcitatorySynapticPlasticityConfig.newBuilder()
+						.withSTDP(0.002f, 0.002f, 50_000_000L, 50_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+						.withWeights(0.20f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+						.withPlasticity(40f, 5f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+						.withHomeostaticRate(0.002f) 			// HOMEOSTATIC_RATE
+						.withInitialDelay(1.0f)
+						.build(),			
+					InhibitorySynapticPlasticityConfig.newBuilder()
+						.withWeights(0.50f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+						.withLearningRate(0.005f)				// LEARNING_RATE
+						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+						.build()
+		)));						
+
 		// L2 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.20), 0.25f,  8*connScale, 12*connScale, 0.50f, 0.85f, true, true,
-						ALWAYS_CONNECT_PREDICATE,
-						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.08f, 1.2f, L2_SOFT),
-								new InhibitorySynapticPlasticity(0.3f, GENERIC_INHIBITORY)
-								)	
-						));
+			new SphericalLayerConfig((int)(totN*0.25), 0.15f, 10*connScale, 15*connScale, 0.40f, 0.65f, true, true,
+				ALWAYS_CONNECT_PREDICATE,
+				new SynapsePlasticityConfig(
+					ExcitatorySynapticPlasticityConfig.newBuilder()
+						.withSTDP(0.004f, 0.003f, 80_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+						.withWeights(0.20f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+						.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+						.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+						.withInitialDelay(1.2f)
+						.build(),			
+					InhibitorySynapticPlasticityConfig.newBuilder()
+						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+						.withLearningRate(0.005f)				// LEARNING_RATE
+						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+						.build()
+		)));			
+		
 		// L3 
 		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.25), 0.15f, 10*connScale, 15*connScale, 0.40f, 0.65f, true, true,
-						ALWAYS_CONNECT_PREDICATE,
-						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.08f, 1.5f, STABLE_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.8f, GENERIC_INHIBITORY)
-								)	
-						));
-		// L4 
-		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.20), 0.30f, 12*connScale, 18*connScale, 0.30f, 0.45f, true, true,
-						ALWAYS_CONNECT_PREDICATE,
-						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.06f, 1.2f, STABLE_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.6f, GENERIC_INHIBITORY)
-								)	
-						));
-		// L5 
-		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.12), 0.10f, 7*connScale, 10*connScale, 0.20f, 0.30f, true, true,
-						ALWAYS_CONNECT_PREDICATE,
-						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.15f, 1.5f, VERY_SLOW_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.80f, GENERIC_INHIBITORY)
-								)	
-						));
-		// L6 
-		cfg.addLayerConfig( 
-				new SphericalLayerConfig((int)(totN*0.08), 0.20f, 8*connScale, 12*connScale, 0.10f, 0.15f, true, true,
-						ALWAYS_CONNECT_PREDICATE,
-						new SynapsePlasticityConfig(
-								new ExcitatorySynapticPlasticity(0.15f, 1.5f, VERY_SLOW_EXCITATORY),
-								new InhibitorySynapticPlasticity(0.6f, GENERIC_INHIBITORY)
-								)	
-						));
+			new SphericalLayerConfig((int)(totN*0.20), 0.30f, 12*connScale, 18*connScale, 0.30f, 0.45f, true, true,
+				ALWAYS_CONNECT_PREDICATE,
+				new SynapsePlasticityConfig(
+					ExcitatorySynapticPlasticityConfig.newBuilder()
+						.withSTDP(0.004f, 0.003f, 80_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+						.withWeights(0.20f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+						.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+						.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+						.withInitialDelay(1.2f)
+						.build(),			
+					InhibitorySynapticPlasticityConfig.newBuilder()
+						.withWeights(0.60f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+						.withLearningRate(0.005f)				// LEARNING_RATE
+						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+						.build()
+		)));
 
+		//L4 
+		cfg.addLayerConfig( 
+			new SphericalLayerConfig((int)(totN*0.12), 0.10f, 7*connScale, 10*connScale, 0.20f, 0.30f, true, true,
+				ALWAYS_CONNECT_PREDICATE,
+				new SynapsePlasticityConfig(
+					ExcitatorySynapticPlasticityConfig.newBuilder()
+						.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+						.withWeights(0.15f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withEligibility(0.985f) 				// ELIGIBILITY_DECAY
+						.withPlasticity(80f, 10f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+						.withHomeostaticRate(0.002f) 			// HOMEOSTATIC_RATE
+						.withInitialDelay(1.5f)
+						.build(),			
+					InhibitorySynapticPlasticityConfig.newBuilder()
+						.withWeights(0.60f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+						.withLearningRate(0.005f)				// LEARNING_RATE
+						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+						.build()
+		)));
+
+		//L5 
+		cfg.addLayerConfig( 
+			new SphericalLayerConfig((int)(totN*0.08), 0.20f, 8*connScale, 12*connScale, 0.10f, 0.15f, true, true,
+				ALWAYS_CONNECT_PREDICATE,
+				new SynapsePlasticityConfig(
+					ExcitatorySynapticPlasticityConfig.newBuilder()
+						.withSTDP(0.004f, 0.003f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+						.withWeights(0.12f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withEligibility(0.99f) 				// ELIGIBILITY_DECAY
+						.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+						.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+						.withInitialDelay(1.5f)
+						.build(),			
+					InhibitorySynapticPlasticityConfig.newBuilder()
+						.withWeights(0.2f, 3.0f, 0.15f)			// INITIAL, W_MAX, W_MIN,
+						.withLearningRate(0.005f)				// LEARNING_RATE
+						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+						.build()
+		)));
+		
 		// ==========================================================================================
 
-		// L1 -> L2		
+		// L0 -> L1		
 		cfg.addIntraLayerConfig(0, 1, new IntraLayersConnConfig(
 				(int)(1.0*connScale), (int)(3.0*connScale), 
 				0.30f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L1 -> L3
+		// L0 -> L2
 		cfg.addIntraLayerConfig(0, 2, new IntraLayersConnConfig(
 				(int)(0.6*connScale), (int)(1.2*connScale), 
 				0.85f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L2 -> L3
+		// L1 -> L2
 		cfg.addIntraLayerConfig(1, 2, new IntraLayersConnConfig(
 				(int)(0.4*connScale), (int)(0.6*connScale), 
 				0.50f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L2 -> L4
+		// L1 -> L3
 		cfg.addIntraLayerConfig(1, 3, new IntraLayersConnConfig(
-				(int)(0.1*connScale), (int)(0.3*connScale), 
-				0.50f, // max distance
+				(int)(0.1*connScale), (int)(0.4*connScale), 
+				0.60f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L2 -> L5
+		// L1 -> L4
 		cfg.addIntraLayerConfig(1, 4, new IntraLayersConnConfig(
 				(int)(0.2*connScale), (int)(0.5*connScale), 
 				0.85f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L2 -> L1
+		// L1 -> L0
 		cfg.addIntraLayerConfig(1, 0, new IntraLayersConnConfig(
 				(int)(0.2*connScale), (int)(0.8*connScale), 
 				0.50f, // max distance
 				fbPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L3 -> L4
+		// L2 -> L3
 		cfg.addIntraLayerConfig(2, 3, new IntraLayersConnConfig(
 				(int)(1.5*connScale), (int)(4.0*connScale), 
 				0.50f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L3 -> L2
+		// L2 -> L1
 		cfg.addIntraLayerConfig(2, 1, new IntraLayersConnConfig(
 				(int)(0.5*connScale), (int)(1.5*connScale), 
 				0.50f, // max distance
 				fbPlasticity(),	ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L3 -> L5
+		// L2 -> L4
 		cfg.addIntraLayerConfig(2, 4, new IntraLayersConnConfig(
-				(int)(0.1*connScale), (int)(0.5*connScale), 
-				0.40f, // max distance
+				(int)(0.1*connScale), (int)(0.6*connScale), 
+				0.50f, // max distance
 				ffPlasticity(),	ALWAYS_CONNECT_PREDICATE));
-		// L4 -> L5
+		// L3 -> L4
 		cfg.addIntraLayerConfig(3, 4, new IntraLayersConnConfig(
 				(int)(1.0*connScale), (int)(3.0*connScale), 
 				0.25f, // max distance
 				ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L4 -> L3
+		// L3 -> L2
 		cfg.addIntraLayerConfig(3, 2, new IntraLayersConnConfig(
 				(int)(0.1*connScale), (int)(0.4*connScale), 
 				0.50f, // max distance
 				fbPlasticity(),	ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L4 -> L1
+		// L3 -> L1
 		cfg.addIntraLayerConfig(3, 1, new IntraLayersConnConfig(
 				(int)(0.1*connScale), (int)(0.4*connScale), 
 				0.60f, // max distance
 				fbPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L4 -> L6
+		// L3 -> L5
 		cfg.addIntraLayerConfig(3, 5, new IntraLayersConnConfig(
 				(int)(0.2*connScale), (int)(0.8*connScale), 
 				0.40f,
 				ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L5 -> L4
+		// L4 -> L3
 		cfg.addIntraLayerConfig(4, 3, new IntraLayersConnConfig(
 				(int)(0.3*connScale), (int)(1.0*connScale), 
 				0.50f, // max distance
 				ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L5 -> L3
+		// L4 -> L2
 		cfg.addIntraLayerConfig(4, 2, new IntraLayersConnConfig(
 				(int)(0.2*connScale), (int)(0.8*connScale), 
 				0.80f, // max distance
 				fbPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L6 -> L4
+		// L5 -> L3
 		cfg.addIntraLayerConfig(5, 3, new IntraLayersConnConfig(
 				(int)(1.0*connScale), (int)(3.0*connScale), 
 				1.0f, // max distance
 				ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L6 -> L3
+		// L5 -> L2
 		cfg.addIntraLayerConfig(5, 2, new IntraLayersConnConfig(
 				(int)(0.8*connScale), (int)(2.0*connScale), 
 				1.0f, // max distance
 				ctrlPlasticity(), ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L6 -> L2
+		// L5 -> L1
 		cfg.addIntraLayerConfig(5, 1, new IntraLayersConnConfig(
 				(int)(0.5*connScale), (int)(1.5*connScale), 
 				1.0f, // max distance
 				fbPlasticity(),	ONLY_INHIBITOR_CONNECT_PREDICATE));
-		// L6 -> L1
+		// L5 -> L0
 		cfg.addIntraLayerConfig(5, 0, new IntraLayersConnConfig(
 				(int)(0.1*connScale), (int)(0.4*connScale), 
 				1.0f, // max distance
 				fbPlasticity(),	ONLY_INHIBITOR_CONNECT_PREDICATE));
 
+		
+		// L3 -> L4
+		cfg.addIntraLayerConfig(3, 4, new IntraLayersConnConfig(
+				(int)(0.2*connScale), (int)(0.8*connScale), 
+				0.40f,
+				ffPlasticity(), ALWAYS_CONNECT_PREDICATE));
+		// L4 -> L5
+		cfg.addIntraLayerConfig(4, 5, new IntraLayersConnConfig(
+				(int)(0.2*connScale), (int)(0.8*connScale), 
+				0.40f,
+				ffPlasticity(), ALWAYS_CONNECT_PREDICATE));
+		
 		return cfg;
 	}
 }
