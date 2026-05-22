@@ -1,4 +1,4 @@
-package com.cortex.base;
+package com.cortex.base.config;
 
 public class ExcitatorySynapticPlasticityConfig {
 

@@ -5,23 +5,23 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 
-import com.cortex.brain.GlobalContext;
+import com.cortex.base.config.SynapsePlasticityConfig;
+import com.cortex.brain.layers.Layer.Neighbor;
 import com.cortex.commons.IPlasticSynapse;
 import com.cortex.commons.IPlasticityRule;
 import com.cortex.commons.Pair;
-import com.cortex.layer.Layer.Neighbor;
-import com.cortex.layer.SynapsePlasticityConfig;
+import com.cortex.globals.GlobalContext;
 
 public final class Synapse implements IPlasticSynapse {
 
-    private final Neuron pre;
-    private final Neuron post;
+    private final AbstractNeuron pre;
+    private final AbstractNeuron post;
     private final IPlasticityRule plasticityRule;
 	private final float length;
 	
 	private final Queue<Spike> spikes = new ConcurrentLinkedQueue<>();
 	
-	public Synapse(Neuron pre, Neuron post, float length, IPlasticityRule plasticityRule) {
+	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, IPlasticityRule plasticityRule) {
 		super();
 		this.pre = pre;
 		this.post = post;
@@ -29,25 +29,25 @@ public final class Synapse implements IPlasticSynapse {
 		this.plasticityRule = plasticityRule;
 	}
 	
-	public static int create( Neuron srcNeuron, Collection<Neighbor> toNeurons, SynapsePlasticityConfig plasticityCfg ) {
+	public static int create( AbstractNeuron srcNeuron, Collection<Neighbor> toNeurons, SynapsePlasticityConfig plasticityCfg ) {
 		for (Neighbor toNeuron : toNeurons) {
 			link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), plasticityCfg );
 		}
 		return toNeurons.size();
 	}
 	
-	public static int create( Collection<Neighbor> srcNeurons, Neuron toNeuron, SynapsePlasticityConfig plasticityCfg ) {
+	public static int create( Collection<Neighbor> srcNeurons, AbstractNeuron toNeuron, SynapsePlasticityConfig plasticityCfg ) {
 		for (Neighbor srcNeuron : srcNeurons) {
 			link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), plasticityCfg );
 		}
 		return srcNeurons.size();
 	}
 	
-	public static void create( Neuron srcNeuron, Pair<Neuron, Float> toNeuron, SynapsePlasticityConfig plasticityCfg) {
+	public static void create( AbstractNeuron srcNeuron, Pair<AbstractNeuron, Float> toNeuron, SynapsePlasticityConfig plasticityCfg) {
 		link( srcNeuron, toNeuron.left(), toNeuron.right(), plasticityCfg );
 	}
 	
-	private static void link(Neuron srcNeuron, Neuron toNeuron, float distance, SynapsePlasticityConfig plasticityCfg) {
+	private static void link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, SynapsePlasticityConfig plasticityCfg) {
 		Synapse s = new Synapse( 
 			srcNeuron, 
 			toNeuron, 
@@ -100,7 +100,7 @@ public final class Synapse implements IPlasticSynapse {
 		this.spikes.add(spike);
 	}
 	
-	public Neuron getTarget() {
+	public AbstractNeuron getTarget() {
 		return post;
 	}
 	

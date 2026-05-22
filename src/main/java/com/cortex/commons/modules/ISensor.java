@@ -2,12 +2,12 @@ package com.cortex.commons.modules;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.cortex.base.Neuron;
+import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.IProcessable;
 
 public interface ISensor extends IProcessable {
 
-	public long getWaitTime();
+	public long getWaitTimeNanos();
 	
 	public String getId();
 	
@@ -19,7 +19,7 @@ public interface ISensor extends IProcessable {
 	
 	public long getLastProcessTime();
 	
-	public Neuron[][] getNeurons();
+	public AbstractNeuron[][] getNeurons();
 	
 	public static float randomGaussian() {
 		return (float)ThreadLocalRandom.current().nextGaussian();

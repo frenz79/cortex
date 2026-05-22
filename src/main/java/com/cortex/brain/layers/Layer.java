@@ -1,4 +1,4 @@
-package com.cortex.layer;
+package com.cortex.brain.layers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,52 +14,56 @@ import java.util.function.Predicate;
 
 import javax.vecmath.Point3f;
 
-import com.cortex.base.Neuron;
 import com.cortex.base.Synapse;
+import com.cortex.base.config.LayerConfig;
+import com.cortex.base.config.SynapsePlasticityConfig;
+import com.cortex.brain.CorticalNeuron;
+import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 
 import net.jafama.FastMath;
 
-public abstract class Layer<C extends LayerConfig> {
+public abstract class Layer {
 
-	protected final int id;
-	protected final C config;
-	protected Neuron[] neurons;
+	protected final LayerConfig config;
+	protected CorticalNeuron[] neurons;
 	private int synapsesCount = 0;
-	private static int seq = -1;
 	private Map<Long, IntList> spatialHash;
 
-	public Layer(C config) {
+	public Layer(LayerConfig config) {
 		super();
-		this.id = ++seq;
 		this.config = config;
 	}
 
+	public int getLayerId() {
+		return config.getLayerId();
+	} 
+	
 	protected boolean randomBoolean( float trueProbability ) {
 		return ThreadLocalRandom.current().nextFloat(0.0f, 1.0f)<=trueProbability;
 	}
 
 	protected boolean isInhibitor( ) {
-		return randomBoolean( config.getInhibitorFreq() );
+		return randomBoolean( config.INHIBITOR_FREQ );
 	}
 
-	public static record Neighbor(Neuron neuron, float distance) { 
+	public static record Neighbor(CorticalNeuron neuron, float distance) { 
 
 		public float getRealDistance() {
 			return (float)FastMath.sqrtQuick(distance);
 		}		
 	}
 
-	public abstract void generateNeurons( );
+	public abstract Layer populate( CorticalNeuronFactory neuronFactory );
 
 	public abstract int link( 
-			Layer<?> layer,
+			Layer layer,
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 
-			Predicate<Neuron> filter, 
+			Predicate<CorticalNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );
 
 	public abstract int link( 
@@ -67,50 +71,51 @@ public abstract class Layer<C extends LayerConfig> {
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 
-			Predicate<Neuron> filter, 
+			Predicate<CorticalNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );
 
 	public abstract int link( 
-			IClassifier<? extends Neuron> classifier,
+			IClassifier<? extends CorticalNeuron> classifier,
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 
-			Predicate<Neuron> filter, 
+			Predicate<CorticalNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );	
 
-	public void connectInternal( ) {
+	public Layer connectInternal( ) {
 		long startTime = System.nanoTime();
-		Map<Neuron,Collection<Neighbor>> tmp = new ConcurrentHashMap<>();
+		Map<CorticalNeuron,Collection<Neighbor>> tmp = new ConcurrentHashMap<>();
 		ThreadLocalRandom random = ThreadLocalRandom.current();
 
 		Arrays.stream(getNeurons()).parallel().forEach( n -> {	
-			int connsCounter = random.nextInt(config.getMinConnections(), config.getMaxConnections());
+			int connsCounter = random.nextInt(config.MIN_CONNECTIONS, config.MAX_CONNECTIONS);
 			Collection<Neighbor> conns = findNearest(
 					getNeurons(), 
 					n.getPosition(), 
 					connsCounter, 
-					config.getConnectionFilter());		
+					config.CONNECTION_FILTER);		
 			tmp.put(n, conns);
 		});
 
 		// Synapse creation made sync!
 		int connectionsCount = 0;
-		for ( Entry<Neuron, Collection<Neighbor>> e : tmp.entrySet() ) {
-			Synapse.create(e.getKey(), e.getValue(), config.getSynapsePlasticityConfig());
+		for ( Entry<CorticalNeuron, Collection<Neighbor>> e : tmp.entrySet() ) {
+			Synapse.create(e.getKey(), e.getValue(), config.SYNAPSE_PLASTICITY_CONFIG);
 			connectionsCount += e.getValue().size();
 		}
 
 		long endTime = System.nanoTime();
-		System.out.println("L"+getId()+" generated "+connectionsCount+" synapses in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
+		System.out.println("L"+config.getLayerId()+" generated "+connectionsCount+" synapses in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
 		this.synapsesCount += connectionsCount;
+		return this;
 	}
 
-	public Collection<Neighbor> findNearest( Neuron[] neurons, Point3f target, int N, Predicate<Neuron> filter ) {
+	public Collection<Neighbor> findNearest( CorticalNeuron[] neurons, Point3f target, int N, Predicate<CorticalNeuron> filter ) {
 		PriorityQueue<Neighbor> pq =
 				new PriorityQueue<>((a,b) -> Float.compare(b.distance(), a.distance()));
 
 		for (int i = 0; i < neurons.length; i++) {
-			Neuron n = neurons[i];
+			CorticalNeuron n = neurons[i];
 			if (filter.test(n)) {			
 				float dx = n.getPosition().x - target.x;
 				float dy = n.getPosition().y - target.y;
@@ -128,16 +133,12 @@ public abstract class Layer<C extends LayerConfig> {
 		return pq;
 	}
 
-	public Neuron[] getNeurons() {
+	public CorticalNeuron[] getNeurons() {
 		return neurons;
 	}
 
 	public int getNeuronsCount() {
-		return config.getNeurons();
-	}
-
-	public int getId() {
-		return id;
+		return config.NEURONS_COUNT;
 	}
 
 	public int getSynapsesCount() {
@@ -226,7 +227,7 @@ public abstract class Layer<C extends LayerConfig> {
 		return result;
 	}
     
-    public static Collection<Neighbor> toNeighbors(IntList idxs, Neuron[] neurons, float px, float py, float pz) {
+    public static Collection<Neighbor> toNeighbors(IntList idxs, CorticalNeuron[] neurons, float px, float py, float pz) {
         ArrayList<Neighbor> out = new ArrayList<>(idxs.size());
         for (int i = 0; i < idxs.size(); i++) {
             int ni = idxs.get(i);
@@ -239,7 +240,8 @@ public abstract class Layer<C extends LayerConfig> {
         return out;
     }
 
-	public C getConfig() {
+	public LayerConfig getConfig() {
 		return config;
 	}
+
 }

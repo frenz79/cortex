@@ -19,12 +19,12 @@ import javax.swing.JScrollPane;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import com.cortex.base.Neuron;
-import com.cortex.brain.GlobalContext;
-import com.cortex.layer.Layer;
-import com.cortex.layer.LayerConfig;
-import com.cortex.layer.MultiLayer;
-import com.cortex.layer.MultiLayerConfig;
+import com.cortex.base.config.LayerConfig;
+import com.cortex.brain.CorticalNeuron;
+import com.cortex.brain.layers.Layer;
+import com.cortex.brain.layers.MultiLayer;
+import com.cortex.brain.layers.MultiLayerConfig;
+import com.cortex.globals.GlobalContext;
 import com.sun.j3d.utils.behaviors.mouse.MouseRotate;
 import com.sun.j3d.utils.behaviors.mouse.MouseTranslate;
 import com.sun.j3d.utils.behaviors.mouse.MouseWheelZoom;
@@ -145,7 +145,7 @@ public class SimpleViewer<MC extends MultiLayerConfig<C>, C extends LayerConfig,
 		Point3f[] plaPts = new Point3f[GlobalContext.getNeuronsCount()];
 		int i = 0;
 
-		for ( Neuron n : layer.getNeurons() ) {
+		for ( CorticalNeuron n : layer.getNeurons() ) {
 			plaPts[i++] = n.getPosition();
 		}
 

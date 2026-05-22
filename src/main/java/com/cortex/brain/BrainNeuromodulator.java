@@ -3,10 +3,11 @@ package com.cortex.brain;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
-import com.cortex.base.Neuron;
+import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
+import com.cortex.globals.GlobalContext;
 
-public class GlobalNeuromodulator {
+public class BrainNeuromodulator {
 
 	public static void broadcastReward(
 			float reward,
@@ -23,9 +24,9 @@ public class GlobalNeuromodulator {
 					return false;
 				}
 
-				Neuron n = s.getTarget();
-				int sign = (n.isInhibitor())?-1:1;
-				float scaledReward = scaleReward(((Neuron)(s.getTarget())).getLayerId(),reward);
+				AbstractNeuron n = s.getTarget();
+				int sign = n.getSpikeSign();
+				float scaledReward = scaleReward(((CorticalNeuron)(s.getTarget())).getLayerId(),reward);
 				
 				if ( scaledReward>0.0f ) {
 					s.applyReward( scaledReward*sign, now, neuromodulator);

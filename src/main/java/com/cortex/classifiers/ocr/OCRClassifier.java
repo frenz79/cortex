@@ -1,6 +1,8 @@
 package com.cortex.classifiers.ocr;
 
-import com.cortex.base.Neuron;
+import com.cortex.base.AbstractNeuron;
+import com.cortex.base.config.CorticalNeuronsConfig;
+import com.cortex.base.config.LayerConfig;
 import com.cortex.commons.modules.IClassifier;
 
 public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
@@ -14,12 +16,12 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
     private long lastClassificationTime = 0L;
 	private OCRCharacterNeuron result;
 	
-	public OCRClassifier() {
+	public OCRClassifier(CorticalNeuronsConfig neuronsConfig, LayerConfig layerConfig) {
 		this.neurons = new OCRCharacterNeuron[1][26];
 		int i=0;
 		int counter = 0;
 		for (char c = 'A'; c <= 'Z'; c++) {
-			this.neurons[0][i++] = new OCRCharacterNeuron(counter++,c);
+			this.neurons[0][i++] = new OCRCharacterNeuron(counter++, c);
 		}
 	}
 	
@@ -77,7 +79,7 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 	}
 
 	@Override
-	public Neuron[][] getNeurons() {
+	public AbstractNeuron[][] getNeurons() {
 		return neurons;
 	}
 }

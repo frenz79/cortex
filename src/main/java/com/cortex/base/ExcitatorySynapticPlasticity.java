@@ -1,5 +1,6 @@
 package com.cortex.base;
 
+import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.commons.IPlasticityRule;
 import com.cortex.commons.Maths;
 

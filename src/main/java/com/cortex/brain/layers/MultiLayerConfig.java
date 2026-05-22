@@ -1,4 +1,4 @@
-package com.cortex.layer;
+package com.cortex.brain.layers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,24 +6,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import com.cortex.base.Neuron;
+import com.cortex.base.config.LayerConfig;
+import com.cortex.base.config.SynapsePlasticityConfig;
+import com.cortex.brain.CorticalNeuron;
 import com.cortex.commons.IntPair;
 
-public class MultiLayerConfig<C extends LayerConfig> {
+public class MultiLayerConfig {
 	
 	private final Map<IntPair,IntraLayersConnConfig> layer2layerConns = new HashMap<>();
 	
-	public static record IntraLayersConnConfig(int minConnections, int maxConnections, float maxDistance, SynapsePlasticityConfig synapsePlasticityConfig, Predicate<Neuron> filter) {
+	public static record IntraLayersConnConfig(int minConnections, int maxConnections, float maxDistance, SynapsePlasticityConfig synapsePlasticityConfig, Predicate<CorticalNeuron> filter) {
 	}
 	
-	private final List<C> configs = new ArrayList<>();
+	private final List<LayerConfig> configs = new ArrayList<>();
 		
-	public MultiLayerConfig<C> addLayerConfig( C cfg ){
+	public MultiLayerConfig addLayerConfig( LayerConfig cfg ){
 		this.configs.add(cfg);
 		return this;
 	}
 	
-	public MultiLayerConfig<C> addIntraLayerConfig( int fromLayer, int toLayer, IntraLayersConnConfig cfg ){
+	public MultiLayerConfig addIntraLayerConfig( int fromLayer, int toLayer, IntraLayersConnConfig cfg ){
 		this.layer2layerConns.put( new IntPair(fromLayer, toLayer), cfg );
 		return this;
 	}
@@ -32,7 +34,7 @@ public class MultiLayerConfig<C extends LayerConfig> {
 		return this.layer2layerConns.get( new IntPair(fromLayer, toLayer));
 	}
 	
-	public List<C> getConfigs() {
+	public List<LayerConfig> getConfigs() {
 		return configs;
 	}
 	

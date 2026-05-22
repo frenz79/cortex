@@ -1,7 +1,7 @@
 package com.cortex.classifiers.ocr;
 
 import com.cortex.base.Synapse;
-import com.cortex.brain.GlobalNeuromodulator;
+import com.cortex.brain.BrainNeuromodulator;
 import com.cortex.commons.modules.ISupervisor;
 
 public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {

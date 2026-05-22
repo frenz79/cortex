@@ -1,6 +1,6 @@
 package com.cortex.commons.modules;
 
-import com.cortex.base.Neuron;
+import com.cortex.brain.CorticalNeuron;
 import com.cortex.commons.IProcessable;
 
 public interface IActuator extends IProcessable {
@@ -17,5 +17,5 @@ public interface IActuator extends IProcessable {
 	
 	public long getLastProcessTime();
 	
-	public Neuron[][] getNeurons();
+	public CorticalNeuron[][] getNeurons();
 }

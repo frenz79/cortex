@@ -1,4 +1,4 @@
-package com.cortex.layer;
+package com.cortex.brain.layers;
 
 import java.util.Collection;
 import java.util.Random;
@@ -6,29 +6,34 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import com.cortex.base.Neuron;
+import javax.vecmath.Point3f;
+
+import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
-import com.cortex.brain.GlobalContext;
+import com.cortex.base.config.LayerConfig;
+import com.cortex.base.config.SynapsePlasticityConfig;
+import com.cortex.brain.CorticalNeuron;
+import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 
 import net.jafama.FastMath;
 
-public class SphericalLayer extends Layer<SphericalLayerConfig> {
+public class SphericalLayer extends Layer {
 
-	public SphericalLayer(SphericalLayerConfig config) {
+	public SphericalLayer(LayerConfig config) {
 		super(config);
 	}
 
 	@Override
-	public int link( Layer<?> layer, int minConn, int maxConn, float maxDistance, Predicate<Neuron> filter,	SynapsePlasticityConfig synCfg) {
+	public int link( Layer layer, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter,	SynapsePlasticityConfig synCfg) {
 		Random rnd = ThreadLocalRandom.current();
 		int connections = 0;
 
 		float cellSize = maxDistance; // scelta naturale
 
-		for (Neuron src : layer.getNeurons()) {
+		for (CorticalNeuron src : layer.getNeurons()) {
 			int k = rnd.nextInt(minConn, maxConn);
 			IntList idxs = findKNearestApprox(
 					src.getPosition().x,
@@ -59,16 +64,16 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
 	}
 
 	@Override
-	public int link(IClassifier<? extends Neuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<Neuron> filter, SynapsePlasticityConfig synCfg) {
+	public int link(IClassifier<? extends CorticalNeuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter, SynapsePlasticityConfig synCfg) {
 		return link (classifier.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, true);
 	}
 
 	@Override
-	public int link( ISensor sensor, int minConn, int maxConn, float maxDistance, Predicate<Neuron> filter, SynapsePlasticityConfig synCfg ) {
+	public int link( ISensor sensor, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter, SynapsePlasticityConfig synCfg ) {
 		return link (sensor.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, false);
 	}
 
-	private final int link( Neuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<Neuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
+	private final int link( AbstractNeuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
 		int w = matrix.length;
 		int h = matrix[0].length;
 		int connections = 0;
@@ -86,9 +91,9 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
 				float phi   = (float)(FastMath.PI * (v - 0.5)); // latitude
 				float cosPhi = (float)FastMath.cos(phi);
 
-				float x = (float)(cosPhi * FastMath.cos(theta) * config.getRadius());
-				float y = (float)(cosPhi * FastMath.sin(theta) * config.getRadius());
-				float z = (float)(FastMath.sin(phi) * config.getRadius());
+				float x = (float)(cosPhi * FastMath.cos(theta) * config.DIMENSION);
+				float y = (float)(cosPhi * FastMath.sin(theta) * config.DIMENSION);
+				float z = (float)(FastMath.sin(phi) * config.DIMENSION);
 
 				IntList neighborsIdx = findKNearestApprox(x, y, z, rnd.nextInt(minConn, maxConn), cellSize, maxDistance);
 				if (neighborsIdx.size() == 0) continue;
@@ -107,15 +112,15 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
 	}
 
 	@Override
-	public void generateNeurons() {
+	public SphericalLayer populate( CorticalNeuronFactory neuronFactory ) {
 		long startTime = System.nanoTime();
-		this.neurons = new Neuron[getNeuronsCount()];
+		this.neurons = new CorticalNeuron[getNeuronsCount()];
 
 		//  golden spiral / Fibonacci sphere variation
 		float gr = (float) (3-Math.sqrt(5));
 		float lambda = (float) (FastMath.PI * gr);
 		final int counter = getNeuronsCount();
-		final float radius = config.getRadius();
+		final float radius = config.DIMENSION;
 
 		for(int i=0; i<counter; i++){
 			float t = (float)i/counter;
@@ -126,20 +131,17 @@ public class SphericalLayer extends Layer<SphericalLayerConfig> {
 			float x = sina1 * (float)FastMath.cos(a2);
 			float y = sina1 * (float)FastMath.sin(a2);
 			float z = (float) FastMath.cos(a1) * radius;
-			Neuron p = GlobalContext.getNeuronFactory().buildNeuron(
-					getId() 
-					, config.isHasIncoming()
-					, config.isHasOutgoing()
-					, isInhibitor( )
-					, x,y,z
 
-					);
-			this.neurons[i] = p;
+			this.neurons[i] = neuronFactory.buildNeuron(
+				config.getLayerId(),
+				isInhibitor(), new Point3f(x,y,z)
+			);
 		}
 
-		buildSpatialHash(config.getRadius() / 2f);
+		buildSpatialHash(config.DIMENSION / 2f);
 
 		long endTime = System.nanoTime();
-		System.out.println("L"+getId()+" generated "+getNeuronsCount()+" neurons in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
-	}    
+		System.out.println("L"+getLayerId()+" generated "+getNeuronsCount()+" neurons in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
+		return this;
+	}   
 }

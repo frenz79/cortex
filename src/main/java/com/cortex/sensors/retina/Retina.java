@@ -4,18 +4,17 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.cortex.base.Neuron;
+import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
+import com.cortex.base.config.LayerConfig;
 import com.cortex.commons.modules.ISensor;
 
 public class Retina implements ISensor {
 
 	private static final String SENSOR_ID = "RETINA";
 	
+	private final RetinaConfig retinaConfig;
 	private final RetinaNeuron[][] retinaNeurons;
-	private final int retinaW;
-	private final int retinaH;
-
 	private volatile float[][] sourceLuminance;
 	private int sourceWidth;
 	private int sourceHeight;
@@ -27,21 +26,15 @@ public class Retina implements ISensor {
     private volatile boolean active;
     private volatile long lastSaccadeTime = System.nanoTime();
     private volatile long lastProcessTime = 0;
-
-    private static final long SAMPLING_PERIOD = 20_000_000; // 20 ms
-    private static final long MICROSACCADE_PERIOD = 40_000_000; // 40 ms
-    private static final float MICROSACCADE_AMPLITUDE = 0.5f;
-    private static final int RECEPTIVE_RADIUS = 1;
     
-    public Retina( int retinaW, int retinaH ) {
+    public Retina( RetinaConfig retinaConfig, RetinaNeuronConfig neuronsConfig ) {
     	this.active = false;
-    	this.retinaW = retinaW;
-    	this.retinaH = retinaH;
-    	this.retinaNeurons = new RetinaNeuron[retinaW][retinaH];
+    	this.retinaConfig = retinaConfig;
+    	this.retinaNeurons = new RetinaNeuron[retinaConfig.RETINA_W][retinaConfig.RETINA_H];
     	int counter = 0;
-    	for (int x = 0; x < retinaW; x++) {
-    	    for (int y = 0; y < retinaH; y++) {
-    	        retinaNeurons[x][y] = new RetinaNeuron(counter++);
+    	for (int x = 0; x < retinaConfig.RETINA_W; x++) {
+    	    for (int y = 0; y < retinaConfig.RETINA_H; y++) {
+    	        retinaNeurons[x][y] = new RetinaNeuron(counter++, neuronsConfig );
     	    }
     	}
     }
@@ -55,14 +48,14 @@ public class Retina implements ISensor {
     	
     	updateMicrosaccades( currTimeNanos );
     	
-    	int totalSpikes = 0;
+    //	int totalSpikes = 0;
     	
-    	for (int x = 0; x < retinaW; x++) {
-    	    for (int y = 0; y < retinaH; y++) {
+    	for (int x = 0; x < retinaConfig.RETINA_W; x++) {
+    	    for (int y = 0; y < retinaConfig.RETINA_H; y++) {
         		float lum = sampleLuminanceFromSource(x, y);
         		 int c = retinaNeurons[x][y].process(currTimeNanos, lum);
         	        if (c > 0) {
-        	            totalSpikes += c;
+     //   	            totalSpikes += c;
         	            List<Spike> spikes = retinaNeurons[x][y].drainSpikes();
         	            for (Spike s : spikes) {
         	                retinaNeurons[x][y].fire(s);
@@ -77,9 +70,9 @@ public class Retina implements ISensor {
    	}
     
     private boolean updateMicrosaccades(long timeNanos) {
-        if (timeNanos - lastSaccadeTime > (MICROSACCADE_PERIOD + ThreadLocalRandom.current().nextInt(1_000_000, 5_000_000))) {
-            microDx = ISensor.randomGaussian() * MICROSACCADE_AMPLITUDE;
-            microDy = ISensor.randomGaussian() * MICROSACCADE_AMPLITUDE;
+        if (timeNanos - lastSaccadeTime > (retinaConfig.MICROSACCADE_PERIOD_NANOS + ThreadLocalRandom.current().nextInt(1_000_000, 5_000_000))) {
+            microDx = ISensor.randomGaussian() * retinaConfig.MICROSACCADE_AMPLITUDE;
+            microDy = ISensor.randomGaussian() * retinaConfig.MICROSACCADE_AMPLITUDE;
             lastSaccadeTime = timeNanos;
             return true;
         }
@@ -90,7 +83,7 @@ public class Retina implements ISensor {
         int cx = (int)((rx + 0.5f + microDx) * sourceScaleX);
         int cy = (int)((ry + 0.5f + microDy) * sourceScaleY);
 
-        int radius = RECEPTIVE_RADIUS;
+        int radius = retinaConfig.RECEPTIVE_RADIUS;
         float sum = 0.0f;
         int count = 0;
 
@@ -111,8 +104,8 @@ public class Retina implements ISensor {
     }
 
 	@Override
-	public long getWaitTime() {
-		return SAMPLING_PERIOD;
+	public long getWaitTimeNanos() {
+		return retinaConfig.SAMPLING_PERIOD_NANOS;
 	}
 
 	@Override
@@ -123,8 +116,8 @@ public class Retina implements ISensor {
 	public void setImage(BufferedImage image) {
 		this.sourceWidth = image.getWidth();
 		this.sourceHeight = image.getHeight();
-		this.sourceScaleX = (float)sourceWidth / (float)retinaW;
-		this.sourceScaleY = (float)sourceHeight / (float)retinaH;
+		this.sourceScaleX = (float)sourceWidth / (float)retinaConfig.RETINA_W;
+		this.sourceScaleY = (float)sourceHeight / (float)retinaConfig.RETINA_H;
 		this.sourceLuminance = new float[image.getWidth()][image.getHeight()];
 		
 		for (int x=0; x<sourceLuminance.length; x++) {
@@ -167,7 +160,7 @@ public class Retina implements ISensor {
 	}
 
 	@Override
-	public Neuron[][] getNeurons() {
+	public AbstractNeuron[][] getNeurons() {
 		return retinaNeurons;
 	}
 }

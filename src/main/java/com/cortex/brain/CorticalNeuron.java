@@ -1,0 +1,149 @@
+package com.cortex.brain;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.vecmath.Point3f;
+
+import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Spike;
+import com.cortex.base.Synapse;
+import com.cortex.base.config.CorticalNeuronsConfig;
+
+/**
+ *  Event-driven, analog-spike, delayed, plastic Neuron
+ * 
+ * */
+public class CorticalNeuron extends AbstractNeuron {
+
+	private final CorticalNeuronsConfig config;
+	
+	private long lastProcessTime = 0l;
+	private long lastSpikeTime = 0l;
+	private float potential = 0;
+
+	public CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position) {
+		super(layerId, 
+			  index, 
+			  hasIncoming, 
+			  hasOutgoing, 
+			  inhibitor, 
+			  position
+		);
+		this.config = neuronsConfig;
+	}
+
+	// Decadimento lineare verso il potenziale di riposo
+	private void computeDecay( long deltaTimeNanos ) {
+		if (potential == config.POTENTIAL_ZERO) return;
+	    double seconds = deltaTimeNanos / 1_000_000_000.0;
+	    double delta = config.REPOLARIZATION_PER_SECOND * seconds;
+	    if (potential > config.POTENTIAL_ZERO) {
+	        potential -= delta;
+	        if (potential < config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
+	    } else {
+	        potential += delta;
+	        if (potential > config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
+	    }
+	    // clamp to bounds
+	    potential = Math.max(config.POTENTIAL_MIN, Math.min(config.POTENTIAL_MAX, potential));
+	}
+	
+	/**
+	 * returns:
+	 * 	null if no spike has been produced
+	 *  the incoming spike if it was not processed
+	 *  a new Spike if a fire will occurr
+	 */
+	private Spike integrateInputAndFire(long currTimeNanos, long deltaTimeNanos, Spike spike, Synapse synapse) {
+	    long ageNanos = currTimeNanos - spike.getCreationTimeNanos();
+	    long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
+	    if (ageNanos < 0) {
+	        System.out.println("Spike nel futuro: age=" + ageNanos);
+	    }
+	    if (ageNanos >= travelTimeNanos) {
+	        synapse.onPreSpike(currTimeNanos);
+	        potential += spike.getSign() * synapse.getWeight() * spike.getAmplitude();
+	        if (currTimeNanos - lastSpikeTime > config.REFRACTORY_PERIOD_NANOS && potential > config.FIRING_THRESHOLD) {
+	            lastSpikeTime = currTimeNanos;
+	            potential = config.POTENTIAL_ZERO;
+	            return new Spike(synapse.getWeight() * spike.getAmplitude(), currTimeNanos, isInhibitor());
+	        }
+	        return null;
+	    } else {
+	        return spike; // still in flight
+	    }
+	}
+	
+	/**
+	 * Called by Thinker Neurons thread loop:
+	 * - For each incoming synapse
+	 *   - For each spike on the synapse
+	 *     - Integrate all and grab outgoing spikes
+	 *     
+	 * returns TRUE if there's at least one spike not yet arrived
+	 */
+	@Override
+	public boolean process(long currTimeNanos) throws InterruptedException{		
+		long deltaTime = currTimeNanos - lastProcessTime;
+		computeDecay(deltaTime);
+
+		AtomicBoolean stayActive = new AtomicBoolean(false);
+		final List<Spike> newSpikes = new ArrayList<>();
+	    boolean inRefractory = (currTimeNanos - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
+	    
+		for ( Synapse synapse : getInSynapses() ) {
+			synapse.forEachSpike( spike -> {
+				try {
+					Spike s = integrateInputAndFire(currTimeNanos, deltaTime, spike, synapse);
+					if (s!=null ) {
+						if (s==spike) {
+							// We still have a spike not yet arrived...keep the synapse active
+							stayActive.set(true);
+						} else {
+							 if (!inRefractory) {
+								 newSpikes.add(s);
+		                     }
+						}
+						return s;
+					}					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return null;
+			} );	
+			if (!newSpikes.isEmpty()) {
+				fire(newSpikes);
+				newSpikes.clear();
+				// Must be called once per synapse even if fired multiple times
+				// TODO: first param should be affected by travel time
+				synapse.onPostSpike(currTimeNanos, currTimeNanos);
+			}
+
+	        // still call update even if no new spikes were fired to keep plasticity timing consistent
+	        synapse.update(deltaTime);
+		}
+
+		this.potential = Math.min(config.POTENTIAL_MAX, potential);
+		this.lastProcessTime = currTimeNanos;
+		return stayActive.get();
+	}
+	
+	// continuous/exponential decay based on elapsed time 
+	public float getRecentFiringRate(long now) {
+	    long dt = now - lastRateUpdate;
+	    if (dt <= 0) return firingRate;
+	    
+	    // Temporal normalization
+	    double windows = (double) dt / config.RATE_WINDOW;
+	    firingRate *= Math.pow(config.RATE_DECAY_PER_WINDOW, windows);
+	    	    
+	    // Avoid negative or too small values
+	    if (firingRate < 0 || firingRate < 1e-6f) {
+	    	firingRate = 0;
+	    }
+	    lastRateUpdate = now;
+	    return firingRate;
+	}
+}
