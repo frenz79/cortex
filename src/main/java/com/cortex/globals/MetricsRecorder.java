@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.LongAdder;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
-import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.layers.SphericalLayer;
 
 public class MetricsRecorder {
@@ -97,7 +96,7 @@ public class MetricsRecorder {
                        .SYNAPSE_PLASTICITY_CONFIG
                        .excitatorySynapticPlasticityConfig();
         
-        for (CorticalNeuron n : layer.getNeurons()) {
+        for (AbstractNeuron n : layer.getNeurons()) {
         	for ( Synapse s : n.getInSynapses() ) {
 	            float w = s.getWeight();
 	            sum += w;

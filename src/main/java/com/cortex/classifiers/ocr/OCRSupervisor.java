@@ -1,7 +1,6 @@
 package com.cortex.classifiers.ocr;
 
 import com.cortex.base.Synapse;
-import com.cortex.brain.BrainNeuromodulator;
 import com.cortex.commons.modules.ISupervisor;
 
 public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
@@ -82,5 +81,9 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 
 	    // clamp in [-1,1]
 	    return Math.max(-1f, Math.min(1f, raw));
+	}
+
+	public OCRClassifier getClassifier() {
+		return classifier;
 	}
 }

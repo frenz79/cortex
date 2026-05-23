@@ -6,7 +6,6 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
-import com.cortex.base.config.LayerConfig;
 import com.cortex.commons.modules.ISensor;
 
 public class Retina implements ISensor {
@@ -162,5 +161,16 @@ public class Retina implements ISensor {
 	@Override
 	public AbstractNeuron[][] getNeurons() {
 		return retinaNeurons;
+	}
+
+	@Override
+	public int getSynapsesCount() {
+		int ret = 0;
+    	for (int x = 0; x < retinaConfig.RETINA_W; x++) {
+    	    for (int y = 0; y < retinaConfig.RETINA_H; y++) {
+    	    	ret += retinaNeurons[x][y].getOutSynapses().size();
+    	    }
+    	}
+		return ret;
 	}
 }

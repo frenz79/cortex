@@ -13,7 +13,6 @@ import java.util.function.Function;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
-import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.Brain;
 import com.cortex.globals.MetricsRecorder.LayerStats;
 
@@ -69,18 +68,18 @@ public class GlobalContext {
 	    }
 	}	
 	
-	
 	public static void traceNeuronFire(long time, AbstractNeuron neuron, int layerId) {
 		if (layerId<0) return;
-        layersStats.computeIfAbsent(layerId, k -> new MetricsRecorder(layer.getLayers(layerId))).neuronFired(neuron);
+        layersStats.computeIfAbsent(layerId, 
+        	k -> new MetricsRecorder(layer.getLayer(layerId))).neuronFired(neuron);
     }
 
     public static void traceSynapseWeightUpdated(long time, int layerId, float oldW, float newW) {
     	if (layerId<0) return;
-        layersStats.computeIfAbsent(layerId, k -> new MetricsRecorder(layer.getLayers(layerId))).sumSynapticWeights(oldW, newW);
+        layersStats.computeIfAbsent(layerId, 
+        	k -> new MetricsRecorder(layer.getLayer(layerId))).sumSynapticWeights(oldW, newW);
     }
-    
-    
+        
 	private static final ConcurrentHashMap<Integer, MetricsRecorder> layersStats = new ConcurrentHashMap<>();	
 
     public static LayerStats getAndResetStats(int layerId) {

@@ -9,4 +9,6 @@ public interface IClassifier<N extends AbstractNeuron> {
 	public N classify(long now) throws InterruptedException;
 	
 	public AbstractNeuron[][] getNeurons();
+
+	public int getSynapsesCount();
 }

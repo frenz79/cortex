@@ -12,7 +12,6 @@ import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.SynapsePlasticityConfig;
-import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
 import com.cortex.commons.modules.IClassifier;
@@ -27,13 +26,13 @@ public class SphericalLayer extends Layer {
 	}
 
 	@Override
-	public int link( Layer layer, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter,	SynapsePlasticityConfig synCfg) {
+	public int link( Layer layer, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter,	SynapsePlasticityConfig synCfg) {
 		Random rnd = ThreadLocalRandom.current();
 		int connections = 0;
 
 		float cellSize = maxDistance; // scelta naturale
 
-		for (CorticalNeuron src : layer.getNeurons()) {
+		for (AbstractNeuron src : layer.getNeurons()) {
 			int k = rnd.nextInt(minConn, maxConn);
 			IntList idxs = findKNearestApprox(
 					src.getPosition().x,
@@ -64,16 +63,16 @@ public class SphericalLayer extends Layer {
 	}
 
 	@Override
-	public int link(IClassifier<? extends CorticalNeuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter, SynapsePlasticityConfig synCfg) {
+	public int link(IClassifier<? extends AbstractNeuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
 		return link (classifier.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, true);
 	}
 
 	@Override
-	public int link( ISensor sensor, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter, SynapsePlasticityConfig synCfg ) {
+	public int link( ISensor sensor, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg ) {
 		return link (sensor.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, false);
 	}
 
-	private final int link( AbstractNeuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<CorticalNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
+	private final int link( AbstractNeuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
 		int w = matrix.length;
 		int h = matrix[0].length;
 		int connections = 0;
@@ -114,7 +113,7 @@ public class SphericalLayer extends Layer {
 	@Override
 	public SphericalLayer populate( CorticalNeuronFactory neuronFactory ) {
 		long startTime = System.nanoTime();
-		this.neurons = new CorticalNeuron[getNeuronsCount()];
+		this.neurons = new AbstractNeuron[getNeuronsCount()];
 
 		//  golden spiral / Fibonacci sphere variation
 		float gr = (float) (3-Math.sqrt(5));

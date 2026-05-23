@@ -108,4 +108,8 @@ public abstract class AbstractNeuron implements IProcessable {
 	public void setActive(boolean isActive) {
 		this.isActive = isActive;
 	}
+
+	public List<Synapse> getOutSynapses() {
+		return outSynapses;
+	}
 }

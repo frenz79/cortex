@@ -24,4 +24,6 @@ public interface ISensor extends IProcessable {
 	public static float randomGaussian() {
 		return (float)ThreadLocalRandom.current().nextGaussian();
 	}
+
+	public int getSynapsesCount();
 }

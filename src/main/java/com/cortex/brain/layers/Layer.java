@@ -14,10 +14,10 @@ import java.util.function.Predicate;
 
 import javax.vecmath.Point3f;
 
+import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.SynapsePlasticityConfig;
-import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
 import com.cortex.commons.modules.IClassifier;
@@ -28,7 +28,7 @@ import net.jafama.FastMath;
 public abstract class Layer {
 
 	protected final LayerConfig config;
-	protected CorticalNeuron[] neurons;
+	protected AbstractNeuron[] neurons;
 	private int synapsesCount = 0;
 	private Map<Long, IntList> spatialHash;
 
@@ -49,7 +49,7 @@ public abstract class Layer {
 		return randomBoolean( config.INHIBITOR_FREQ );
 	}
 
-	public static record Neighbor(CorticalNeuron neuron, float distance) { 
+	public static record Neighbor(AbstractNeuron neuron, float distance) { 
 
 		public float getRealDistance() {
 			return (float)FastMath.sqrtQuick(distance);
@@ -63,7 +63,7 @@ public abstract class Layer {
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 
-			Predicate<CorticalNeuron> filter, 
+			Predicate<AbstractNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );
 
 	public abstract int link( 
@@ -71,20 +71,20 @@ public abstract class Layer {
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 
-			Predicate<CorticalNeuron> filter, 
+			Predicate<AbstractNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );
 
 	public abstract int link( 
-			IClassifier<? extends CorticalNeuron> classifier,
+			IClassifier<? extends AbstractNeuron> classifier,
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 
-			Predicate<CorticalNeuron> filter, 
+			Predicate<AbstractNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );	
 
 	public Layer connectInternal( ) {
 		long startTime = System.nanoTime();
-		Map<CorticalNeuron,Collection<Neighbor>> tmp = new ConcurrentHashMap<>();
+		Map<AbstractNeuron,Collection<Neighbor>> tmp = new ConcurrentHashMap<>();
 		ThreadLocalRandom random = ThreadLocalRandom.current();
 
 		Arrays.stream(getNeurons()).parallel().forEach( n -> {	
@@ -99,7 +99,7 @@ public abstract class Layer {
 
 		// Synapse creation made sync!
 		int connectionsCount = 0;
-		for ( Entry<CorticalNeuron, Collection<Neighbor>> e : tmp.entrySet() ) {
+		for ( Entry<AbstractNeuron, Collection<Neighbor>> e : tmp.entrySet() ) {
 			Synapse.create(e.getKey(), e.getValue(), config.SYNAPSE_PLASTICITY_CONFIG);
 			connectionsCount += e.getValue().size();
 		}
@@ -110,12 +110,12 @@ public abstract class Layer {
 		return this;
 	}
 
-	public Collection<Neighbor> findNearest( CorticalNeuron[] neurons, Point3f target, int N, Predicate<CorticalNeuron> filter ) {
+	public Collection<Neighbor> findNearest( AbstractNeuron[] neurons, Point3f target, int N, Predicate<AbstractNeuron> filter ) {
 		PriorityQueue<Neighbor> pq =
 				new PriorityQueue<>((a,b) -> Float.compare(b.distance(), a.distance()));
 
 		for (int i = 0; i < neurons.length; i++) {
-			CorticalNeuron n = neurons[i];
+			AbstractNeuron n = neurons[i];
 			if (filter.test(n)) {			
 				float dx = n.getPosition().x - target.x;
 				float dy = n.getPosition().y - target.y;
@@ -133,7 +133,7 @@ public abstract class Layer {
 		return pq;
 	}
 
-	public CorticalNeuron[] getNeurons() {
+	public AbstractNeuron[] getNeurons() {
 		return neurons;
 	}
 
@@ -227,7 +227,7 @@ public abstract class Layer {
 		return result;
 	}
     
-    public static Collection<Neighbor> toNeighbors(IntList idxs, CorticalNeuron[] neurons, float px, float py, float pz) {
+    public static Collection<Neighbor> toNeighbors(IntList idxs, AbstractNeuron[] neurons, float px, float py, float pz) {
         ArrayList<Neighbor> out = new ArrayList<>(idxs.size());
         for (int i = 0; i < idxs.size(); i++) {
             int ni = idxs.get(i);

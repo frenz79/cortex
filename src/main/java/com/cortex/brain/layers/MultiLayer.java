@@ -4,47 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cortex.base.config.LayerConfig;
+import com.cortex.base.config.LayerConnectionsConfig;
 
 public abstract class MultiLayer<L extends Layer> {
 
-	private final MultiLayerConfig config;
-	protected List<L> layers;
-
-	public abstract L buildLayer( LayerConfig config );
+	protected List<L> layers = new ArrayList<>();
+	protected List<LayerConnectionsConfig>	layersConnConfig = new ArrayList<>();
 	
-	public MultiLayer(MultiLayerConfig config) {
+	protected abstract L buildLayer( LayerConfig config );
+	
+	public MultiLayer() {
 		super();
-		this.config = config;
 	}
 	
-	public void buildAndConnectLayers() {
-		buildLayers();
-		connectLayers();
-	}
-	
-	private void buildLayers() {
-		this.layers = new ArrayList<L>(config.getNumberOfLayers());
-		for ( LayerConfig config : config.getConfigs() ) {
-			this.layers.add(buildLayer(config));
+	public MultiLayer<L> generateLayers( List<LayerConfig> configs ) {
+		for ( LayerConfig c : configs ) {
+			this.layers.add(c.getLayerId(),	buildLayer(c) );
 		}
+		return this;
 	}
-	
-	private void connectLayers() {
-		//for ( Entry<IntPair, IntraLayersConnConfig> e : config.getLayer2layerConns().entrySet() ) 
 		
-		config.getLayer2layerConns().entrySet().parallelStream().forEach(e -> {
-		
-			L srcLayer = this.layers.get( e.getKey().left() );
-			L dstLayer = this.layers.get( e.getKey().right() );
+	public void generateConnections( List<LayerConnectionsConfig> configs ) {
+		configs.parallelStream().forEach(e -> {
+			
+			Layer srcLayer = e.SOURCE_LAYER;
+			Layer dstLayer = e.TARGET_LAYER;
 			int connections = 0;
 			
 			connections += dstLayer.link(
 				srcLayer, 
-				e.getValue().minConnections(), 
-				e.getValue().maxConnections(),
-				e.getValue().maxDistance(), 
-				e.getValue().filter(),
-				e.getValue().synapsePlasticityConfig()
+				e.MIN_CONNECTIONS, 
+				e.MAX_CONNECTIONS,
+				e.MAX_DISTANCE, 
+				e.NEURON_FILTER_PREDICATE,
+				e.SYNAPSE_PLASTICITY_CONFIG
 			);
 			
 			System.out.println("L"+srcLayer.getLayerId()+" -> L"+dstLayer.getLayerId()+" : created "+connections+" synapses");
@@ -55,14 +48,10 @@ public abstract class MultiLayer<L extends Layer> {
 		return layers;
 	}
 	
-	public L getLayers(int index) {
+	public L getLayer(int index) {
 		return layers.get(index);
 	}
 
-	public MultiLayerConfig getConfig() {
-		return config;
-	}
-	
 	public int getNeuronsCount() {
 		int ret = 0;
 		for ( L l : layers ) {

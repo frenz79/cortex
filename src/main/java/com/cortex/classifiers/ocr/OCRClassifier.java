@@ -1,8 +1,6 @@
 package com.cortex.classifiers.ocr;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.config.CorticalNeuronsConfig;
-import com.cortex.base.config.LayerConfig;
 import com.cortex.commons.modules.IClassifier;
 
 public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
@@ -16,7 +14,7 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
     private long lastClassificationTime = 0L;
 	private OCRCharacterNeuron result;
 	
-	public OCRClassifier(CorticalNeuronsConfig neuronsConfig, LayerConfig layerConfig) {
+	public OCRClassifier() {
 		this.neurons = new OCRCharacterNeuron[1][26];
 		int i=0;
 		int counter = 0;
@@ -81,5 +79,14 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 	@Override
 	public AbstractNeuron[][] getNeurons() {
 		return neurons;
+	}
+
+	@Override
+	public int getSynapsesCount() {
+		int ret = 0;
+    	for (int x = 0; x < neurons[0].length; x++) {
+    	    ret += neurons[0][x].getInSynapses().size();
+    	}
+		return ret;
 	}
 }

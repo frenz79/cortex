@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.layers.Layer.Neighbor;
@@ -13,6 +14,10 @@ import com.cortex.commons.Pair;
 import com.cortex.globals.GlobalContext;
 
 public final class Synapse implements IPlasticSynapse {
+
+    public static final Predicate<AbstractNeuron> ALWAYS_CONNECT_PREDICATE = n -> true;
+    public static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
+    public static final Predicate<AbstractNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = AbstractNeuron::isInhibitor;
 
     private final AbstractNeuron pre;
     private final AbstractNeuron post;

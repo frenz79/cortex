@@ -2,14 +2,10 @@ package com.cortex.base.config;
 
 import java.util.function.Predicate;
 
-import com.cortex.brain.CorticalNeuron;
+import com.cortex.base.AbstractNeuron;
 
 public class LayerConfig {
-    
-    public static final Predicate<CorticalNeuron> ALWAYS_CONNECT_PREDICATE = n -> true;
-    public static final Predicate<CorticalNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
-    public static final Predicate<CorticalNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = CorticalNeuron::isInhibitor;
-    
+        
     private final int LAYER_ID;
 
     // CONFIG PARAMETERS (UPPERCASE + PUBLIC)
@@ -20,7 +16,7 @@ public class LayerConfig {
     public boolean HAS_INCOMING = false;
     public boolean HAS_OUTGOING = false;
     public float MAX_CONN_DISTANCE = 0;
-    public Predicate<CorticalNeuron> CONNECTION_FILTER = ALWAYS_CONNECT_PREDICATE;
+    public Predicate<AbstractNeuron> CONNECTION_FILTER = null;
     public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG = null;
     public CorticalNeuronsConfig CORTICAL_NEURONS_CONFIG = null;
     public float DIMENSION = 0;
@@ -72,7 +68,7 @@ public class LayerConfig {
             return this;
         }
         
-        public Builder withConnectionFilter(Predicate<CorticalNeuron> connectionFilter) {
+        public Builder withConnectionFilter(Predicate<AbstractNeuron> connectionFilter) {
             cfg.CONNECTION_FILTER = connectionFilter;
             return this;
         }
