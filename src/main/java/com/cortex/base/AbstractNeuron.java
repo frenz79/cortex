@@ -7,6 +7,8 @@ import java.util.List;
 import javax.vecmath.Point3f;
 
 import com.cortex.commons.IProcessable;
+import com.cortex.globals.EventBus;
+import com.cortex.globals.EventBus.EventType;
 import com.cortex.globals.GlobalContext;
 
 public abstract class AbstractNeuron implements IProcessable {
@@ -45,20 +47,20 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 	
 	public void fire(Spike spike) throws InterruptedException {
-	//	System.out.println("Spike:"+spike);
 		for ( Synapse s : this.outSynapses  ) {
 			s.addSpike(spike);
 			firingRate += 1.0f;
 		    lastRateUpdate = spike.getCreationTimeNanos();
 		    s.getTarget().setActive(true);
-		    GlobalContext.traceNeuronFire( lastRateUpdate, this, layerId );
+		    //GlobalContext.traceNeuronFire( lastRateUpdate, this, layerId );
+		    EventBus.fire(EventType.NEURON_FIRED, lastRateUpdate, this, null);
 		}
 	}
-			
+	/*	
 	public void synapseUpdated( long time, Synapse synapse, float oldW, float newW) {
 		GlobalContext.traceSynapseWeightUpdated(time, layerId, oldW, newW);
 	}
-	
+	*/
 	public int getIndex() {
 		return index;
 	}

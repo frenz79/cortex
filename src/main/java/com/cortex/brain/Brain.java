@@ -22,6 +22,7 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	private volatile CorticalNeuron[] neurons;
 	private int totalNeurons = 0;
 	private CorticalNeuronFactory neuronFactory;
+	private BrainLayersConnConfig brainLayersConnConfig;
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnectionsConfig> layersConnConfigs = new ArrayList<>();
 
@@ -70,8 +71,8 @@ public class Brain extends MultiLayer<SphericalLayer>{
 			return this;
 		}
 
-		public Builder addLayerConnectionConfig(LayerConnectionsConfig cfg) {
-			brain.layersConnConfig.add(cfg);
+		public Builder addLayerConnectionConfig(BrainLayersConnConfig cfg) {
+			brain.brainLayersConnConfig = cfg;
 			return this;
 		}
 
@@ -96,7 +97,8 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	Brain build() {
 		this.neurons = new CorticalNeuron[totalNeurons];
 		this.neuronFactory = new CorticalNeuronFactory( this.layersConfigs );
-		var layers = generateLayers(this.layersConfigs);
+		var layers = generateLayers(layersConfigs);
+		this.layersConnConfig = this.brainLayersConnConfig.getLayersConnectionsConfig(layers.getAllLayers());
 		generateConnections(this.layersConnConfig);
 		return this;
 	}

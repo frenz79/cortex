@@ -12,16 +12,17 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.Brain;
+import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.layers.SphericalLayer;
 import com.cortex.commons.modules.IActuator;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 import com.cortex.commons.modules.ISupervisor;
-import com.cortex.globals.MetricsRecorder.LayerStats;
+import com.cortex.metrics.LayerStats;
+import com.cortex.metrics.MetricsRecorder;
 
-public class Thinker {
+public class NeuralEngine {
 
 	private static final AtomicLong GLOBAL_TIME = new AtomicLong();
 
@@ -46,11 +47,15 @@ public class Thinker {
 
 	private ScheduledFuture<?> neuronTask;
 	private ScheduledFuture<?> ioTask;
-
-	private final Brain brain;
+	private ScheduledFuture<?> stabilizerTask;
 	
-	public Thinker(Brain brain) {
+	private final Brain brain;
+	private final AdaptiveStabilizer stabilizer;
+	
+	public NeuralEngine(Brain brain, AdaptiveStabilizer stabilizer) {
 		this.brain = Objects.requireNonNull(brain);
+		this.stabilizer = stabilizer;
+		
 		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
 		this.sensors = new CopyOnWriteArrayList<>();
 		this.actuators = new CopyOnWriteArrayList<>();
@@ -146,27 +151,51 @@ public class Thinker {
 				TimeUnit.NANOSECONDS
 				);
 
+
+		stabilizerTask = scheduler.scheduleAtFixedRate(
+		        stabilizer::step,
+		        1_000,      // delay iniziale
+		        500,        // ogni 500 ms
+		        TimeUnit.MILLISECONDS
+		);
+		
 		// scheduled reporter already present; keep using scheduler
 		scheduler.scheduleAtFixedRate(() -> {
 			try {
 				System.out.println("== Avg Process Time:" + GlobalContext.getAverageProcessTimeMillis() + "ms ===========");
+				System.out.println(
+						  "L" 
+						+ " | NEURONS" 
+						+ " | ACT"
+						+ " | SYN_W"
+						+ " | SYN_W_STD" 
+						+ " | FIRE_ACT" 
+						+ " | FIRE_ALL" 
+						+ " | SAT_MAX" 
+						+ " | SAT_MIN"
+						+ " | SPARSE" 
+						+ " | PLAST" 
+						+ " | ENERGY" 
+						);
+				
 				for (SphericalLayer l : brain.getAllLayers()) {
 					LayerStats stats = GlobalContext.getAndResetStats(l.getLayerId());
 					if (stats != null) {
 						System.out.println(
-								"L:" + l.getLayerId() 
-								+ " | ACT:" + stats.activeNeurons()
-								+ " | SYN_W:" + String.format("%,.2f",stats.averageSynapticWeight() )
-								+ " | SYN_W_STD:" + String.format("%,.2f",stats.synapticWeightStdDev() )
-								+ " | FIRE_ACT:" + String.format("%,.2f",stats.avgFiringRateActive() )
-								+ " | FIRE_ALL:" + String.format("%,.2f",stats.avgFiringRateAll() )
-								+ " | EN:" + String.format("%,.2f",stats.energy() )
-								+ " | SAT_MAX:" + String.format("%,.2f",stats.saturatedMaxRatio() )
-								+ " | SAT_MIN:" + String.format("%,.2f",stats.saturatedMinRatio() )
-								+ " | SPARSE:" + String.format("%,.2f",stats.sparsity() )
-								+ " | NEU:" + stats.totalNeurons() 
-								+ " | PLAST:" + String.format("%,.2f",stats.totalPlasticity())
+								l.getLayerId() 
+								+ " | " + stats.totalNeurons() 
+								+ " | " + stats.activeNeurons()
+								+ " | " + String.format("%,.2f",stats.averageSynapticWeight() )
+								+ " | " + String.format("%,.2f",stats.synapticWeightStdDev() )
+								+ " | " + String.format("%,.2f",stats.avgFiringRateActive() )
+								+ " | " + String.format("%,.2f",stats.avgFiringRateAll() )
+								+ " | " + String.format("%,.2f",stats.saturatedMaxRatio() )
+								+ " | " + String.format("%,.2f",stats.saturatedMinRatio() )
+								+ " | " + String.format("%,.2f",stats.sparsity() )
+								+ " | " + String.format("%,.2f",stats.totalPlasticity())
+								+ " | " + String.format("%,.2f",stats.energy() )
 								);
+						
 					} else {
 						System.out.println("Layer:" + l.getLayerId() + " NO STATS");
 					}
@@ -180,6 +209,8 @@ public class Thinker {
 	public synchronized void stop() {
 		if (neuronTask != null) neuronTask.cancel(true);
 		if (ioTask != null) ioTask.cancel(true);
+		if (stabilizerTask != null) stabilizerTask.cancel(true);
+		
 		scheduler.shutdownNow();
 		try {
 			if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {

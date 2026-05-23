@@ -2,6 +2,8 @@ package com.cortex.viewer;
 
 import java.awt.BorderLayout;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BoundingSphere;
@@ -19,25 +21,24 @@ import javax.swing.JScrollPane;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import com.cortex.base.config.LayerConfig;
+import com.cortex.brain.Brain;
 import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.layers.Layer;
 import com.cortex.brain.layers.MultiLayer;
-import com.cortex.brain.layers.MultiLayerConfig;
 import com.cortex.globals.GlobalContext;
 import com.sun.j3d.utils.behaviors.mouse.MouseRotate;
 import com.sun.j3d.utils.behaviors.mouse.MouseTranslate;
 import com.sun.j3d.utils.behaviors.mouse.MouseWheelZoom;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 
-public class SimpleViewer<MC extends MultiLayerConfig<C>, C extends LayerConfig, L extends Layer<C>> extends JFrame {
+public class SimpleViewer extends JFrame {
 
-	private final MultiLayer<MC,C,L> layers;
+	private final Brain brain;
 
-	public SimpleViewer( MultiLayer<MC,C,L> layers, boolean drawNeurons, boolean drawSynapses ) {
+	public SimpleViewer( Brain brain, boolean drawNeurons, boolean drawSynapses ) {
 		super("Simple Viewer");
 		System.out.println(" ------------------------------------------- ");
-		this.layers = layers;
+		this.brain = brain;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(800, 600);
 
@@ -79,13 +80,15 @@ public class SimpleViewer<MC extends MultiLayerConfig<C>, C extends LayerConfig,
 	
 	private void registerNeuronLayers( TransformGroup objRotate ) {
 		long startTime = System.nanoTime();
-		for ( L layer : layers.getAllLayers() ) {
+		int numLayers = brain.getAllLayers().size();
+		
+		for ( Layer layer : brain.getAllLayers() ) {
 			Shape3D layer3d = buildNeuronsShape( 
 				layer, 
-				getGradient(layer.getId(), 
-					layers.getAllLayers().size(), 
-					new Color3f(255.0f, 0.0f, 0.0f), 
-					new Color3f(0.0f, 255.0f, 255.0f)) );
+				getGradient(layer.getLayerId(), 
+				numLayers	, 
+				new Color3f(255.0f, 0.0f, 0.0f), 
+				new Color3f(0.0f, 255.0f, 255.0f)) );
 			objRotate.addChild(layer3d);
 		}
 
@@ -142,12 +145,13 @@ public class SimpleViewer<MC extends MultiLayerConfig<C>, C extends LayerConfig,
 */
 	private Shape3D buildNeuronsShape( Layer layer, Color3f color ) {
 		// Neurons
-		Point3f[] plaPts = new Point3f[GlobalContext.getNeuronsCount()];
-		int i = 0;
-
-		for ( CorticalNeuron n : layer.getNeurons() ) {
-			plaPts[i++] = n.getPosition();
-		}
+		Point3f[] plaPts = new Point3f[brain.getNeuronsCount()];
+		AtomicInteger i = new AtomicInteger(0);
+		brain.streamAllNeurons(  n -> {
+			 plaPts[i.getAndIncrement()] = n.getPosition();
+			 return true;
+		});
+		
 
 		PointArray pla = new PointArray(plaPts.length, GeometryArray.COORDINATES);
 		pla.setCoordinates(0, plaPts);

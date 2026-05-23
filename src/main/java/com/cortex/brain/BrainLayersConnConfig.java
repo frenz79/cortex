@@ -13,7 +13,8 @@ import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.layers.Layer;
 
 public class BrainLayersConnConfig {
-
+	private final int connScale;
+	
 	public static SynapsePlasticityConfig ffPlasticity() {
 		return new SynapsePlasticityConfig(
 				ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -68,7 +69,7 @@ public class BrainLayersConnConfig {
 				);
 	}
 
-	public static List<LayerConnectionsConfig> getLayersConnectionsConfig(int connScale, List<Layer> layers) {
+	public List<LayerConnectionsConfig> getLayersConnectionsConfig(List<? extends Layer> layers) {
 		List<LayerConnectionsConfig> cfg = new ArrayList<>();
 		Layer L0 = layers.get(0);
 		Layer L1 = layers.get(1);
@@ -256,7 +257,7 @@ public class BrainLayersConnConfig {
 		// L4 -> L0 (feedback debole)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L4).to(L0)
-				.withConnections((int)(0.05*connScale), (int)(0.2*connScale), 0.90f)
+				.withConnections((int)(0.1*connScale), (int)(0.2*connScale), 0.90f)
 				.withSynapsePlasticityConfig(fbPlasticity())
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
@@ -286,5 +287,10 @@ public class BrainLayersConnConfig {
 				.build());
 
 		return cfg;
+	}
+
+	public BrainLayersConnConfig(int connScale) {
+		super();
+		this.connScale = connScale;
 	}
 }

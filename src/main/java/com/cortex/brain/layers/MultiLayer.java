@@ -25,7 +25,7 @@ public abstract class MultiLayer<L extends Layer> {
 	}
 		
 	public void generateConnections( List<LayerConnectionsConfig> configs ) {
-		configs.parallelStream().forEach(e -> {
+		for (LayerConnectionsConfig e : configs) {
 			
 			Layer srcLayer = e.SOURCE_LAYER;
 			Layer dstLayer = e.TARGET_LAYER;
@@ -41,7 +41,7 @@ public abstract class MultiLayer<L extends Layer> {
 			);
 			
 			System.out.println("L"+srcLayer.getLayerId()+" -> L"+dstLayer.getLayerId()+" : created "+connections+" synapses");
-		});
+		};
 	}
 	
 	public List<L> getAllLayers() {

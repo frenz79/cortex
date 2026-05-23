@@ -2,6 +2,7 @@ package com.cortex.brain;
 
 import static com.cortex.base.Synapse.ALWAYS_CONNECT_PREDICATE;
 
+import com.cortex.base.config.CorticalNeuronsConfig;
 import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.config.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.config.LayerConfig;
@@ -10,7 +11,7 @@ import com.cortex.base.config.SynapsePlasticityConfig;;
 public class BrainLayersConfig {
 
 	//	(int)(totN*0.15), 0.15f,  5*connScale, 7*connScale, 0.60f, 1.00f, true, true,
-	public static LayerConfig l0_config( int neuronsCount, int minConnections, int maxConnections, float maxConnDistance ) {
+	public LayerConfig l0_config( int neuronsCount, int minConnections, int maxConnections, float maxConnDistance ) {
 		return	LayerConfig.newBuilder(0)
 				.enableInConn(true)
 				.enableOutConn(true)
@@ -19,6 +20,12 @@ public class BrainLayersConfig {
 				.withNeurons(neuronsCount)
 				.withConnection(minConnections, maxConnections, maxConnDistance)
 				.withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
+				.withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
+					.withFiringThreshold(0.25f)
+					.withRepolarizationPerSecond(0.3f)
+					.withRate(50_000_000l, 0.95f)
+					.build()
+				)
 				.withSynapsePlasticityConfig(
 						new SynapsePlasticityConfig(	
 								ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -38,7 +45,7 @@ public class BrainLayersConfig {
 						).build();
 	}
 
-	public static LayerConfig l1_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
+	public LayerConfig l1_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
 		return LayerConfig.newBuilder(1)
 				.enableInConn(true)
 				.enableOutConn(true)
@@ -47,6 +54,12 @@ public class BrainLayersConfig {
 				.withNeurons(neuronsCount)
 				.withConnection(minConnections, maxConnections, maxConnDistance)
 				.withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
+				.withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
+					.withFiringThreshold(0.25f)
+					.withRepolarizationPerSecond(0.3f)
+					.withRate(50_000_000l, 0.95f)
+					.build()
+				)
 				.withSynapsePlasticityConfig(
 						new SynapsePlasticityConfig(
 								ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -66,7 +79,7 @@ public class BrainLayersConfig {
 						).build();
 	}
 
-	public static LayerConfig l2_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
+	public LayerConfig l2_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
 		return LayerConfig.newBuilder(2)
 				.enableInConn(true)
 				.enableOutConn(true)
@@ -75,6 +88,12 @@ public class BrainLayersConfig {
 				.withNeurons(neuronsCount)
 				.withConnection(minConnections, maxConnections, maxConnDistance)
 				.withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
+				.withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
+					.withFiringThreshold(0.25f)
+					.withRepolarizationPerSecond(0.3f)
+					.withRate(50_000_000l, 0.95f)
+					.build()
+				)
 				.withSynapsePlasticityConfig(
 						new SynapsePlasticityConfig(
 								ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -94,7 +113,7 @@ public class BrainLayersConfig {
 						).build();
 	}
 
-	public static LayerConfig l3_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
+	public LayerConfig l3_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
 		return LayerConfig.newBuilder(3)
 				.enableInConn(true)
 				.enableOutConn(true)
@@ -103,6 +122,12 @@ public class BrainLayersConfig {
 				.withNeurons(neuronsCount)
 				.withConnection(minConnections, maxConnections, maxConnDistance)
 				.withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
+				.withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
+					.withFiringThreshold(0.35f)
+					.withRepolarizationPerSecond(0.2f)
+					.withRate(100_000_000l, 0.95f)
+					.build()
+				)
 				.withSynapsePlasticityConfig(
 						new SynapsePlasticityConfig(
 								ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -122,7 +147,7 @@ public class BrainLayersConfig {
 						).build();
 	}
 
-	public static LayerConfig l4_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
+	public LayerConfig l4_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
 		return LayerConfig.newBuilder(4)
 				.enableInConn(true)
 				.enableOutConn(true)
@@ -131,6 +156,12 @@ public class BrainLayersConfig {
 				.withNeurons(neuronsCount)
 				.withConnection(minConnections, maxConnections, maxConnDistance)
 				.withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
+				.withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
+					.withFiringThreshold(0.25f)
+					.withRepolarizationPerSecond(0.2f)
+					.withRate(100_000_000l, 0.95f)
+					.build()
+				)
 				.withSynapsePlasticityConfig(
 						new SynapsePlasticityConfig(
 								ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -150,7 +181,7 @@ public class BrainLayersConfig {
 						).build();
 	}
 
-	public static LayerConfig l5_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
+	public LayerConfig l5_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
 		return LayerConfig.newBuilder(5)
 				.enableInConn(true)
 				.enableOutConn(true)
@@ -159,6 +190,12 @@ public class BrainLayersConfig {
 				.withNeurons(neuronsCount)
 				.withConnection(minConnections, maxConnections, maxConnDistance)
 				.withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
+				.withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
+					.withFiringThreshold(0.45f)
+					.withRepolarizationPerSecond(0.15f)
+					.withRate(150_000_000l, 0.95f)
+					.build()
+				)
 				.withSynapsePlasticityConfig(
 						new SynapsePlasticityConfig(
 								ExcitatorySynapticPlasticityConfig.newBuilder()

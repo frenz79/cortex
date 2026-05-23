@@ -11,6 +11,9 @@ import com.cortex.brain.layers.Layer.Neighbor;
 import com.cortex.commons.IPlasticSynapse;
 import com.cortex.commons.IPlasticityRule;
 import com.cortex.commons.Pair;
+import com.cortex.globals.EventBus;
+import com.cortex.globals.EventBus.EventType;
+import com.cortex.globals.EventBus.SynapseUpdatedData;
 import com.cortex.globals.GlobalContext;
 
 public final class Synapse implements IPlasticSynapse {
@@ -105,10 +108,6 @@ public final class Synapse implements IPlasticSynapse {
 		this.spikes.add(spike);
 	}
 	
-	public AbstractNeuron getTarget() {
-		return post;
-	}
-	
 	public boolean isEmpty() {
 		return spikes.isEmpty();
 	}
@@ -140,7 +139,9 @@ public final class Synapse implements IPlasticSynapse {
     public void update(long t) {
 		float oldValue = this.plasticityRule.getWeight();
 		this.plasticityRule.update(t, this);
-		pre.synapseUpdated( t, this, oldValue, this.plasticityRule.getWeight() );
+		// pre.synapseUpdated( t, this, oldValue, this.plasticityRule.getWeight() );
+		EventBus.fire(EventType.SYNAPSE_UPDATED, t, this, new SynapseUpdatedData(oldValue, this.plasticityRule.getWeight()));
+		
     }
 	@Override
     public float getWeight() {
@@ -149,5 +150,13 @@ public final class Synapse implements IPlasticSynapse {
 
 	public boolean isEligible(long now, long window) {
 		return this.plasticityRule.isEligible(now,window);
+	}
+
+	public AbstractNeuron getTarget() {
+		return post;
+	}
+	
+	public AbstractNeuron getSource() {
+		return pre;
 	}
 }
