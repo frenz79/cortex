@@ -21,19 +21,19 @@ public class BrainLayersConfig {
 				.withConnection(minConnections, maxConnections, maxConnDistance)
 				.withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
 				.withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
-					.withFiringThreshold(0.25f)
-					.withRepolarizationPerSecond(0.3f)
-					.withRate(50_000_000l, 0.95f)
+					.withFiringThreshold(0.10f)
+					.withRepolarizationPerSecond(0.10f)
+					.withRate(50_000_000l, 0.98f)
 					.build()
 				)
 				.withSynapsePlasticityConfig(
 						new SynapsePlasticityConfig(	
 								ExcitatorySynapticPlasticityConfig.newBuilder()
-								.withSTDP(0.003f, 0.0025f, 60_000_000L, 120_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
-								.withWeights(0.25f, 0.35f, 0.12f, 0.25f)	// INITIAL, W_MAX, W_MIN, W_BASELINE
-								.withEligibility(0.992f) 					// ELIGIBILITY_DECAY
+								.withSTDP(0.01f, 0.009f, 60_000_000L, 120_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+								.withWeights(0.25f, 0.50f, 0.05f, 0.20f)	// INITIAL, W_MAX, W_MIN, W_BASELINE
+								.withEligibility(0.995f) 					// ELIGIBILITY_DECAY
 								.withPlasticity(30f, 5f)					// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
-								.withHomeostaticRate(0.003f) 				// HOMEOSTATIC_RATE
+								.withHomeostaticRate(0.01f) 				// HOMEOSTATIC_RATE
 								.withInitialDelay(1.2f)
 								.build(),			
 								InhibitorySynapticPlasticityConfig.newBuilder()

@@ -35,7 +35,21 @@ public class DiscreteAdaptiveStabilizer {
 
 		ExcitatorySynapticPlasticityConfig pcfg =
 				layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.excitatorySynapticPlasticityConfig();
+		
+		if (lid == 0) {
+		    // revival se morto
+		    if (stats.activeNeurons() == 0) {
+		        ncfg.FIRING_THRESHOLD -= 0.05f;
+		        ncfg.REPOLARIZATION_PER_SECOND -= 0.05f;
+		    }
 
+		    // clamp minimi
+		    ncfg.FIRING_THRESHOLD = Math.max(0.05f, ncfg.FIRING_THRESHOLD);
+		    ncfg.REPOLARIZATION_PER_SECOND = Math.max(0.01f, ncfg.REPOLARIZATION_PER_SECOND);
+
+		    return; // IMPORTANTISSIMO: NON TOCCARE ALTRO
+		}
+		
 		// ---------------------------------------------------------
 		// 1) Recupero parametri per-layer (override)
 		// ---------------------------------------------------------
@@ -64,8 +78,12 @@ public class DiscreteAdaptiveStabilizer {
 		// ---------------------------------------------------------
 		if (lid == 0) {
 			ncfg.FIRING_THRESHOLD = Math.min(ncfg.FIRING_THRESHOLD, 0.6f);
-			ncfg.REPOLARIZATION_PER_SECOND = Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.2f);
 		}
+		
+		if (lid == 0)
+		    ncfg.REPOLARIZATION_PER_SECOND = Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.15f);
+		else
+		    ncfg.REPOLARIZATION_PER_SECOND = Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.3f);
 
 		// ---------------------------------------------------------
 		// 4) Protezione layer profondi (mai troppo attivi)
@@ -88,7 +106,8 @@ public class DiscreteAdaptiveStabilizer {
 			pcfg.A_PLUS  *= (1f - config.MAX_A_PLUS_FACTOR);
 			pcfg.A_MINUS *= (1f + config.MAX_A_MINUS_FACTOR);
 
-		} else if (firingAll < firingLow - config.FIRING_HYSTERESIS) {
+		} else if (lid != 0 && firingAll < firingLow - config.FIRING_HYSTERESIS) {
+			// No firing control for sensorial layer 0 
 			float dTh = (lid == 0 ? clampDelta(-0.005f, config.MAX_THRESHOLD_STEP)
                    : clampDelta(-0.01f, config.MAX_THRESHOLD_STEP));
 
@@ -162,14 +181,12 @@ public class DiscreteAdaptiveStabilizer {
 
 		clampNeuronParams(ncfg);
 		clampPlasticityParams(pcfg);
-		ncfg.REPOLARIZATION_PER_SECOND =
-			    Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.3f);
 		
 		// If a layer is dead..kick it!
 		if (stats.activeNeurons() == 0 && lid == 0) {
 			   // revival più deciso
-		    ncfg.FIRING_THRESHOLD -= 0.02f;
-		    ncfg.REPOLARIZATION_PER_SECOND -= 0.02f;
+		    ncfg.FIRING_THRESHOLD -= 0.05f;
+		    ncfg.REPOLARIZATION_PER_SECOND -= 0.05f;
 
 		    // clamp per evitare runaway
 		    ncfg.FIRING_THRESHOLD = Math.max(0.1f, ncfg.FIRING_THRESHOLD);
