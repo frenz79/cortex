@@ -77,10 +77,10 @@ public class MetricsRecorder {
 					  "L" 
 					+ " | NEURONS" 
 					+ " | ACT"
-					+ " | SYN_W"
-					+ " | SYN_W_STD" 
 					+ " | FIRE_ACT" 
 					+ " | FIRE_ALL" 
+					+ " | SYN_W"
+					+ " | SYN_W_STD" 
 					+ " | SAT_MAX" 
 					+ " | SAT_MIN"
 					+ " | SPARSE" 
@@ -95,9 +95,9 @@ public class MetricsRecorder {
 							l.getLayerId() 
 							+ " | " + stats.totalNeurons() 
 							+ " | " + stats.activeNeurons()
+							+ " | " + String.format("%,.2f",stats.avgFiringRateActive() )
 							+ " | " + String.format("%,.2f",stats.averageSynapticWeight() )
 							+ " | " + String.format("%,.2f",stats.synapticWeightStdDev() )
-							+ " | " + String.format("%,.2f",stats.avgFiringRateActive() )
 							+ " | " + String.format("%,.2f",stats.avgFiringRateAll() )
 							+ " | " + String.format("%,.2f",stats.saturatedMaxRatio() )
 							+ " | " + String.format("%,.2f",stats.saturatedMinRatio() )

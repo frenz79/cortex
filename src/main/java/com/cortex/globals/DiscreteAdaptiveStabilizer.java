@@ -192,6 +192,14 @@ public class DiscreteAdaptiveStabilizer {
 		    ncfg.FIRING_THRESHOLD = Math.max(0.1f, ncfg.FIRING_THRESHOLD);
 		    ncfg.REPOLARIZATION_PER_SECOND = Math.max(0.01f, ncfg.REPOLARIZATION_PER_SECOND);
 		}
+		
+		if (stats.activeNeurons() == 0 && lid > 0) {
+		    ncfg.FIRING_THRESHOLD -= 0.02f;
+		    ncfg.REPOLARIZATION_PER_SECOND -= 0.02f;
+
+		    ncfg.FIRING_THRESHOLD = Math.max(0.15f, ncfg.FIRING_THRESHOLD);
+		    ncfg.REPOLARIZATION_PER_SECOND = Math.max(0.02f, ncfg.REPOLARIZATION_PER_SECOND);
+		}
 	}
 
 	private final static float clampDelta(float delta, float maxStep) {

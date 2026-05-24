@@ -18,17 +18,17 @@ public class BrainLayersConnConfig {
 	public static SynapsePlasticityConfig ffPlasticity() {
 		return new SynapsePlasticityConfig(
 				ExcitatorySynapticPlasticityConfig.newBuilder()
-				.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
-				.withWeights(0.20f, 0.30f, 0.09f, 0.25f)// INITIAL, W_MAX, W_MIN, W_BASELINE
-				.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+				.withSTDP(0.0030f, 0.0015f, 60_000_000L, 120_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+				.withWeights(0.28f, 0.45f, 0.12f, 0.30f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+				.withEligibility(0.995f) 				// ELIGIBILITY_DECAY
 				.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
-				.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
+				.withHomeostaticRate(0.003f) 			// HOMEOSTATIC_RATE
 				.withInitialDelay(1.2f)
 				.build(),
 				InhibitorySynapticPlasticityConfig.newBuilder()
-				.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
-				.withLearningRate(0.005f)				// LEARNING_RATE
-				.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+				.withWeights(0.40f, 1.5f, 0.10f)			// INITIAL, W_MAX, W_MIN,
+				.withLearningRate(0.002f)				// LEARNING_RATE
+				.withTargetFiringRate(8.0f)				// TARGET_FIRING_RATE
 				.build()
 				);
 	}
