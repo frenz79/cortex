@@ -4,24 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
-import com.cortex.brain.Brain;
 
 public class GlobalContext {
 
     // Process timing: keep nanos internally
     private static final AtomicLong processCounter = new AtomicLong(0);
     private static final LongAdder processTimeNanos = new LongAdder();
-		
-	
 
 	/**
      * Returns average process time in milliseconds since last call and resets counters.

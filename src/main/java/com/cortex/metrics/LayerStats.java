@@ -1,6 +1,10 @@
 package com.cortex.metrics;
 
+import com.cortex.brain.layers.Layer;
+
 public record LayerStats( 
+		Layer layer,
+		
 		double averageSynapticWeight,
 
 		// if 0     -> collapsing

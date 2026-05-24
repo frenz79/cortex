@@ -16,7 +16,8 @@ public class EventBus {
 
 	public static enum EventType {
 		NEURON_FIRED,
-		SYNAPSE_UPDATED
+		SYNAPSE_UPDATED,
+		LAYER_STATS
 	}
 
 	public static final EnumMap<EventType, List<EventListener>> listeners = new EnumMap<>(EventType.class);

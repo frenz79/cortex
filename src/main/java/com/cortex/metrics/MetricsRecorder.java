@@ -7,7 +7,6 @@ import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.brain.Brain;
 import com.cortex.brain.layers.Layer;
-import com.cortex.brain.layers.SphericalLayer;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
@@ -19,8 +18,12 @@ public class MetricsRecorder {
 	private final Brain brain;
 	private final ConcurrentHashMap<Integer, MetricsLayerRecorder> layersStats = new ConcurrentHashMap<>();	
 	
-	public MetricsRecorder( Brain brain ) {
+	private final long dumpStatsTimeNanos;
+	private long lastDumpTimeNanos = System.nanoTime();
+	
+	public MetricsRecorder( Brain brain, long dumpStatsTimeMillis ) {
 		this.brain = brain;
+		this.dumpStatsTimeNanos = TimeUnit.MILLISECONDS.toNanos(dumpStatsTimeMillis);
 		
 		EventBus.addListener(EventType.NEURON_FIRED,  new EventListener() {
 			
@@ -56,13 +59,20 @@ public class MetricsRecorder {
         return (s != null) ? s.getStatsAndReset() : null;
     }
     
-    public LayerStats pollLayerStats(int layerId) {
-        return getAndResetStats(layerId);
+    public LayerStats pollLayerStats(long time, int layerId) {
+    	LayerStats stats = getAndResetStats(layerId);
+    	EventBus.fire(EventType.LAYER_STATS, time, this, stats);
+    	
+    	if (dumpStatsTimeNanos>0 && time - lastDumpTimeNanos > dumpStatsTimeNanos) {
+    		dumpStats(time);
+    		lastDumpTimeNanos = time;
+    	}
+        return stats;
     }
     
-	public void dumpStats() {
+	private void dumpStats(long time) {
 		try {
-			System.out.println("== Avg Process Time:" + GlobalContext.getAverageProcessTimeMillis() + "ms ===========");
+			System.out.println("== Time: "+time+" - Avg Process Time:" + GlobalContext.getAverageProcessTimeMillis() + "ms ===========");
 			System.out.println(
 					  "L" 
 					+ " | NEURONS" 

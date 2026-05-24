@@ -14,12 +14,12 @@ import java.util.function.Function;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.brain.Brain;
 import com.cortex.brain.CorticalNeuron;
-import com.cortex.brain.layers.SphericalLayer;
+import com.cortex.brain.layers.Layer;
 import com.cortex.commons.modules.IActuator;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 import com.cortex.commons.modules.ISupervisor;
-import com.cortex.metrics.LayerStats;
+import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {
 
@@ -33,6 +33,8 @@ public class NeuralEngine {
 		GLOBAL_TIME.set(t);
 	}
 
+	private final NeuralEngineConfig config;
+
 	private final List<ISensor> sensors;
 	private final List<IActuator> actuators;
 	private final List<IClassifier<?>> classifiers;
@@ -40,21 +42,17 @@ public class NeuralEngine {
 
 	private final ScheduledExecutorService scheduler;
 
-	// scheduling parameters (tunable)
-	private static final long NEURON_PERIOD_NANOS = TimeUnit.MICROSECONDS.toNanos(200); // 200 µs
-	private static final long IO_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(1); // 1 ms
-
 	private ScheduledFuture<?> neuronTask;
 	private ScheduledFuture<?> ioTask;
-	private ScheduledFuture<?> stabilizerTask;
-	
+	private ScheduledFuture<?> metricsRecorderTask;
+
 	private final Brain brain;
-	private AdaptiveStabilizer stabilizer;
-	
-	public NeuralEngine(Brain brain) {
+	private MetricsRecorder metricsRecorder;
+
+	public NeuralEngine(Brain brain, NeuralEngineConfig config ) {
 		this.brain = Objects.requireNonNull(brain);
-		this.stabilizer = stabilizer;
-		
+		this.config = Objects.requireNonNull(config);
+
 		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
 		this.sensors = new CopyOnWriteArrayList<>();
 		this.actuators = new CopyOnWriteArrayList<>();
@@ -70,9 +68,9 @@ public class NeuralEngine {
 		// single-thread scheduler is fine; increase pool size if tasks are heavy
 		this.scheduler = Executors.newScheduledThreadPool(2, tf);
 	}
-	
-	public NeuralEngine withStabilizer(AdaptiveStabilizer stabilizer) {
-		this.stabilizer = stabilizer;
+
+	public NeuralEngine withMetricsRecorder(MetricsRecorder metricsRecorder) {
+		this.metricsRecorder = metricsRecorder;
 		return this;
 	}
 
@@ -144,32 +142,38 @@ public class NeuralEngine {
 		neuronTask = scheduler.scheduleAtFixedRate(
 				neuronRunnable,
 				0,
-				NEURON_PERIOD_NANOS,
+				config.NEURON_PERIOD_NANOS,
 				TimeUnit.NANOSECONDS
 				);
 
 		ioTask = scheduler.scheduleAtFixedRate(
 				ioRunnable,
 				0,
-				IO_PERIOD_NANOS,
+				config.IO_PERIOD_NANOS,
 				TimeUnit.NANOSECONDS
 				);
 
-		if (stabilizer!=null) {
-			stabilizerTask = scheduler.scheduleAtFixedRate(
-			        stabilizer::step,
-			        1_000,      // delay iniziale
-			        500,        // ogni 500 ms
-			        TimeUnit.MILLISECONDS
-			);
+		if (metricsRecorder!=null) {
+			metricsRecorderTask = scheduler.scheduleAtFixedRate(
+				() -> {
+					long now = now();
+					for (Layer layer : brain.getAllLayers()) {
+						int layerId = layer.getLayerId();
+						metricsRecorder.pollLayerStats(now, layerId);
+					}
+				},
+				1_000,
+				config.METRICS_PERIOD_NANOS, 
+				TimeUnit.NANOSECONDS
+				);
 		}
 	}
 
 	public synchronized void stop() {
 		if (neuronTask != null) neuronTask.cancel(true);
 		if (ioTask != null) ioTask.cancel(true);
-		if (stabilizerTask != null) stabilizerTask.cancel(true);
-		
+		if (metricsRecorderTask != null) metricsRecorderTask.cancel(true);
+
 		scheduler.shutdownNow();
 		try {
 			if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {

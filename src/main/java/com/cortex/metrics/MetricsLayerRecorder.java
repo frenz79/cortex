@@ -25,13 +25,13 @@ public class MetricsLayerRecorder {
 		this.layer = layer;
 	}
 	
-	public MetricsLayerRecorder neuronFired(AbstractNeuron neuron) {
+	MetricsLayerRecorder neuronFired(AbstractNeuron neuron) {
 		spikeCounter.increment();
 		activeNeurons.add(neuron);
 		return this;
 	}
 
-	public MetricsLayerRecorder sumSynapticWeights(SynapseUpdatedData data) {
+	MetricsLayerRecorder sumSynapticWeights(SynapseUpdatedData data) {
 		absWeightSum.add(Math.abs(data.newValue() - data.oldValue()));
 		return this;
 	}
@@ -99,6 +99,7 @@ public class MetricsLayerRecorder {
 		activeNeurons.clear();
 
 		return new LayerStats(
+				layer,
 				averageSynapticWeight,
 				synapticWeightStdDev,
 				activeCount,
@@ -113,5 +114,9 @@ public class MetricsLayerRecorder {
 				totalPlasticity,
 				energy
 				);
+	}
+
+	public Layer getLayer() {
+		return layer;
 	}
 }

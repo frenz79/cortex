@@ -19,9 +19,12 @@ import com.cortex.classifiers.ocr.OCRClassifier;
 import com.cortex.classifiers.ocr.OCRSupervisor;
 import com.cortex.commons.modules.ISensor;
 import com.cortex.commons.modules.ISupervisor;
-import com.cortex.globals.AdaptiveStabilizer;
-import com.cortex.globals.GlobalContext;
+import com.cortex.globals.DiscreteAdaptiveStabilizer;
+import com.cortex.globals.DiscreteAdaptiveStabilizerConfig;
+import com.cortex.globals.DiscreteAdaptiveStabilizerConfig.LayerAdaptiveParams;
 import com.cortex.globals.NeuralEngine;
+import com.cortex.globals.NeuralEngineConfig;
+import com.cortex.metrics.MetricsRecorder;
 import com.cortex.sensors.retina.Retina;
 import com.cortex.sensors.retina.RetinaConfig;
 import com.cortex.sensors.retina.RetinaNeuronConfig;
@@ -116,15 +119,50 @@ public class Boostrap {
 		System.out.println("Number of OCR Synapses:"+ocrSupervisor.getClassifier().getSynapsesCount());
 
 		// Stabilizer
-		AdaptiveStabilizer stabilizer = new AdaptiveStabilizer(brain, null);
+		DiscreteAdaptiveStabilizer stabilizer = new DiscreteAdaptiveStabilizer( 
+			DiscreteAdaptiveStabilizerConfig.newBuilder()
+			.addLayerParams(0, new LayerAdaptiveParams(
+			        8f, 20f,			// TARGET_FIRING_LOW - HIGH
+			        0.90f, 0.98f,		// TARGET_SPARSITY_MIN - HIGH
+			        150_000f			// MAX_ENERGY
+			    ))
+			    .addLayerParams(1, new LayerAdaptiveParams(
+			        1f, 5f,				// TARGET_FIRING_LOW - HIGH
+			        0.95f, 0.995f,		// TARGET_SPARSITY_MIN - HIGH
+			        50_000f				// MAX_ENERGY
+			    ))
+			    .addLayerParams(2, new LayerAdaptiveParams(
+			        0.1f, 1.0f,			// TARGET_FIRING_LOW - HIGH
+			        0.97f, 0.999f,		// TARGET_SPARSITY_MIN - HIGH
+			        20_000f				// MAX_ENERGY
+			    ))
+			    .addLayerParams(3, new LayerAdaptiveParams(
+			        0.05f, 0.5f,		// TARGET_FIRING_LOW - HIGH
+			        0.98f, 0.9995f,		// TARGET_SPARSITY_MIN - HIGH
+			        10_000f
+			    ))
+			    .addLayerParams(4, new LayerAdaptiveParams(
+			        0.01f, 0.2f,		// TARGET_FIRING_LOW - HIGH
+			        0.985f, 0.9997f,	// TARGET_SPARSITY_MIN - HIGH
+			        5_000f
+			    ))
+			    .addLayerParams(5, new LayerAdaptiveParams(
+			        0.01f, 0.1f,		// TARGET_FIRING_LOW - HIGH
+			        0.99f, 0.9998f,		// TARGET_SPARSITY_MIN - HIGH
+			        3_000f				// MAX_ENERGY
+			    ))
+				.build()
+		);
+		
+		MetricsRecorder metricsRecorder = new MetricsRecorder(brain, 5000l);
 		
 		// =======================================================================================
 		// This is the main processing loop
-		NeuralEngine engine = new NeuralEngine( brain );
+		NeuralEngine engine = new NeuralEngine( brain, new NeuralEngineConfig() );
 		engine.attachSensor( retina );
 		engine.attachClassifier( ocrSupervisor.getClassifier() );
 		engine.attachSupervisor( ocrSupervisor );
-		engine.withStabilizer( stabilizer );
+		engine.withMetricsRecorder( metricsRecorder );
 
 		CountDownLatch keepAlive = new CountDownLatch(1);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {

@@ -38,7 +38,12 @@ public class InhibitorySynapticPlasticityConfig {
 			return this;
 		}
 		
+		private void validate() {
+			
+		}
+		
 		public InhibitorySynapticPlasticityConfig build() {
+			validate();
 			return ret;
 		}
 	}
