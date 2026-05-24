@@ -19,6 +19,7 @@ import com.cortex.classifiers.ocr.OCRClassifier;
 import com.cortex.classifiers.ocr.OCRSupervisor;
 import com.cortex.commons.modules.ISensor;
 import com.cortex.commons.modules.ISupervisor;
+import com.cortex.globals.AdaptiveStabilizer;
 import com.cortex.globals.GlobalContext;
 import com.cortex.globals.NeuralEngine;
 import com.cortex.sensors.retina.Retina;
@@ -106,23 +107,24 @@ public class Boostrap {
 		System.out.println("Number of Neurons:"+brain.getNeuronsCount());
 		System.out.println("Number of Synapses:"+brain.getSynapsesCount());
 
-		// =======================================================================================
 		// Create sensors
 		ISensor retina = buildAndConnectRetina( brain );
 		System.out.println("Number of Retina Synapses:"+retina.getSynapsesCount());
 
-		// =======================================================================================
 		// Connect OCR Classifier to L4
 		ISupervisor<OCRCharacterNeuron> ocrSupervisor = buildAndConnectOCR( brain );		
 		System.out.println("Number of OCR Synapses:"+ocrSupervisor.getClassifier().getSynapsesCount());
 
-		GlobalContext.setMultiSphericalLayer(brain); // TODO:REMOVE ME
+		// Stabilizer
+		AdaptiveStabilizer stabilizer = new AdaptiveStabilizer(brain, null);
+		
 		// =======================================================================================
 		// This is the main processing loop
-		NeuralEngine thinker = new NeuralEngine( brain );
-		thinker.attachSensor( retina );
-		thinker.attachClassifier( ocrSupervisor.getClassifier() );
-		thinker.attachSupervisor( ocrSupervisor );
+		NeuralEngine engine = new NeuralEngine( brain );
+		engine.attachSensor( retina );
+		engine.attachClassifier( ocrSupervisor.getClassifier() );
+		engine.attachSupervisor( ocrSupervisor );
+		engine.withStabilizer( stabilizer );
 
 		CountDownLatch keepAlive = new CountDownLatch(1);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -131,7 +133,7 @@ public class Boostrap {
 				retina.stop();
 			} catch (Exception ignored) {}
 			try {
-				thinker.stop();
+				engine.stop();
 			} catch (Exception ignored) {}
 			keepAlive.countDown();
 		}));
@@ -140,7 +142,7 @@ public class Boostrap {
 		// new SimpleViewer( layer, true, false );
 
 		// ..give the life!
-		thinker.start();
+		engine.start();
 		Thread.sleep(200); // breve delay per garantire che il thinker sia operativo
 
 		retina.start();

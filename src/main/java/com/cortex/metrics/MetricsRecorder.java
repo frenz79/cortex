@@ -1,11 +1,13 @@
 package com.cortex.metrics;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.brain.Brain;
 import com.cortex.brain.layers.Layer;
+import com.cortex.brain.layers.SphericalLayer;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;

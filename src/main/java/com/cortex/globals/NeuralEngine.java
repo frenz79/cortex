@@ -20,7 +20,6 @@ import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 import com.cortex.commons.modules.ISupervisor;
 import com.cortex.metrics.LayerStats;
-import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {
 
@@ -50,9 +49,9 @@ public class NeuralEngine {
 	private ScheduledFuture<?> stabilizerTask;
 	
 	private final Brain brain;
-	private final AdaptiveStabilizer stabilizer;
+	private AdaptiveStabilizer stabilizer;
 	
-	public NeuralEngine(Brain brain, AdaptiveStabilizer stabilizer) {
+	public NeuralEngine(Brain brain) {
 		this.brain = Objects.requireNonNull(brain);
 		this.stabilizer = stabilizer;
 		
@@ -70,6 +69,11 @@ public class NeuralEngine {
 		};
 		// single-thread scheduler is fine; increase pool size if tasks are heavy
 		this.scheduler = Executors.newScheduledThreadPool(2, tf);
+	}
+	
+	public NeuralEngine withStabilizer(AdaptiveStabilizer stabilizer) {
+		this.stabilizer = stabilizer;
+		return this;
 	}
 
 	public synchronized void start() {
@@ -151,59 +155,14 @@ public class NeuralEngine {
 				TimeUnit.NANOSECONDS
 				);
 
-
-		stabilizerTask = scheduler.scheduleAtFixedRate(
-		        stabilizer::step,
-		        1_000,      // delay iniziale
-		        500,        // ogni 500 ms
-		        TimeUnit.MILLISECONDS
-		);
-		
-		// scheduled reporter already present; keep using scheduler
-		scheduler.scheduleAtFixedRate(() -> {
-			try {
-				System.out.println("== Avg Process Time:" + GlobalContext.getAverageProcessTimeMillis() + "ms ===========");
-				System.out.println(
-						  "L" 
-						+ " | NEURONS" 
-						+ " | ACT"
-						+ " | SYN_W"
-						+ " | SYN_W_STD" 
-						+ " | FIRE_ACT" 
-						+ " | FIRE_ALL" 
-						+ " | SAT_MAX" 
-						+ " | SAT_MIN"
-						+ " | SPARSE" 
-						+ " | PLAST" 
-						+ " | ENERGY" 
-						);
-				
-				for (SphericalLayer l : brain.getAllLayers()) {
-					LayerStats stats = GlobalContext.getAndResetStats(l.getLayerId());
-					if (stats != null) {
-						System.out.println(
-								l.getLayerId() 
-								+ " | " + stats.totalNeurons() 
-								+ " | " + stats.activeNeurons()
-								+ " | " + String.format("%,.2f",stats.averageSynapticWeight() )
-								+ " | " + String.format("%,.2f",stats.synapticWeightStdDev() )
-								+ " | " + String.format("%,.2f",stats.avgFiringRateActive() )
-								+ " | " + String.format("%,.2f",stats.avgFiringRateAll() )
-								+ " | " + String.format("%,.2f",stats.saturatedMaxRatio() )
-								+ " | " + String.format("%,.2f",stats.saturatedMinRatio() )
-								+ " | " + String.format("%,.2f",stats.sparsity() )
-								+ " | " + String.format("%,.2f",stats.totalPlasticity())
-								+ " | " + String.format("%,.2f",stats.energy() )
-								);
-						
-					} else {
-						System.out.println("Layer:" + l.getLayerId() + " NO STATS");
-					}
-				}
-			} catch (Throwable ex) {
-				ex.printStackTrace();
-			}
-		}, 3, 3, TimeUnit.SECONDS);
+		if (stabilizer!=null) {
+			stabilizerTask = scheduler.scheduleAtFixedRate(
+			        stabilizer::step,
+			        1_000,      // delay iniziale
+			        500,        // ogni 500 ms
+			        TimeUnit.MILLISECONDS
+			);
+		}
 	}
 
 	public synchronized void stop() {

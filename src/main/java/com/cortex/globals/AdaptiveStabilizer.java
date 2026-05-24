@@ -68,6 +68,7 @@ public class AdaptiveStabilizer {
         // 1) Controllo firing rate globale
         // ---------------------------------------------------------
         if (firingAll > targetFiringHigh) {
+        	float delta = 0.01f;
             // Troppa attività → alza leggermente la soglia
         	neuronsCfg.FIRING_THRESHOLD += 0.01f;
         	neuronsCfg.REPOLARIZATION_PER_SECOND += 0.02f;
@@ -75,12 +76,13 @@ public class AdaptiveStabilizer {
         	excCfg.A_MINUS *= 1.02f;
             log(id, "HIGH FIRING (" + firingAll + ") → +threshold " + delta);
         } else if (firingAll < targetFiringLow) {
+        	float delta = 0.01f;
             // Troppo poco → abbassa leggermente la soglia
         	neuronsCfg.FIRING_THRESHOLD -= 0.01f;
         	neuronsCfg.REPOLARIZATION_PER_SECOND = Math.max(0.01f, neuronsCfg.REPOLARIZATION_PER_SECOND - 0.02f);
         	excCfg.A_PLUS *= 1.02f;
         	excCfg.A_MINUS *= 0.98f;
-            neuronsCfg.FIRING_THRESHOLD -= delta);
+            neuronsCfg.FIRING_THRESHOLD -= delta;
             log(id, "LOW FIRING (" + firingAll + ") → -threshold " + delta);
         }
 
@@ -103,6 +105,7 @@ public class AdaptiveStabilizer {
         // 3) Controllo saturazione sinaptica
         // ---------------------------------------------------------
         if (satMaxRatio > maxSatMaxRatio) {
+        	float factor = 0.97f;
             // Troppe sinapsi a W_MAX → riduci leggermente il learning rate
         	excCfg.A_PLUS *= 0.97f;
         	excCfg.A_MINUS *= 1.03f;
@@ -110,6 +113,7 @@ public class AdaptiveStabilizer {
             log(id, "HIGH SAT_MAX (" + satMaxRatio + ") → LR * " + factor);
         }
         if (satMinRatio > maxSatMinRatio) {
+        	float factor = 1.03f;
             // Troppe sinapsi a W_MIN → aumenta leggermente il learning rate
         	excCfg.A_PLUS *= 1.03f;
         	excCfg.A_MINUS *= 0.97f;
@@ -144,6 +148,7 @@ public class AdaptiveStabilizer {
         // ---------------------------------------------------------
         double plastHigh = 10_000.0; // da calibrare
         if (plasticity > plastHigh) {
+        	float factor = 1.05f;
             excCfg.ELIGIBILITY_DECAY *= 1.05f;
             excCfg.TAU_MINUS *= 1.05f;
             log(id, "HIGH PLASTICITY (" + plasticity + ") → LR * " + factor);
@@ -152,6 +157,7 @@ public class AdaptiveStabilizer {
         // 7) plasticità bassa
         // ---------------------------------------------------------
         if (plasticity < 50.0) {
+        	float factor = 0.95f;
         	excCfg.ELIGIBILITY_DECAY *= 0.95f;
         	excCfg.TAU_MINUS *= 0.95f;
         	log(id, "LOW PLASTICITY (" + plasticity + ") → LR * " + factor);
