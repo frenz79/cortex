@@ -20,7 +20,7 @@ public class BrainLayersConnConfig {
 				ExcitatorySynapticPlasticityConfig.newBuilder()
 				.withSTDP(0.0030f, 0.0015f, 60_000_000L, 120_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
 				.withWeights(0.32f, 0.45f, 0.12f, 0.30f)// INITIAL, W_MAX, W_MIN, W_BASELINE
-				.withEligibility(0.995f) 				// ELIGIBILITY_DECAY
+				.withEligibilityDecaySeconds(0.995f) 				// ELIGIBILITY_DECAY
 				.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 				.withHomeostaticRate(0.003f) 			// HOMEOSTATIC_RATE
 				.withInitialDelay(0.6f)
@@ -38,7 +38,7 @@ public class BrainLayersConnConfig {
 				ExcitatorySynapticPlasticityConfig.newBuilder()
 				.withSTDP(0.004f, 0.003f, 80_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
 				.withWeights(0.11f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
-				.withEligibility(0.990f) 				// ELIGIBILITY_DECAY
+				.withEligibilityDecaySeconds(0.990f) 				// ELIGIBILITY_DECAY
 				.withPlasticity(80f, 10f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 				.withHomeostaticRate(0.001f) 			// HOMEOSTATIC_RATE
 				.withInitialDelay(1.2f)
@@ -56,7 +56,7 @@ public class BrainLayersConnConfig {
 				ExcitatorySynapticPlasticityConfig.newBuilder()
 				.withSTDP(0.004f, 0.003f, 150_000_000L, 300_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
 				.withWeights(0.11f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
-				.withEligibility(0.995f) 				// ELIGIBILITY_DECAY
+				.withEligibilityDecaySeconds(0.995f) 				// ELIGIBILITY_DECAY
 				.withPlasticity(150f, 20f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 				.withHomeostaticRate(0.001f) 			// HOMEOSTATIC_RATE
 				.withInitialDelay(1.2f)

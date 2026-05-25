@@ -6,6 +6,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
+import com.cortex.commons.Maths;
 import com.cortex.commons.modules.ISensor;
 
 public class Retina implements ISensor {
@@ -88,18 +89,14 @@ public class Retina implements ISensor {
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dy = -radius; dy <= radius; dy++) {
-                int sx = clamp(cx + dx, 0, sourceWidth - 1);
-                int sy = clamp(cy + dy, 0, sourceHeight - 1);
+                int sx = Maths.clamp(cx + dx, 0, sourceWidth - 1);
+                int sy = Maths.clamp(cy + dy, 0, sourceHeight - 1);
                 sum += sourceLuminance[sx][sy];
                 count++;
             }
         }
         // Luminance clamp
-        return Math.max(0f, Math.min(1f, sum / count));
-    }
-
-    private static int clamp(int v, int min, int max) {
-        return Math.max(min, Math.min(max, v));
+        return Maths.clamp(sum / count, 0f, 1f );
     }
 
 	@Override

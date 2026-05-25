@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -21,10 +20,9 @@ import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
+import com.cortex.commons.Maths;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
-
-import net.jafama.FastMath;
 
 public abstract class Layer {
 
@@ -53,7 +51,7 @@ public abstract class Layer {
 	public static record Neighbor(AbstractNeuron neuron, float distance) { 
 
 		public float getRealDistance() {
-			return (float)FastMath.sqrtQuick(distance);
+			return (float)Maths.sqrt(distance);
 		}		
 	}
 
@@ -147,7 +145,7 @@ public abstract class Layer {
 	}
 
 	public void buildSpatialHash(float cellSize) {
-		this.spatialHash = new HashMap<>( ((int)Math.floor(neurons.length*1.5)) );
+		this.spatialHash = new HashMap<>( (Maths.floor(neurons.length*1.5)) );
 		int n = neurons.length;
 		for (int i = 0; i < n; i++) {
 			int cx = cellCoord(neurons[i].getPosition().x, cellSize);
@@ -173,7 +171,7 @@ public abstract class Layer {
 	}
 
 	private static int cellCoord(float v, float cellSize) {
-		return (int)Math.floor(v / cellSize);
+		return Maths.floor(v / cellSize);
 	}
 
     private static record IntFloatPair(int idx, float dist) {/**/  }
@@ -235,7 +233,7 @@ public abstract class Layer {
             float vx = neurons[ni].getPosition().x - px;
             float vy = neurons[ni].getPosition().y - py;
             float vz = neurons[ni].getPosition().z - pz;
-            float d = (float)Math.sqrt(vx*vx + vy*vy + vz*vz);
+            float d = (float)Maths.sqrt(vx*vx + vy*vy + vz*vz);
             out.add(new Neighbor(neurons[ni], d));
         }
         return out;

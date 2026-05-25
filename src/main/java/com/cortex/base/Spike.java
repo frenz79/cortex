@@ -1,5 +1,7 @@
 package com.cortex.base;
 
+import com.cortex.commons.Maths;
+
 public record Spike(
 		float amplitude,
 		long creationTimeNanos,
@@ -10,7 +12,7 @@ public record Spike(
 	private static final float DEFAULT_SPEED = 10.0f;
 	
 	public Spike(float amplitude, long creationTimeNanos, boolean inhibitor) {
-		this.amplitude = Math.min(amplitude, MAX_AMPLITUDE);
+		this.amplitude = Maths.min(amplitude, MAX_AMPLITUDE);
 		this.inhibitor = inhibitor;
 		this.creationTimeNanos = creationTimeNanos;
 	}
@@ -21,7 +23,7 @@ public record Spike(
 	
 	private static float clampAmplitude(float a) {
         if (Float.isNaN(a) || a <= 0f) return 0f;
-        return Math.min(a, MAX_AMPLITUDE);
+        return Maths.min(a, MAX_AMPLITUDE);
     }
 	
 	public long getCreationTimeNanos() {

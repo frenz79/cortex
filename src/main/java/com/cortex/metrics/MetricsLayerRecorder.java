@@ -10,6 +10,7 @@ import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.brain.layers.Layer;
+import com.cortex.commons.Maths;
 import com.cortex.globals.EventBus.SynapseUpdatedData;
 
 public class MetricsLayerRecorder {
@@ -32,7 +33,7 @@ public class MetricsLayerRecorder {
 	}
 
 	MetricsLayerRecorder sumSynapticWeights(SynapseUpdatedData data) {
-		absWeightSum.add(Math.abs(data.newValue() - data.oldValue()));
+		absWeightSum.add(Maths.abs(data.newValue() - data.oldValue()));
 		return this;
 	}
 	
@@ -76,13 +77,13 @@ public class MetricsLayerRecorder {
 
 		double averageSynapticWeight = count == 0 ? 0.0 : sum / count;
 		double variance = count == 0 ? 0.0 : (sum2 / count) - (averageSynapticWeight * averageSynapticWeight);
-		double synapticWeightStdDev = Math.sqrt(Math.max(variance, 0.0));
+		double synapticWeightStdDev = Maths.sqrt(Maths.max(variance, 0.0));
 
 		double saturatedMinRatio = count == 0 ? 0.0 : (double) saturatedMin / count;
 		double saturatedMaxRatio = count == 0 ? 0.0 : (double) saturatedMax / count;
 
 		double totalPlasticity = absWeightSum.sumThenReset();
-		double energy = spikesCount * Math.abs(averageSynapticWeight + synapticWeightStdDev);
+		double energy = spikesCount * Maths.abs(averageSynapticWeight + synapticWeightStdDev);
 
 		// ---------------------------------------------------------
 		//  STABILITÀ ATTIVAZIONE

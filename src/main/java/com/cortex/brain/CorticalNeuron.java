@@ -10,6 +10,7 @@ import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.CorticalNeuronsConfig;
+import com.cortex.commons.Maths;
 
 /**
  *  Event-driven, analog-spike, delayed, plastic Neuron
@@ -46,7 +47,7 @@ public class CorticalNeuron extends AbstractNeuron {
 	        if (potential > config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
 	    }
 	    // clamp to bounds
-	    potential = Math.max(config.POTENTIAL_MIN, Math.min(config.POTENTIAL_MAX, potential));
+	    potential = Maths.clamp(potential, config.POTENTIAL_MIN, config.POTENTIAL_MAX);
 	}
 	
 	/**
@@ -123,7 +124,7 @@ public class CorticalNeuron extends AbstractNeuron {
 	        synapse.update(deltaTimeNanos);
 		}
 
-		this.potential = Math.min(config.POTENTIAL_MAX, potential);
+		this.potential = Maths.min(config.POTENTIAL_MAX, potential);
 		this.lastProcessTime = currTimeNanos;
 		return stayActive.get();
 	}
@@ -135,7 +136,7 @@ public class CorticalNeuron extends AbstractNeuron {
 	    
 	    // Temporal normalization
 	    double windows = (double) dt / config.RATE_WINDOW_NANOS;
-	    firingRate *= Math.pow(config.RATE_DECAY_PER_WINDOW, windows);
+	    firingRate *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
 	    	    
 	    // Avoid negative or too small values
 	    if (firingRate < 0 || firingRate < 1e-6f) {

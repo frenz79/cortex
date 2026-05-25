@@ -14,6 +14,7 @@ import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
+import com.cortex.commons.Maths;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 
@@ -86,13 +87,13 @@ public class SphericalLayer extends Layer {
 				float v = (ry + 0.5f) / h; // 0..1
 
 				// Sphere projection
-				float theta = (float)(2 * FastMath.PI * u);     // longitude
-				float phi   = (float)(FastMath.PI * (v - 0.5)); // latitude
-				float cosPhi = (float)FastMath.cos(phi);
+				float theta = (float)(2 * Maths.PI * u);     // longitude
+				float phi   = (float)(Maths.PI * (v - 0.5)); // latitude
+				float cosPhi = (float)Maths.cos(phi);
 
-				float x = (float)(cosPhi * FastMath.cos(theta) * config.DIMENSION);
-				float y = (float)(cosPhi * FastMath.sin(theta) * config.DIMENSION);
-				float z = (float)(FastMath.sin(phi) * config.DIMENSION);
+				float x = (float)(cosPhi * Maths.cos(theta) * config.DIMENSION);
+				float y = (float)(cosPhi * Maths.sin(theta) * config.DIMENSION);
+				float z = (float)(Maths.sin(phi) * config.DIMENSION);
 
 				IntList neighborsIdx = findKNearestApprox(x, y, z, rnd.nextInt(minConn, maxConn), cellSize, maxDistance);
 				if (neighborsIdx.size() == 0) continue;
@@ -116,20 +117,20 @@ public class SphericalLayer extends Layer {
 		this.neurons = new AbstractNeuron[getNeuronsCount()];
 
 		//  golden spiral / Fibonacci sphere variation
-		float gr = (float) (3-Math.sqrt(5));
-		float lambda = (float) (FastMath.PI * gr);
+		float gr = (float) (3-Maths.sqrt(5));
+		float lambda = (float) (Maths.PI * gr);
 		final int counter = getNeuronsCount();
 		final float radius = config.DIMENSION;
 
 		for(int i=0; i<counter; i++){
 			float t = (float)i/counter;
-			float a1 = (float) FastMath.acos(1-2*t);
+			float a1 = (float) Maths.acos(1-2*t);
 			float a2 = lambda * i;
-			float sina1 = (float)FastMath.sin(a1)* radius;
+			float sina1 = (float)Maths.sin(a1)* radius;
 
-			float x = sina1 * (float)FastMath.cos(a2);
-			float y = sina1 * (float)FastMath.sin(a2);
-			float z = (float) FastMath.cos(a1) * radius;
+			float x = sina1 * (float)Maths.cos(a2);
+			float y = sina1 * (float)Maths.sin(a2);
+			float z = (float) Maths.cos(a1) * radius;
 
 			this.neurons[i] = neuronFactory.buildNeuron(
 				config.getLayerId(),

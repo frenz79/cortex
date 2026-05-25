@@ -9,7 +9,7 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 	public float FIRING_THRESHOLD = 0.12f;
 	public float POTENTIAL_ZERO = 0.0f;
 	public long  REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(5);
-	public float REPOLARIZATION_PER_NANOS  = TimeUnit.NANOSECONDS.toSeconds(1) * 0.2f; // potential units per second
+	public float REPOLARIZATION_PER_NANOS  = /*TimeUnit.NANOSECONDS.toSeconds(1) */ 0.2f; // potential units per second
 	public long  RATE_WINDOW_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
 	public float RATE_DECAY_PER_WINDOW = 0.95f; // per RATE_WINDOW
 
@@ -60,7 +60,7 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 				throw new IllegalArgumentException("FIRING_THRESHOLD must be between POTENTIAL_MIN and POTENTIAL_MAX");
 
 			if (cfg.REPOLARIZATION_PER_NANOS <= 0)
-				throw new IllegalArgumentException("REPOLARIZATION_PER_SECOND must be > 0");
+				throw new IllegalArgumentException("REPOLARIZATION_PER_NANOS must be > 0");
 
 			if (cfg.RATE_WINDOW_NANOS <= 0)
 				throw new IllegalArgumentException("RATE_WINDOW must be > 0");

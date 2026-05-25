@@ -1,6 +1,7 @@
 package com.cortex.classifiers.ocr;
 
 import com.cortex.base.Synapse;
+import com.cortex.commons.Maths;
 import com.cortex.commons.modules.ISupervisor;
 
 public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
@@ -69,18 +70,18 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 	    float correctness = (winner != null && expected != null && winner == expected) ? 1.0f : -1.0f;
 
 	    // confidence normalizzata in [0,1] (assumi che caller fornisca già normalizzato)
-	    float conf = Math.max(0f, Math.min(1f, confidence));
+	    float conf = Maths.clamp(confidence, 0f, 1f);
 
 	    // timing factor: decresce esponenzialmente con delta time
-	    long delta = Math.max(0L, now - eventTime);
-	    float timing = (float) Math.exp(- (double) delta / (double) TIMING_TAU_NANOS);
+	    long delta = Maths.max(0L, now - eventTime);
+	    float timing = (float) Maths.exp(- (double) delta / (double) TIMING_TAU_NANOS);
 
 	    // combinazione pesata
 	    float raw = WC * correctness + WE * (2f * conf - 1f) + WT * timing; 
 	    // (2*conf-1) porta confidence in [-1,1] per coerenza con correctness
 
 	    // clamp in [-1,1]
-	    return Math.max(-1f, Math.min(1f, raw));
+	    return Maths.clamp( raw, -1f, 1f);
 	}
 
 	public OCRClassifier getClassifier() {

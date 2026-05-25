@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
+import com.cortex.commons.Maths;
 
 public class RetinaNeuron extends AbstractNeuron {
 
@@ -63,7 +64,7 @@ public class RetinaNeuron extends AbstractNeuron {
 			if (ThreadLocalRandom.current().nextFloat() < fractional)
 				spikeCount++;
 
-			spikeCount = Math.min(spikeCount, this.retinaNeuronConfig.MAX_SPIKES_PER_SAMPLE);
+			spikeCount = Maths.min(spikeCount, this.retinaNeuronConfig.MAX_SPIKES_PER_SAMPLE);
 
 			for (int i = 0; i < spikeCount; i++) {
 				spikes.add(new Spike(amplitude, currTimeNanos, isInhibitory));

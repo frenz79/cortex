@@ -2,6 +2,7 @@ package com.cortex.base.config;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -129,13 +130,13 @@ public class LayerConfig {
         if (n.FIRING_THRESHOLD <= 0f || n.FIRING_THRESHOLD > 1.0f)
             errors.add("FIRING_THRESHOLD fuori range (0 < thr <= 1): " + n.FIRING_THRESHOLD);
 
-        if (n.REPOLARIZATION_PER_SECOND < 0.01f || n.REPOLARIZATION_PER_SECOND > 0.50f)
-            errors.add("REPOLARIZATION_PER_SECOND fuori range (0.01–0.50): " + n.REPOLARIZATION_PER_SECOND);
+        if (n.REPOLARIZATION_PER_NANOS < 0.01f || n.REPOLARIZATION_PER_NANOS > 0.50f)
+            errors.add("REPOLARIZATION_PER_SECOND fuori range (0.01–0.50): " + n.REPOLARIZATION_PER_NANOS);
 
         if (n.RATE_DECAY_PER_WINDOW <= 0f || n.RATE_DECAY_PER_WINDOW >= 1f)
             errors.add("RATE_DECAY_PER_WINDOW deve essere (0 < x < 1): " + n.RATE_DECAY_PER_WINDOW);
 
-        if (n.RATE_WINDOW <= 0)
+        if (n.RATE_WINDOW_NANOS <= 0)
             errors.add("RATE_WINDOW deve essere > 0");
 
         // -------------------------
@@ -162,8 +163,9 @@ public class LayerConfig {
         if (e.TAU_PLUS <= 0 || e.TAU_MINUS <= 0)
             errors.add("TAU_PLUS e TAU_MINUS devono essere > 0");
 
-        if (e.ELIGIBILITY_DECAY < 0.95f || e.ELIGIBILITY_DECAY > 0.999f)
-            errors.add("ELIGIBILITY_DECAY fuori range consigliato (0.95–0.999)");
+    //    if (e.ELIGIBILITY_DECAY_NANOS*TimeUnit.s.toSeconds(1) < 0.95f 
+     //   	|| e.ELIGIBILITY_DECAY_NANOS*TimeUnit.NANOSECONDS.toSeconds(1) > 0.999f)
+      //      errors.add("ELIGIBILITY_DECAY fuori range consigliato (0.95–0.999)");
 
         if (e.HOMEOSTATIC_RATE < 0f || e.HOMEOSTATIC_RATE > 0.05f)
             errors.add("HOMEOSTATIC_RATE fuori range (0–0.05)");
@@ -207,7 +209,7 @@ public class LayerConfig {
             if (n.FIRING_THRESHOLD < 0.05f)
                 errors.add("Layer " + LAYER_ID + ": FIRING_THRESHOLD troppo basso per un layer profondo");
 
-            if (n.REPOLARIZATION_PER_SECOND < 0.05f)
+            if (n.REPOLARIZATION_PER_NANOS < 0.05f)
                 errors.add("Layer " + LAYER_ID + ": REPOLARIZATION troppo bassa (rischio runaway)");
         }
 

@@ -5,6 +5,7 @@ import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.brain.Brain;
 import com.cortex.brain.layers.Layer;
+import com.cortex.commons.Maths;
 import com.cortex.globals.DiscreteAdaptiveStabilizerConfig.LayerAdaptiveParams;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
@@ -224,7 +225,7 @@ public class DiscreteAdaptiveStabilizer {
 	    } else {
 	        // altrimenti fai convergere i target verso il firing osservato
 	        float center = (float)firingAll;
-	        float span   = Math.max(0.02f, center * 0.5f); // ampiezza banda
+	        float span   = Maths.max(0.02f, center * 0.5f); // ampiezza banda
 	        lp.TARGET_FIRING_LOW  = (1 - LR_FIRING) * lp.TARGET_FIRING_LOW
 	                              + LR_FIRING * (center - span);
 	        lp.TARGET_FIRING_HIGH = (1 - LR_FIRING) * lp.TARGET_FIRING_HIGH
@@ -235,8 +236,8 @@ public class DiscreteAdaptiveStabilizer {
 	    if (sparsity > 0.0 && sparsity < 1.0) {
 	        float sCenter = (float)sparsity;
 	        float sSpan   = 0.1f; // banda di sparsità desiderata
-	        float newMin  = Math.max(0.0f, sCenter - sSpan);
-	        float newMax  = Math.min(1.0f, sCenter + sSpan);
+	        float newMin  = Maths.max(0.0f, sCenter - sSpan);
+	        float newMax  = Maths.min(1.0f, sCenter + sSpan);
 
 	        lp.TARGET_SPARSITY_MIN = (1 - LR_SPARSITY) * lp.TARGET_SPARSITY_MIN
 	                               + LR_SPARSITY * newMin;
@@ -254,45 +255,45 @@ public class DiscreteAdaptiveStabilizer {
 	    // ---------------------------------------------------------
 	    // 4) Vincoli "morbidi" per layer (solo limiti, non set fissi)
 	    // ---------------------------------------------------------
-	    if (lid == 0) ncfg.REPOLARIZATION_PER_SECOND =
-	            Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.15f);
-	    if (lid == 1) ncfg.REPOLARIZATION_PER_SECOND =
-	            Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.15f);
-	    if (lid == 2) ncfg.REPOLARIZATION_PER_SECOND =
-	            Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.20f);
-	    if (lid == 3) ncfg.REPOLARIZATION_PER_SECOND =
-	            Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.15f);
-	    if (lid == 4) ncfg.REPOLARIZATION_PER_SECOND =
-	            Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.12f);
-	    if (lid == 5) ncfg.REPOLARIZATION_PER_SECOND =
-	            Math.min(ncfg.REPOLARIZATION_PER_SECOND, 0.10f);
+	    if (lid == 0) ncfg.REPOLARIZATION_PER_NANOS =
+	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.15f);
+	    if (lid == 1) ncfg.REPOLARIZATION_PER_NANOS =
+	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.15f);
+	    if (lid == 2) ncfg.REPOLARIZATION_PER_NANOS =
+	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.20f);
+	    if (lid == 3) ncfg.REPOLARIZATION_PER_NANOS =
+	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.15f);
+	    if (lid == 4) ncfg.REPOLARIZATION_PER_NANOS =
+	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.12f);
+	    if (lid == 5) ncfg.REPOLARIZATION_PER_NANOS =
+	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.10f);
 
 	    if (lid == 3) ncfg.FIRING_THRESHOLD =
-	            Math.max(ncfg.FIRING_THRESHOLD, 0.30f);
+	    		Maths.max(ncfg.FIRING_THRESHOLD, 0.30f);
 	    if (lid == 4) ncfg.FIRING_THRESHOLD =
-	            Math.max(ncfg.FIRING_THRESHOLD, 0.35f);
+	    		Maths.max(ncfg.FIRING_THRESHOLD, 0.35f);
 	    if (lid == 5) ncfg.FIRING_THRESHOLD =
-	            Math.max(ncfg.FIRING_THRESHOLD, 0.40f);
+	    		Maths.max(ncfg.FIRING_THRESHOLD, 0.40f);
 
 	    // ---------------------------------------------------------
 	    // 5) Controllo firing rate (adattivo, scalato sull'errore)
 	    // ---------------------------------------------------------
 	    float centerTarget = 0.5f * (firingLow + firingHigh);
-	    float spanTarget   = Math.max(1e-4f, firingHigh - firingLow);
+	    float spanTarget   = Maths.max(1e-4f, firingHigh - firingLow);
 
 	    float errF = (float)firingAll - centerTarget;
 	    float normErrF = errF / spanTarget; // errore normalizzato
 
-	    if (Math.abs(normErrF) > config.FIRING_HYSTERESIS) {
-	        float sign = Math.signum(normErrF);
+	    if (Maths.abs(normErrF) > config.FIRING_HYSTERESIS) {
+	        float sign = Maths.signum(normErrF);
 	        // più sei lontano, più spingi
-	        float scale = Math.min(1.0f, Math.abs(normErrF));
+	        float scale = Maths.min(1.0f, Maths.abs(normErrF));
 
 	        float dTh   = clampDelta(0.01f * sign * scale, config.MAX_THRESHOLD_STEP);
 	        float dLeak = clampDelta(0.02f * sign * scale, config.MAX_LEAK_STEP);
 
-	        ncfg.FIRING_THRESHOLD          += dTh;
-	        ncfg.REPOLARIZATION_PER_SECOND += dLeak;
+	        ncfg.FIRING_THRESHOLD         += dTh;
+	        ncfg.REPOLARIZATION_PER_NANOS += dLeak;
 
 	        if (sign > 0) {
 	            // firing troppo alto → riduci LTP, aumenta LTD
@@ -310,17 +311,17 @@ public class DiscreteAdaptiveStabilizer {
 	    // ---------------------------------------------------------
 	    if (sparsity < sparsityMin || sparsity > sparsityMax) {
 	        float sCenter = 0.5f * (sparsityMin + sparsityMax);
-	        float sSpan   = Math.max(1e-4f, sparsityMax - sparsityMin);
+	        float sSpan   = Maths.max(1e-4f, sparsityMax - sparsityMin);
 	        float errS    = (float)sparsity - sCenter;
 	        float normErrS = errS / sSpan;
 
-	        float signS  = Math.signum(normErrS);
-	        float scaleS = Math.min(1.0f, Math.abs(normErrS));
+	        float signS  = Maths.signum(normErrS);
+	        float scaleS = Maths.min(1.0f, Maths.abs(normErrS));
 
 	        // se sparsità troppo bassa → aumenti leak (meno attivi)
 	        // se troppo alta → riduci leak (più attivi)
 	        float dLeak = clampDelta(0.02f * signS * scaleS, config.MAX_LEAK_STEP);
-	        ncfg.REPOLARIZATION_PER_SECOND += dLeak;
+	        ncfg.REPOLARIZATION_PER_NANOS += dLeak;
 	    }
 
 	    // ---------------------------------------------------------
@@ -345,7 +346,7 @@ public class DiscreteAdaptiveStabilizer {
 	        float dTh   = clampDelta(0.01f, config.MAX_THRESHOLD_STEP);
 	        float dLeak = clampDelta(0.02f, config.MAX_LEAK_STEP);
 	        ncfg.FIRING_THRESHOLD          += dTh;
-	        ncfg.REPOLARIZATION_PER_SECOND += dLeak;
+	        ncfg.REPOLARIZATION_PER_NANOS += dLeak;
 	    }
 
 	    // ---------------------------------------------------------
@@ -360,12 +361,12 @@ public class DiscreteAdaptiveStabilizer {
 	    // 10) Plasticità
 	    // ---------------------------------------------------------
 	    if (plasticity > config.MAX_PLASTICITY) {
-	        pcfg.ELIGIBILITY_DECAY *= 1.05f;
+	        pcfg.ELIGIBILITY_DECAY_NANOS *= 1.05f;
 	        pcfg.TAU_MINUS         *= 1.05f;
 	    }
 
 	    if (plasticity < config.MIN_PLASTICITY) {
-	        pcfg.ELIGIBILITY_DECAY *= 0.95f;
+	        pcfg.ELIGIBILITY_DECAY_NANOS *= 0.95f;
 	        pcfg.TAU_MINUS         *= 0.95f;
 	    }
 
@@ -380,8 +381,8 @@ public class DiscreteAdaptiveStabilizer {
 	    // 11) Layer morto → kick, ma con target che si sono già abbassati
 	    // ---------------------------------------------------------
 	    if (stats.activeNeurons() == 0) {
-	        ncfg.FIRING_THRESHOLD          -= 0.02f;
-	        ncfg.REPOLARIZATION_PER_SECOND -= 0.02f;
+	        ncfg.FIRING_THRESHOLD         -= 0.02f;
+	        ncfg.REPOLARIZATION_PER_NANOS -= 0.02f;
 
 	        pcfg.INITIAL_WEIGHT    += 0.02f;
 	        pcfg.W_BASELINE        += 0.02f;
@@ -389,8 +390,8 @@ public class DiscreteAdaptiveStabilizer {
 
 	        clampWeights(pcfg);
 
-	        ncfg.FIRING_THRESHOLD          = Math.max(0.15f, ncfg.FIRING_THRESHOLD);
-	        ncfg.REPOLARIZATION_PER_SECOND = Math.max(0.02f,  ncfg.REPOLARIZATION_PER_SECOND);
+	        ncfg.FIRING_THRESHOLD         = Maths.max(0.15f, ncfg.FIRING_THRESHOLD);
+	        ncfg.REPOLARIZATION_PER_NANOS = Maths.max(0.02f, ncfg.REPOLARIZATION_PER_NANOS);
 	    }
 	}
 
@@ -402,25 +403,21 @@ public class DiscreteAdaptiveStabilizer {
 		return delta;
 	}
 
-	private final static float clamp(float val, float min, float max) {
-		return Math.max(min, Math.min(val, max));
-	}
-
 	private final static void clampNeuronParams(CorticalNeuronsConfig ncfg) {
-		ncfg.FIRING_THRESHOLD = clamp(ncfg.FIRING_THRESHOLD, 0.1f, 2.0f );
-		ncfg.REPOLARIZATION_PER_SECOND = clamp(ncfg.REPOLARIZATION_PER_SECOND, 0.02f, 1.0f );
+		ncfg.FIRING_THRESHOLD = Maths.clamp(ncfg.FIRING_THRESHOLD, 0.1f, 2.0f );
+		ncfg.REPOLARIZATION_PER_NANOS = Maths.clamp(ncfg.REPOLARIZATION_PER_NANOS, 0.02f, 1.0f );
 	}
 
 	private final static void clampPlasticityParams(ExcitatorySynapticPlasticityConfig pcfg) {
-		pcfg.A_PLUS = clamp(pcfg.A_PLUS, 0.00001f, 0.01f);
-		pcfg.A_MINUS = clamp(pcfg.A_MINUS, 0.00001f, 0.01f);	
-		pcfg.HOMEOSTATIC_RATE = clamp(pcfg.HOMEOSTATIC_RATE, 0.0001f, 0.01f);
-		pcfg.W_MAX = clamp(pcfg.W_MAX, 0.20f, 1.0f);
+		pcfg.A_PLUS = Maths.clamp(pcfg.A_PLUS, 0.00001f, 0.01f);
+		pcfg.A_MINUS = Maths.clamp(pcfg.A_MINUS, 0.00001f, 0.01f);	
+		pcfg.HOMEOSTATIC_RATE = Maths.clamp(pcfg.HOMEOSTATIC_RATE, 0.0001f, 0.01f);
+		pcfg.W_MAX = Maths.clamp(pcfg.W_MAX, 0.20f, 1.0f);
 	}
 
 	private static void clampWeights(ExcitatorySynapticPlasticityConfig e) {
-		e.INITIAL_WEIGHT = clamp(e.INITIAL_WEIGHT, 0.05f, 0.60f);
-		e.W_BASELINE     = clamp(e.W_BASELINE, 0.05f, 0.60f);
+		e.INITIAL_WEIGHT = Maths.clamp(e.INITIAL_WEIGHT, 0.05f, 0.60f);
+		e.W_BASELINE     = Maths.clamp(e.W_BASELINE, 0.05f, 0.60f);
 	}
 
 	private void log(Layer layer, String msg) {

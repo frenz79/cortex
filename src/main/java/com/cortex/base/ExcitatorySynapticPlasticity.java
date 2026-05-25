@@ -9,7 +9,7 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 	private float initialDelay;
 	private float currentWeight;
 	private float currentEligibility = 0.0f;
-	private long lastEligibilityUpdate = -1l;
+	private long lastEligibilityUpdateNanos = -1l;
 	private long lastPreSpike = -1l;
 	private long lastPostSpike = -1l;
 	private boolean enabled = true;	// To disble plasticity
@@ -56,10 +56,10 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 		// convert to double to avoid integer division
 		double dt = (double) dtNanos;
 		if (dt > 0.0) {
-			return (float) (config.A_PLUS * Math.exp(-dt / (double) config.TAU_PLUS));
+			return (float) (config.A_PLUS * Maths.exp(-dt / (double) config.TAU_PLUS));
 		} else {
 			// dt <= 0 : depression
-			return (float) (-config.A_MINUS * Math.exp(dt / (double) config.TAU_MINUS));
+			return (float) (-config.A_MINUS * Maths.exp(dt / (double) config.TAU_MINUS));
 		}
 	}
 	
@@ -72,7 +72,7 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 		currentWeight = Maths.clamp(currentWeight, config.W_MIN, config.W_MAX);
 		// consume eligibility
 		currentEligibility = 0f;
-		lastEligibilityUpdate = now;
+		lastEligibilityUpdateNanos = now;
 	}
 	
 	// Called by Synapse in onPostSpike()
@@ -85,27 +85,23 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 
 	@Override
 	public boolean isEligible(long now, long window) {
-		if (lastEligibilityUpdate <= 0L) return false;
-		return currentEligibility != 0f && (now - lastEligibilityUpdate) <= window;
+		if (lastEligibilityUpdateNanos <= 0L) return false;
+		return currentEligibility != 0f && (now - lastEligibilityUpdateNanos) <= window;
 	}
 
 	public void onEligibilityUpdate(float delta, long now) {
 		currentEligibility += delta;
 		currentEligibility = Maths.clamp(currentEligibility, -1f, 1f);
-		lastEligibilityUpdate = now;
+		lastEligibilityUpdateNanos = now;
 	}
 
 	// update called periodically; compute time-based decay for eligibility and homeostasis
 	public void update(long now, Synapse s) {
-		if (lastEligibilityUpdate > 0L) {
-			long dt = now - lastEligibilityUpdate; // nanos
-			// convert to seconds for decay exponent if ELIGIBILITY_DECAY is per-second factor
-			double seconds = dt / 1_000_000_000.0;
-			// decayFactor = ELIGIBILITY_DECAY ^ seconds
-			double decayFactor = Math.pow(config.ELIGIBILITY_DECAY, seconds);
-			currentEligibility *= (float) decayFactor;
+		if (lastEligibilityUpdateNanos > 0L) {
+			long dt = now - lastEligibilityUpdateNanos; // nanos
+			double decayFactor = Maths.pow(config.ELIGIBILITY_DECAY_NANOS, dt);
 			// if very small, zero it
-			if (Math.abs(currentEligibility) < 1e-6f) currentEligibility = 0f;
+			currentEligibility = Maths.zeroIfSmall(currentEligibility*(float) decayFactor);
 		}
 
 		// homeostatic drift towards baseline (time-independent small step)

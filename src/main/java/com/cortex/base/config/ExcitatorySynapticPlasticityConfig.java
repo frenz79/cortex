@@ -1,5 +1,7 @@
 package com.cortex.base.config;
 
+import java.util.concurrent.TimeUnit;
+
 public class ExcitatorySynapticPlasticityConfig {
 
 	public float A_PLUS;	
@@ -11,7 +13,7 @@ public class ExcitatorySynapticPlasticityConfig {
 	public float W_MAX;	
 	public float W_BASELINE;
 
-	public float ELIGIBILITY_DECAY;	
+	public long ELIGIBILITY_DECAY_NANOS;	
 	public float HOMEOSTATIC_RATE = 0.001f;	
 	public boolean PLASTIC_DELAY = false;	
 	public float PLASTIC_DELAY_MIN;	
@@ -48,9 +50,9 @@ public class ExcitatorySynapticPlasticityConfig {
 			return this;
 		}
 
-		public Builder withEligibility(float ELIGIBILITY_DECAY) {
+		public Builder withEligibilityDecaySeconds(float ELIGIBILITY_DECAY) {
 			if (ELIGIBILITY_DECAY <= 0f || ELIGIBILITY_DECAY > 1f) throw new IllegalArgumentException("ELIGIBILITY_DECAY must be in (0,1]");
-			ret.ELIGIBILITY_DECAY = ELIGIBILITY_DECAY;
+			ret.ELIGIBILITY_DECAY_NANOS = (long)(TimeUnit.SECONDS.toNanos(1) * ELIGIBILITY_DECAY);
 			return this;
 		}
 
