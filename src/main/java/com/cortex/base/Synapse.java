@@ -61,8 +61,8 @@ public final class Synapse implements IPlasticSynapse {
 			toNeuron, 
 			distance, 
 			srcNeuron.isInhibitor() 
-				?new InhibitorySynapticPlasticity( plasticityCfg.inhibitorySynapticPlasticityConfig())
-				:new ExcitatorySynapticPlasticity( plasticityCfg.excitatorySynapticPlasticityConfig())
+				?new InhibitorySynapticPlasticity( plasticityCfg.inhibitory())
+				:new ExcitatorySynapticPlasticity( plasticityCfg.excitatory())
 		);
 		toNeuron.addIncomingSynapse( s );
 		srcNeuron.addOutgoingSynapse( s ); 

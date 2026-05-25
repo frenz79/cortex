@@ -119,35 +119,35 @@ public class Boostrap {
 		System.out.println("Number of OCR Synapses:"+ocrSupervisor.getClassifier().getSynapsesCount());
 
 		// Stabilizer
-		DiscreteAdaptiveStabilizer stabilizer = new DiscreteAdaptiveStabilizer( 
+		DiscreteAdaptiveStabilizer stabilizer = new DiscreteAdaptiveStabilizer( brain,
 			DiscreteAdaptiveStabilizerConfig.newBuilder()
 			.addLayerParams(0, new LayerAdaptiveParams(
-			        8f, 20f,			// TARGET_FIRING_LOW - HIGH
+			        0.10f, 0.30f,			// TARGET_FIRING_LOW - HIGH
 			        0.90f, 0.98f,		// TARGET_SPARSITY_MIN - HIGH
 			        150_000f			// MAX_ENERGY
 			    ))
 			    .addLayerParams(1, new LayerAdaptiveParams(
-			        1f, 5f,				// TARGET_FIRING_LOW - HIGH
+			        0.05f, 0.15f,				// TARGET_FIRING_LOW - HIGH
 			        0.95f, 0.995f,		// TARGET_SPARSITY_MIN - HIGH
 			        50_000f				// MAX_ENERGY
 			    ))
 			    .addLayerParams(2, new LayerAdaptiveParams(
-			        0.1f, 1.0f,			// TARGET_FIRING_LOW - HIGH
+			        0.02f, 0.10f,			// TARGET_FIRING_LOW - HIGH
 			        0.97f, 0.999f,		// TARGET_SPARSITY_MIN - HIGH
 			        20_000f				// MAX_ENERGY
 			    ))
 			    .addLayerParams(3, new LayerAdaptiveParams(
-			        0.05f, 0.5f,		// TARGET_FIRING_LOW - HIGH
+			        0.01f, 0.05f,		// TARGET_FIRING_LOW - HIGH
 			        0.98f, 0.9995f,		// TARGET_SPARSITY_MIN - HIGH
 			        10_000f
 			    ))
 			    .addLayerParams(4, new LayerAdaptiveParams(
-			        0.01f, 0.2f,		// TARGET_FIRING_LOW - HIGH
+			        0.005f, 0.02f,		// TARGET_FIRING_LOW - HIGH
 			        0.985f, 0.9997f,	// TARGET_SPARSITY_MIN - HIGH
 			        5_000f
 			    ))
 			    .addLayerParams(5, new LayerAdaptiveParams(
-			        0.01f, 0.1f,		// TARGET_FIRING_LOW - HIGH
+			        0.001f, 0.01f,		// TARGET_FIRING_LOW - HIGH
 			        0.99f, 0.9998f,		// TARGET_SPARSITY_MIN - HIGH
 			        3_000f				// MAX_ENERGY
 			    ))

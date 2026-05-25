@@ -6,31 +6,29 @@ import java.util.Map;
 public class DiscreteAdaptiveStabilizerConfig {
 
 	// Target globali
-	public float TARGET_FIRING_LOW   = 5.0f;
-	public float TARGET_FIRING_HIGH  = 20.0f;
+	public float TARGET_FIRING_LOW   = 4.00f;
+	public float TARGET_FIRING_HIGH  = 14.00f;
 
-	public float TARGET_SPARSITY_MIN = 0.85f;
-	public float TARGET_SPARSITY_MAX = 0.99f;
-
+	public float TARGET_SPARSITY_MIN = 0.920f;
+	public float TARGET_SPARSITY_MAX = 0.990f;
+	
 	public float MAX_SAT_MAX_RATIO   = 0.15f;
 	public float MAX_SAT_MIN_RATIO   = 0.20f;
 
-	public float MAX_ENERGY_PER_LAYER = 120_000.0f;
+	public float MAX_ENERGY_PER_LAYER = 20_000.0f;
 
-	public float MAX_PLASTICITY = 10_000.0f;
-	public float MIN_PLASTICITY = 50.0f;
+	public float MAX_PLASTICITY = 2000.0f;
+	public float MIN_PLASTICITY = 150.0f;
 
-	public float MIN_STABILITY = 0.15f;
+	public float MIN_STABILITY = 0.20f;
 
 	// --- Rate limiting ---
-	public float MAX_THRESHOLD_STEP = 0.002f;
-	public float MAX_LEAK_STEP = 0.005f;
-	public float MAX_A_PLUS_FACTOR = 0.005f;  
-	public float MAX_A_MINUS_FACTOR = 0.005f;
-
-	// --- Hysteresis ---
-	public float FIRING_HYSTERESIS = 2.0f;
-	public float SPARSITY_HYSTERESIS = 0.02f;
+	public float MAX_THRESHOLD_STEP = 0.03f;
+	public float MAX_LEAK_STEP = 0.006f;
+	public float MAX_A_PLUS_FACTOR = 0.003f;  
+	public float MAX_A_MINUS_FACTOR = 0.003f;
+	public float SPARSITY_HYSTERESIS = 0.01f;
+	public float FIRING_HYSTERESIS = 1.0f;
 
 	// --- Parametri per layer ---
 	public Map<Integer, LayerAdaptiveParams> perLayer = new HashMap<>();
@@ -57,6 +55,9 @@ public class DiscreteAdaptiveStabilizerConfig {
 			this.TARGET_SPARSITY_MIN = TARGET_SPARSITY_MIN;
 			this.TARGET_SPARSITY_MAX = TARGET_SPARSITY_MAX;
 			this.MAX_ENERGY = MAX_ENERGY;
+		}
+
+		public LayerAdaptiveParams() {
 		}
 	}
 

@@ -70,6 +70,12 @@ public class MetricsRecorder {
         return stats;
     }
     
+    public static void main(String args[]) {
+    	float val = 1.12234f;
+    	
+    	System.out.println("--> |"+String.format("%,8.2f",val )+"|");
+    }
+    
 	private void dumpStats(long time) {
 		try {
 			System.out.println("== Time: "+time+" - Avg Process Time:" + GlobalContext.getAverageProcessTimeMillis() + "ms ===========");
@@ -84,7 +90,7 @@ public class MetricsRecorder {
 					+ " | SAT_MAX" 
 					+ " | SAT_MIN"
 					+ " | SPARSE" 
-					+ " | PLAST" 
+					+ " | PLAST " 
 					+ " | ENERGY" 
 					);
 			
@@ -93,16 +99,16 @@ public class MetricsRecorder {
 				if (stats != null) {
 					System.out.println(
 							l.getLayerId() 
-							+ " | " + stats.totalNeurons() 
-							+ " | " + stats.activeNeurons()
-							+ " | " + String.format("%,.2f",stats.avgFiringRateActive() )
-							+ " | " + String.format("%,.2f",stats.averageSynapticWeight() )
-							+ " | " + String.format("%,.2f",stats.synapticWeightStdDev() )
-							+ " | " + String.format("%,.2f",stats.avgFiringRateAll() )
-							+ " | " + String.format("%,.2f",stats.saturatedMaxRatio() )
-							+ " | " + String.format("%,.2f",stats.saturatedMinRatio() )
-							+ " | " + String.format("%,.2f",stats.sparsity() )
-							+ " | " + String.format("%,.2f",stats.totalPlasticity())
+							+ " | " + String.format("%,7d",stats.totalNeurons() )
+							+ " | " + String.format("%,3d",stats.activeNeurons() )
+							+ " | " + String.format("%,8.2f",stats.avgFiringRateActive() )
+							+ " | " + String.format("%,8.2f",stats.avgFiringRateAll() )
+							+ " | " + String.format("%,5.2f",stats.averageSynapticWeight() )
+							+ " | " + String.format("%,9.2f",stats.synapticWeightStdDev() )							
+							+ " | " + String.format("%,7.2f",stats.saturatedMaxRatio() )
+							+ " | " + String.format("%,7.2f",stats.saturatedMinRatio() )
+							+ " | " + String.format("%,6.4f",stats.sparsity() )
+							+ " | " + String.format("%,6.2f",stats.totalPlasticity())
 							+ " | " + String.format("%,.2f",stats.energy() )
 							);
 					

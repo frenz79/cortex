@@ -19,7 +19,7 @@ public class BrainLayersConnConfig {
 		return new SynapsePlasticityConfig(
 				ExcitatorySynapticPlasticityConfig.newBuilder()
 				.withSTDP(0.0030f, 0.0015f, 60_000_000L, 120_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
-				.withWeights(0.28f, 0.45f, 0.12f, 0.30f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+				.withWeights(0.32f, 0.45f, 0.12f, 0.30f)// INITIAL, W_MAX, W_MIN, W_BASELINE
 				.withEligibility(0.995f) 				// ELIGIBILITY_DECAY
 				.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 				.withHomeostaticRate(0.003f) 			// HOMEOSTATIC_RATE
@@ -281,7 +281,7 @@ public class BrainLayersConnConfig {
 		// L1 -> L5 (feedforward debole)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L1).to(L5)
-				.withConnections((int)(0.1*connScale), (int)(0.3*connScale), 0.70f)
+				.withConnections((int)(0.2*connScale), (int)(0.3*connScale), 0.90f)
 				.withSynapsePlasticityConfig(ffPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());

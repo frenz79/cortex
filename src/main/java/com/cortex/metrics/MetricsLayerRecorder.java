@@ -60,7 +60,7 @@ public class MetricsLayerRecorder {
 
 		ExcitatorySynapticPlasticityConfig cfg = layer.getConfig()
 				.SYNAPSE_PLASTICITY_CONFIG
-				.excitatorySynapticPlasticityConfig();
+				.excitatory();
 
 		for (AbstractNeuron n : layer.getNeurons()) {
 			for ( Synapse s : n.getInSynapses() ) {

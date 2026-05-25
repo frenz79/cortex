@@ -1,6 +1,9 @@
 package com.cortex.base.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.cortex.base.AbstractNeuron;
 
@@ -84,7 +87,7 @@ public class LayerConfig {
         }
         
         private void validate() {
-
+        	// Basic Validation
             if (cfg.MAX_CONNECTIONS < cfg.MIN_CONNECTIONS)
                 throw new IllegalArgumentException("MAX_CONNECTIONS must be >= MIN_CONNECTIONS");
 
@@ -106,11 +109,117 @@ public class LayerConfig {
         
         public LayerConfig build() {
             validate();
-            return cfg;
+            return cfg.validate();
         }
     }
     
     public int getLayerId() {
         return LAYER_ID;
+    }
+    
+    public LayerConfig validate() {
+
+        List<String> errors = new ArrayList<>();
+
+        // -------------------------
+        // 1. VALIDAZIONE NEURONI
+        // -------------------------
+        CorticalNeuronsConfig n = this.CORTICAL_NEURONS_CONFIG;
+
+        if (n.FIRING_THRESHOLD <= 0f || n.FIRING_THRESHOLD > 1.0f)
+            errors.add("FIRING_THRESHOLD fuori range (0 < thr <= 1): " + n.FIRING_THRESHOLD);
+
+        if (n.REPOLARIZATION_PER_SECOND < 0.01f || n.REPOLARIZATION_PER_SECOND > 0.50f)
+            errors.add("REPOLARIZATION_PER_SECOND fuori range (0.01–0.50): " + n.REPOLARIZATION_PER_SECOND);
+
+        if (n.RATE_DECAY_PER_WINDOW <= 0f || n.RATE_DECAY_PER_WINDOW >= 1f)
+            errors.add("RATE_DECAY_PER_WINDOW deve essere (0 < x < 1): " + n.RATE_DECAY_PER_WINDOW);
+
+        if (n.RATE_WINDOW <= 0)
+            errors.add("RATE_WINDOW deve essere > 0");
+
+        // -------------------------
+        // 2. VALIDAZIONE SINAPSI
+        // -------------------------
+        SynapsePlasticityConfig sp = this.SYNAPSE_PLASTICITY_CONFIG;
+
+        ExcitatorySynapticPlasticityConfig e = sp.excitatory();
+        InhibitorySynapticPlasticityConfig i = sp.inhibitory();
+
+        // --- Eccitatoria ---
+        if (e.INITIAL_WEIGHT < e.W_MIN || e.INITIAL_WEIGHT > e.W_MAX)
+            errors.add("W_INITIAL non compreso tra W_MIN e W_MAX");
+
+        if (e.W_BASELINE < e.W_MIN || e.W_BASELINE > e.W_MAX)
+            errors.add("W_BASELINE non compreso tra W_MIN e W_MAX");
+
+        if (e.A_PLUS <= 0f || e.A_MINUS <= 0f)
+            errors.add("A_PLUS e A_MINUS devono essere > 0");
+
+        if (e.A_PLUS <= e.A_MINUS)
+            errors.add("A_PLUS deve essere > A_MINUS per avere potenziamento netto");
+
+        if (e.TAU_PLUS <= 0 || e.TAU_MINUS <= 0)
+            errors.add("TAU_PLUS e TAU_MINUS devono essere > 0");
+
+        if (e.ELIGIBILITY_DECAY < 0.95f || e.ELIGIBILITY_DECAY > 0.999f)
+            errors.add("ELIGIBILITY_DECAY fuori range consigliato (0.95–0.999)");
+
+        if (e.HOMEOSTATIC_RATE < 0f || e.HOMEOSTATIC_RATE > 0.05f)
+            errors.add("HOMEOSTATIC_RATE fuori range (0–0.05)");
+
+        // --- Inibitoria ---
+        if (i.INITIAL_WEIGHT < i.W_MIN || i.INITIAL_WEIGHT > i.W_MAX)
+            errors.add("Inhibitory W_INITIAL non compreso tra W_MIN e W_MAX");
+
+        if (i.LEARNING_RATE <= 0f || i.LEARNING_RATE > 0.02f)
+            errors.add("Inhibitory LEARNING_RATE fuori range (0–0.02)");
+
+        if (i.TARGET_FIRING_RATE <= 0f || i.TARGET_FIRING_RATE > 20f)
+            errors.add("TARGET_FIRING_RATE fuori range (0–20)");
+
+        // -------------------------
+        // 3. VALIDAZIONE CONNESSIONI
+        // -------------------------
+        if (this.MIN_CONNECTIONS < 0)
+            errors.add("minConnections deve essere >= 0");
+
+        if (this.MAX_CONNECTIONS < this.MIN_CONNECTIONS)
+            errors.add("maxConnections < minConnections");
+
+        if (this.MAX_CONN_DISTANCE <= 0f || this.MAX_CONN_DISTANCE > 1.5f)
+            errors.add("maxConnDistance fuori range (0–1.5)");
+
+        // -------------------------
+        // 4. VALIDAZIONE GEOMETRIA
+        // -------------------------
+        if (this.DIMENSION <= 0f || this.DIMENSION > 1.0f)
+            errors.add("dimension deve essere (0–1]");
+
+        if (this.INHIBITOR_FREQ < 0f || this.INHIBITOR_FREQ > 1f)
+            errors.add("inhibitorFreq deve essere (0–1)");
+
+        // -------------------------
+        // 5. VALIDAZIONE CROSS-LAYER (se vuoi)
+        // -------------------------
+        // Esempio: layer più profondi devono essere più selettivi
+        if (this.LAYER_ID > 0) {
+            if (n.FIRING_THRESHOLD < 0.15f)
+                errors.add("Layer " + LAYER_ID + ": FIRING_THRESHOLD troppo basso per un layer profondo");
+
+            if (n.REPOLARIZATION_PER_SECOND < 0.05f)
+                errors.add("Layer " + LAYER_ID + ": REPOLARIZATION troppo bassa (rischio runaway)");
+        }
+
+        // -------------------------
+        // 6. RISULTATO
+        // -------------------------
+        if (!errors.isEmpty()) {
+            throw new IllegalStateException(
+                "LayerConfig " + LAYER_ID + " non valido:\n" +
+                errors.stream().map(s -> " - " + s).collect(Collectors.joining("\n"))
+            );
+        }
+        return this;
     }
 }
