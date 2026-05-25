@@ -35,10 +35,9 @@ public class CorticalNeuron extends AbstractNeuron {
 	}
 
 	// Decadimento lineare verso il potenziale di riposo
-	private void computeDecay( long deltaTimeNanos ) {
+	private void computeDecay( double deltaTimeNanos ) {
 		if (potential == config.POTENTIAL_ZERO) return;
-	    double seconds = deltaTimeNanos / 1_000_000_000.0;
-	    double delta = config.REPOLARIZATION_PER_SECOND * seconds;
+	    double delta = config.REPOLARIZATION_PER_NANOS * deltaTimeNanos;
 	    if (potential > config.POTENTIAL_ZERO) {
 	        potential -= delta;
 	        if (potential < config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
@@ -56,7 +55,7 @@ public class CorticalNeuron extends AbstractNeuron {
 	 *  the incoming spike if it was not processed
 	 *  a new Spike if a fire will occurr
 	 */
-	private Spike integrateInputAndFire(long currTimeNanos, long deltaTimeNanos, Spike spike, Synapse synapse) {
+	private Spike integrateInputAndFire(long currTimeNanos, Spike spike, Synapse synapse) {
 	    long ageNanos = currTimeNanos - spike.getCreationTimeNanos();
 	    long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
 	    if (ageNanos < 0) {
@@ -87,8 +86,8 @@ public class CorticalNeuron extends AbstractNeuron {
 	 */
 	@Override
 	public boolean process(long currTimeNanos) throws InterruptedException{		
-		long deltaTime = currTimeNanos - lastProcessTime;
-		computeDecay(deltaTime);
+		long deltaTimeNanos = currTimeNanos - lastProcessTime;
+		computeDecay(deltaTimeNanos);
 
 		AtomicBoolean stayActive = new AtomicBoolean(false);
 		final List<Spike> newSpikes = new ArrayList<>();
@@ -97,7 +96,7 @@ public class CorticalNeuron extends AbstractNeuron {
 		for ( Synapse synapse : getInSynapses() ) {
 			synapse.forEachSpike( spike -> {
 				try {
-					Spike s = integrateInputAndFire(currTimeNanos, deltaTime, spike, synapse);
+					Spike s = integrateInputAndFire(currTimeNanos, spike, synapse);
 					if (s!=null ) {
 						if (s==spike) {
 							// We still have a spike not yet arrived...keep the synapse active
@@ -121,7 +120,7 @@ public class CorticalNeuron extends AbstractNeuron {
 			}
 
 	        // still call update even if no new spikes were fired to keep plasticity timing consistent
-	        synapse.update(deltaTime);
+	        synapse.update(deltaTimeNanos);
 		}
 
 		this.potential = Math.min(config.POTENTIAL_MAX, potential);
@@ -135,7 +134,7 @@ public class CorticalNeuron extends AbstractNeuron {
 	    if (dt <= 0) return firingRate;
 	    
 	    // Temporal normalization
-	    double windows = (double) dt / config.RATE_WINDOW;
+	    double windows = (double) dt / config.RATE_WINDOW_NANOS;
 	    firingRate *= Math.pow(config.RATE_DECAY_PER_WINDOW, windows);
 	    	    
 	    // Avoid negative or too small values

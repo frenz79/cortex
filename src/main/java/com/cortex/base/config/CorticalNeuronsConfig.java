@@ -9,8 +9,8 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 	public float FIRING_THRESHOLD = 0.12f;
 	public float POTENTIAL_ZERO = 0.0f;
 	public long  REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(5);
-	public float REPOLARIZATION_PER_SECOND  = 0.2f; // potential units per second
-	public long  RATE_WINDOW = 100_000_000L; // 100 ms
+	public float REPOLARIZATION_PER_NANOS  = TimeUnit.NANOSECONDS.toSeconds(1) * 0.2f; // potential units per second
+	public long  RATE_WINDOW_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
 	public float RATE_DECAY_PER_WINDOW = 0.95f; // per RATE_WINDOW
 
 	public static Builder newBuilder() {
@@ -37,7 +37,7 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 		}
 
 		public Builder withRepolarizationPerSecond(float REPOLARIZATION_PER_SECOND) {
-			cfg.REPOLARIZATION_PER_SECOND = REPOLARIZATION_PER_SECOND;
+			cfg.REFRACTORY_PERIOD_NANOS = (long)(TimeUnit.SECONDS.toNanos(1)*REPOLARIZATION_PER_SECOND);
 			return this;
 		}
 
@@ -46,8 +46,8 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 			return this;
 		}
 
-		public Builder withRate( long RATE_WINDOW, float RATE_DECAY_PER_WINDOW ) {		
-			cfg.RATE_WINDOW = RATE_WINDOW;
+		public Builder withRatePerSecond( long RATE_WINDOW_SECOND, float RATE_DECAY_PER_WINDOW ) {		
+			cfg.RATE_WINDOW_NANOS = (long)(TimeUnit.SECONDS.toNanos(1)*RATE_WINDOW_SECOND);;
 			cfg.RATE_DECAY_PER_WINDOW = RATE_DECAY_PER_WINDOW;
 			return this;
 		}
@@ -59,10 +59,10 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 			if (cfg.FIRING_THRESHOLD <= cfg.POTENTIAL_MIN || cfg.FIRING_THRESHOLD >= cfg.POTENTIAL_MAX)
 				throw new IllegalArgumentException("FIRING_THRESHOLD must be between POTENTIAL_MIN and POTENTIAL_MAX");
 
-			if (cfg.REPOLARIZATION_PER_SECOND <= 0)
+			if (cfg.REPOLARIZATION_PER_NANOS <= 0)
 				throw new IllegalArgumentException("REPOLARIZATION_PER_SECOND must be > 0");
 
-			if (cfg.RATE_WINDOW <= 0)
+			if (cfg.RATE_WINDOW_NANOS <= 0)
 				throw new IllegalArgumentException("RATE_WINDOW must be > 0");
 
 			if (cfg.RATE_DECAY_PER_WINDOW <= 0 || cfg.RATE_DECAY_PER_WINDOW > 1)
