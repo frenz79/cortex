@@ -1,6 +1,7 @@
 package com.cortex.brain;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
@@ -117,27 +118,20 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	 * false to clear it. This method is safe to call concurrently.
 	 */
 	public void streamActiveNeuron(Function<CorticalNeuron, Boolean> consumer) {
-		//     long start = System.nanoTime();
 		CorticalNeuron[] snapshot = neurons; // volatile read
 		if (snapshot == null) return;
-		for (int i = 0; i < snapshot.length; i++) {
-			CorticalNeuron entry = snapshot[i];
-			if (entry == null) continue;
-			if (entry.isActive()) {
-				Boolean stay = Boolean.TRUE;
-				try {
-					stay = consumer.apply(entry);
-				} catch (RuntimeException ex) {
-					ex.printStackTrace();
-					// on exception, keep neuron active to be retried later
-					stay = Boolean.TRUE;
-				}
-				entry.setActive( Boolean.TRUE.equals(stay) );
-			}
-		}
-		//   long end = System.nanoTime();
-		//   processTimeNanos.add(end - start);
-		//   processCounter.incrementAndGet();
+		 Arrays.stream(snapshot).parallel().forEach( n -> {
+			 if (n != null && n.isActive()) {
+					Boolean stay = Boolean.TRUE;
+					try {
+						stay = consumer.apply(n);
+					} catch (RuntimeException ex) {
+						ex.printStackTrace();
+						stay = Boolean.TRUE;
+					}
+					n.setActive( Boolean.TRUE.equals(stay) );
+				} 
+		 });
 	}
 
 	public void streamAllNeurons(Function<CorticalNeuron, Boolean> consumer) {

@@ -15,9 +15,9 @@ public class DiscreteAdaptiveStabilizerConfig {
 	public float MAX_SAT_MAX_RATIO   = 0.15f;
 	public float MAX_SAT_MIN_RATIO   = 0.20f;
 
-	public float MAX_ENERGY_PER_LAYER = 20_000.0f;
+	public float MAX_ENERGY_PER_LAYER = 5000.0f;
 
-	public float MAX_PLASTICITY = 2000.0f;
+	public float MAX_PLASTICITY = 800.0f;
 	public float MIN_PLASTICITY = 150.0f;
 
 	public float MIN_STABILITY = 0.20f;

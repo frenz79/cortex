@@ -64,11 +64,12 @@ public class CorticalNeuron extends AbstractNeuron {
 	    }
 	    if (ageNanos >= travelTimeNanos) {
 	        synapse.onPreSpike(currTimeNanos);
-	        potential += spike.getSign() * synapse.getWeight() * spike.getAmplitude();
+	        float spikeIntensity = synapse.getWeight() * spike.getAmplitude();
+	        potential += spike.getSign() * spikeIntensity;
 	        if (currTimeNanos - lastSpikeTime > config.REFRACTORY_PERIOD_NANOS && potential > config.FIRING_THRESHOLD) {
 	            lastSpikeTime = currTimeNanos;
 	            potential = config.POTENTIAL_ZERO;
-	            return new Spike(synapse.getWeight() * spike.getAmplitude(), currTimeNanos, isInhibitor());
+	            return new Spike(spikeIntensity, currTimeNanos, isInhibitor());
 	        }
 	        return null;
 	    } else {
@@ -101,10 +102,8 @@ public class CorticalNeuron extends AbstractNeuron {
 						if (s==spike) {
 							// We still have a spike not yet arrived...keep the synapse active
 							stayActive.set(true);
-						} else {
-							 if (!inRefractory) {
-								 newSpikes.add(s);
-		                     }
+						} else if (!inRefractory) {
+							newSpikes.add(s);
 						}
 						return s;
 					}					

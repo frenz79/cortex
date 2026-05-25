@@ -11,7 +11,6 @@ import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.globals.EventBus.SynapseUpdatedData;
-import com.cortex.globals.GlobalContext;
 
 public class MetricsRecorder {
 
@@ -59,26 +58,20 @@ public class MetricsRecorder {
         return (s != null) ? s.getStatsAndReset() : null;
     }
     
-    public LayerStats pollLayerStats(long time, int layerId) {
+    public LayerStats pollLayerStats(long time, long avgProcTime, long runs, int layerId) {
     	LayerStats stats = getAndResetStats(layerId);
     	EventBus.fire(EventType.LAYER_STATS, time, this, stats);
     	
     	if (dumpStatsTimeNanos>0 && time - lastDumpTimeNanos > dumpStatsTimeNanos) {
+			System.out.println("== Now: "+time+" - Avg Time:" + String.format("%,.2f",(avgProcTime/1000.0f)) + "ms Runs:"+runs+" ===========");
     		dumpStats(time);
     		lastDumpTimeNanos = time;
     	}
         return stats;
     }
     
-    public static void main(String args[]) {
-    	float val = 1.12234f;
-    	
-    	System.out.println("--> |"+String.format("%,8.2f",val )+"|");
-    }
-    
 	private void dumpStats(long time) {
 		try {
-			System.out.println("== Time: "+time+" - Avg Process Time:" + GlobalContext.getAverageProcessTimeMillis() + "ms ===========");
 			System.out.println(
 					  "L" 
 					+ " | NEURONS" 

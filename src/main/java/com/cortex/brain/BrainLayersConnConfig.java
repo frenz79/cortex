@@ -23,7 +23,7 @@ public class BrainLayersConnConfig {
 				.withEligibility(0.995f) 				// ELIGIBILITY_DECAY
 				.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 				.withHomeostaticRate(0.003f) 			// HOMEOSTATIC_RATE
-				.withInitialDelay(1.2f)
+				.withInitialDelay(0.6f)
 				.build(),
 				InhibitorySynapticPlasticityConfig.newBuilder()
 				.withWeights(0.40f, 1.5f, 0.10f)			// INITIAL, W_MAX, W_MIN,
@@ -129,7 +129,7 @@ public class BrainLayersConnConfig {
 		// L2 -> L3
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L2).to(L3)
-				.withConnections((int)(1.5*connScale), (int)(4.0*connScale), 0.50f)
+				.withConnections((int)(4.0*connScale), (int)(6.0*connScale), 0.70f)
 				.withSynapsePlasticityConfig(ffPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
@@ -137,7 +137,7 @@ public class BrainLayersConnConfig {
 		// L2 -> L1 (feedback, solo inibitori)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L2).to(L1)
-				.withConnections((int)(0.5*connScale), (int)(1.5*connScale), 0.50f)
+				.withConnections((int)(0.5*connScale), (int)(0.9*connScale), 0.50f)
 				.withSynapsePlasticityConfig(fbPlasticity())
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
@@ -177,7 +177,7 @@ public class BrainLayersConnConfig {
 		// L3 -> L5 (controllo)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L3).to(L5)
-				.withConnections((int)(0.2*connScale), (int)(0.8*connScale), 0.40f)
+				.withConnections((int)(0.6*connScale), (int)(1.8*connScale), 0.80f)
 				.withSynapsePlasticityConfig(ctrlPlasticity())
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
@@ -222,18 +222,10 @@ public class BrainLayersConnConfig {
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
 
-		// L3 -> L4 (feedforward extra)
-		cfg.add(LayerConnectionsConfig.newBuilder()
-				.from(L3).to(L4)
-				.withConnections((int)(0.2*connScale), (int)(0.8*connScale), 0.40f)
-				.withSynapsePlasticityConfig(ffPlasticity())
-				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
-				.build());
-
 		// L4 -> L5
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L4).to(L5)
-				.withConnections((int)(0.2*connScale), (int)(0.8*connScale), 0.40f)
+				.withConnections((int)(0.5*connScale), (int)(1.8*connScale), 0.40f)
 				.withSynapsePlasticityConfig(ffPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());

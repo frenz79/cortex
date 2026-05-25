@@ -5,29 +5,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 
 import com.cortex.base.Synapse;
 
 public class GlobalContext {
-
-    // Process timing: keep nanos internally
-    private static final AtomicLong processCounter = new AtomicLong(0);
-    private static final LongAdder processTimeNanos = new LongAdder();
-
-	/**
-     * Returns average process time in milliseconds since last call and resets counters.
-     */
-    public static long getAverageProcessTimeMillis() {
-        long count = processCounter.getAndSet(0);
-        if (count == 0) return 0L;
-        long totalNanos = processTimeNanos.sumThenReset();
-        // convert to milliseconds
-        return TimeUnit.NANOSECONDS.toMillis(totalNanos / count);
-    }
 		
 	private static final Queue<Synapse> recentlyActiveSynapses = new ConcurrentLinkedQueue<>();
 	

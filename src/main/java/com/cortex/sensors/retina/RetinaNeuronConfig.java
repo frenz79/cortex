@@ -5,7 +5,7 @@ public class RetinaNeuronConfig {
 	public float ON_GAIN  = 1.0f;
 	public float OFF_GAIN = 1.0f;
 	public float THRESHOLD = 0.065f;
-	public int MAX_SPIKES_PER_SAMPLE = 3;
+	public int MAX_SPIKES_PER_SAMPLE = 2;
 
 	public static Builder newBuilder() {
 		return new Builder();

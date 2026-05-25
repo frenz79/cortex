@@ -9,11 +9,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
+import java.util.concurrent.atomic.LongAdder;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.brain.Brain;
-import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.layers.Layer;
 import com.cortex.commons.modules.IActuator;
 import com.cortex.commons.modules.IClassifier;
@@ -32,6 +31,9 @@ public class NeuralEngine {
 	public static void tick(long t) {
 		GLOBAL_TIME.set(t);
 	}
+	
+    private static final AtomicLong processCounter = new AtomicLong(0);
+    private static final LongAdder processTimeNanos = new LongAdder();
 
 	private final NeuralEngineConfig config;
 
@@ -74,32 +76,41 @@ public class NeuralEngine {
 		return this;
 	}
 
+	public static long getAverageProcessTimeMicros() {
+		long count = processCounter.getAndSet(0);
+		if (count == 0) return 0L;
+		long totalNanos = processTimeNanos.sumThenReset();
+		// convert to milliseconds
+		return TimeUnit.NANOSECONDS.toMicros(totalNanos / count);
+	}
+	   
 	public synchronized void start() {
 		if (neuronTask != null && !neuronTask.isDone()) return; // already started
+		AtomicLong iterCounter = new AtomicLong(0);
 
 		// Neuron processing loop scheduled at fixed rate
 		Runnable neuronRunnable = () -> {
+			processCounter.incrementAndGet();
+			iterCounter.incrementAndGet();
 			long now = System.nanoTime();
 			tick(now);
 
 			try {
 				// Stream active neurons; pass the current time to each process call
-				final long timestamp = now;
-				final Function<CorticalNeuron, Boolean> activeNeuronsConsumer = n -> {
+				brain.streamActiveNeuron(n -> {
 					try {
-						return n.process(timestamp);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-						return false;
+						return n.process(now);
 					} catch (Exception ex) {
+						Thread.currentThread().interrupt();
 						ex.printStackTrace();
 						return false;
 					}
-				};
-				brain.streamActiveNeuron(activeNeuronsConsumer);
+				});
 			} catch (Throwable t) {
 				t.printStackTrace();
 			}
+			
+			processTimeNanos.add(System.nanoTime()-now);
 		};
 
 		// IO loop for sensors/actuators/classifiers/supervisors
@@ -159,7 +170,7 @@ public class NeuralEngine {
 					long now = now();
 					for (Layer layer : brain.getAllLayers()) {
 						int layerId = layer.getLayerId();
-						metricsRecorder.pollLayerStats(now, layerId);
+						metricsRecorder.pollLayerStats(now, getAverageProcessTimeMicros(), iterCounter.get(), layerId);
 					}
 				},
 				1_000,

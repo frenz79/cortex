@@ -6,7 +6,7 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 
 	public float POTENTIAL_MAX = 3.0f;
 	public float POTENTIAL_MIN = -2.0f;
-	public float FIRING_THRESHOLD = 0.3f;
+	public float FIRING_THRESHOLD = 0.12f;
 	public float POTENTIAL_ZERO = 0.0f;
 	public long  REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(5);
 	public float REPOLARIZATION_PER_SECOND  = 0.2f; // potential units per second
