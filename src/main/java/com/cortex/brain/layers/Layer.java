@@ -88,7 +88,7 @@ public abstract class Layer {
 
 		Arrays.stream(getNeurons()).parallel().forEach( n -> {	
 			int connsCounter = random.nextInt(config.MIN_CONNECTIONS, config.MAX_CONNECTIONS);
-			Collection<Neighbor> conns = findNearest(
+			Collection<Neighbor> conns = findKNearestApprox(
 					getNeurons(), 
 					n.getPosition(), 
 					connsCounter, 
