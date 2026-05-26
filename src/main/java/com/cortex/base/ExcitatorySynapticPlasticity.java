@@ -70,8 +70,9 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 		float deltaW = reward * currentEligibility * neuromodulator;
 		currentWeight += deltaW;
 		currentWeight = Maths.clamp(currentWeight, config.W_MIN, config.W_MAX);
-		// consume eligibility
-		currentEligibility = 0f;
+		// Keep memory, don't set it to 0 immediately, consumption equivalent to reward
+		float consumption = 0.2f * Math.abs(reward);
+		currentEligibility *= (1.0f - consumption);
 		lastEligibilityUpdateNanos = now;
 	}
 	
