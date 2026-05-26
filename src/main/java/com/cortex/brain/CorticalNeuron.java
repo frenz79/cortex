@@ -130,7 +130,12 @@ public class CorticalNeuron extends AbstractNeuron {
 	        synapse.update(deltaTimeNanos);
 		}
 
-		this.potential = Maths.min(config.POTENTIAL_MAX, potential);
+		this.potential = Maths.clamp(
+		    potential,
+		    config.POTENTIAL_MIN,
+		    config.POTENTIAL_MAX
+		);
+
 		this.lastProcessTime = currTimeNanos;
 		return stayActive.get();
 	}
