@@ -27,41 +27,55 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 		return this.neurons[0][c-'A'];
 	}
 	
-	@Override
-	public OCRCharacterNeuron classify(long now) throws InterruptedException {
+	@Override	
+	public OCRCharacterNeuron classify(long now) {
+	
 	    if (now - lastApply <= windowNanos) return null;
-
+	
 	    int best = -1;
+	    int second = -1;
+	
 	    float bestScore = 0f;
+	    float secondScore = 0f;
 	    float sum = 0f;
-
-	    // singola passata: calcolo score e somma
-	    for (int i = 0; i < neurons[0].length; i++) {
-	        float score = neurons[0][i].scoreSpikes(windowNanos, now);
+	
+	    for (int i = 0; i < neurons.length; i++) {
+	
+	        float score = neurons[i].scoreSpikes(windowNanos, now);
+	
+	        // smoothing
+	        smoothed[i] = 0.3f * score + 0.7f * smoothed[i];
+	        score = smoothed[i];
+	
 	        sum += score;
-
+	
 	        if (score > bestScore) {
+	            secondScore = bestScore;
+	            second = best;
+	
 	            bestScore = score;
 	            best = i;
+	        } else if (score > secondScore) {
+	            secondScore = score;
+	            second = i;
 	        }
 	    }
-
-	    // confidence normalizzata
-	    this.lastConfidence = (sum > 0f) ? (bestScore / sum) : 0f;
-	    this.lastClassificationTime = now;
-
-	    final float minScoreToAccept = 1e-3f;
-
-	    if (best >= 0 && bestScore > minScoreToAccept) {
-	        this.lastApply = now;
-	        this.result = neurons[0][best];
-	        System.out.printf("OCR classify: chosen=%c score=%.4f conf=%.3f%n",
-	                result.getCharacter(), bestScore, lastConfidence);
-	        return this.result;
-	    }
-
-	    return null;
+	
+	    if (sum <= 0f) return null;
+	
+	    float confidence = bestScore / sum;
+	    float margin = bestScore - secondScore;
+	
+	    if (margin < 0.01f) return null;
+	
+	    lastConfidence = confidence;
+	    lastClassificationTime = now;
+	    lastApply = now;
+	
+	    result = neurons[best];
+	    return result;
 	}
+
 
 	public float getConfidence() {
 	    return lastConfidence;
