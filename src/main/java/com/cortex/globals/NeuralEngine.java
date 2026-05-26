@@ -44,7 +44,7 @@ public class NeuralEngine {
 
 	private final ScheduledExecutorService scheduler;
 
-	private ScheduledFuture<?> neuronTask;
+	private Thread neuronThread;
 	private ScheduledFuture<?> ioTask;
 	private ScheduledFuture<?> metricsRecorderTask;
 
@@ -87,17 +87,19 @@ public class NeuralEngine {
 	public synchronized void start() {
 		if (neuronTask != null && !neuronTask.isDone()) return; // already started
 		AtomicLong iterCounter = new AtomicLong(0);
-
-		// Neuron processing loop scheduled at fixed rate
-		Runnable neuronRunnable = () -> {
-			processCounter.incrementAndGet();
-			iterCounter.incrementAndGet();
-			long now = System.nanoTime();
-			tick(now);
-
-			try {
-				// Stream active neurons; pass the current time to each process call
-				brain.streamActiveNeuron(n -> {
+		
+		Thread neuronThread = new Thread(() -> {
+			long localCounter = 0l
+			long localTime = 0l
+		    while (!Thread.currentThread().isInterrupted()) {
+		        long now = System.nanoTime();
+		        tick(now);
+				localCounter++;
+				
+				// processCounter.incrementAndGet();
+				// iterCounter.incrementAndGet();
+				
+		        brain.streamActiveNeuron(n -> {
 					try {
 						return n.process(now);
 					} catch (Exception ex) {
@@ -106,12 +108,21 @@ public class NeuralEngine {
 						return false;
 					}
 				});
-			} catch (Throwable t) {
-				t.printStackTrace();
-			}
+				localTime += System.nanoTime()-now;
+				// processTimeNanos.add(System.nanoTime()-now);
+
+				if (localCounter%100==0){
+					processCounter.incrementAndGet(localCounter);
+					iterCounter.incrementAndGet(localCounter);
+					processTimeNanos.add(localTime);
+					localTime = 0l;
+					localCounter = 0l;
+				}
 			
-			processTimeNanos.add(System.nanoTime()-now);
-		};
+		        // spin / sleep controllato
+		        LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
+		    }
+		});
 
 		// IO loop for sensors/actuators/classifiers/supervisors
 		Runnable ioRunnable = () -> {
@@ -150,13 +161,6 @@ public class NeuralEngine {
 		};
 
 		// schedule at fixed rate; use nanosecond precision by converting to appropriate units
-		neuronTask = scheduler.scheduleAtFixedRate(
-				neuronRunnable,
-				0,
-				config.NEURON_PERIOD_NANOS,
-				TimeUnit.NANOSECONDS
-				);
-
 		ioTask = scheduler.scheduleAtFixedRate(
 				ioRunnable,
 				0,
