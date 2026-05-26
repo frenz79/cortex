@@ -18,6 +18,9 @@ public class RetinaNeuron extends AbstractNeuron {
 
 	private final RetinaNeuronConfig retinaNeuronConfig;
 
+	private float firingRate;
+	private long lastUpdate;
+	
 	public RetinaNeuron(int index, RetinaNeuronConfig retinaNeuronConfig) {
 		super(-1, 
 				index, 
@@ -52,7 +55,7 @@ public class RetinaNeuron extends AbstractNeuron {
 			amplitude = -delta * this.retinaNeuronConfig.OFF_GAIN;
 			isInhibitory = true;
 		}
-
+		
 		int spikeCount = 0;
 
 		if (amplitude > 0f) {
@@ -72,6 +75,7 @@ public class RetinaNeuron extends AbstractNeuron {
 		}
 
 		this.lastLuminance = luminance;
+		this.firingRate += spikeCount;
 		return spikeCount;
 	}
 
@@ -83,6 +87,9 @@ public class RetinaNeuron extends AbstractNeuron {
 
 	@Override
 	public float getRecentFiringRate(long now) {
-		return spikes.size();
+	    long dt = now - lastUpdate;
+	    firingRate *= Math.exp(-dt / TAU);
+	    lastUpdate = now;
+	    return firingRate;
 	}
 }
