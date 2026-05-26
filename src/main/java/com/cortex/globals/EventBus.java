@@ -1,16 +1,16 @@
 package com.cortex.globals;
 
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class EventBus {
 
 	// Add monitoring metrics
-	private static final AtomicLong pendingEvents;
+	private static final AtomicLong pendingEvents = new AtomicLong(0);
 	
 	public static record SynapseUpdatedData (
 			float oldValue,

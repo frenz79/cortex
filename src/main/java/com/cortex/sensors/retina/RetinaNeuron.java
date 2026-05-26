@@ -88,7 +88,7 @@ public class RetinaNeuron extends AbstractNeuron {
 	@Override
 	public float getRecentFiringRate(long now) {
 	    long dt = now - lastUpdate;
-	    firingRate *= Math.exp(-dt / TAU);
+	    firingRate *= Math.exp(-dt / this.retinaNeuronConfig.TAU);
 	    lastUpdate = now;
 	    return firingRate;
 	}

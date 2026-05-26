@@ -18,8 +18,6 @@ import com.cortex.commons.Maths;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 
-import net.jafama.FastMath;
-
 public class SphericalLayer extends Layer {
 
 	public SphericalLayer(LayerConfig config) {
@@ -27,7 +25,7 @@ public class SphericalLayer extends Layer {
 	}
 
 	@Override
-	public int link( Layer layer, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter,	SynapsePlasticityConfig synCfg) {
+	public int link( Layer layer, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
 		Random rnd = ThreadLocalRandom.current();
 		int connections = 0;
 
@@ -99,7 +97,7 @@ public class SphericalLayer extends Layer {
 				if (neighborsIdx.size() == 0) continue;
 				Collection<Neighbor> conns = toNeighbors(neighborsIdx, getNeurons(), x, y, z);
 				conns.removeIf(n -> !filter.test(n.neuron()));
-				conns.removeIf(n -> n.distance() > maxDistance);
+				conns.removeIf(n -> n.getRealDistance() > maxDistance);
 				if (!conns.isEmpty()) {
 					if (!isIncoming)
 						connections += Synapse.create( matrix[rx][ry], conns, synCfg );

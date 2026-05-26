@@ -1,7 +1,7 @@
 package com.cortex.sensors.retina;
 
 public class RetinaNeuronConfig {
-
+	public float TAU  = 1.0f;
 	public float ON_GAIN  = 1.0f;
 	public float OFF_GAIN = 1.0f;
 	public float THRESHOLD = 0.065f;

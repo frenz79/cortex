@@ -6,10 +6,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.LockSupport;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.brain.Brain;
@@ -31,9 +31,6 @@ public class NeuralEngine {
 	public static void tick(long t) {
 		GLOBAL_TIME.set(t);
 	}
-	
-    private static final AtomicLong processCounter = new AtomicLong(0);
-    private static final LongAdder processTimeNanos = new LongAdder();
 
 	private final NeuralEngineConfig config;
 
@@ -61,44 +58,29 @@ public class NeuralEngine {
 		this.classifiers = new CopyOnWriteArrayList<>();
 		this.supervisors = new CopyOnWriteArrayList<>();
 
-		ThreadFactory tf = r -> {
-			Thread t = new Thread(r);
-			t.setDaemon(true);
-			t.setUncaughtExceptionHandler((th, ex) -> ex.printStackTrace());
-			return t;
-		};
 		// single-thread scheduler is fine; increase pool size if tasks are heavy
-		this.scheduler = Executors.newScheduledThreadPool(2, tf);
+		this.scheduler = Executors.newSingleThreadScheduledExecutor();
 	}
 
 	public NeuralEngine withMetricsRecorder(MetricsRecorder metricsRecorder) {
 		this.metricsRecorder = metricsRecorder;
 		return this;
 	}
-
-	public static long getAverageProcessTimeMicros() {
-		long count = processCounter.getAndSet(0);
-		if (count == 0) return 0L;
-		long totalNanos = processTimeNanos.sumThenReset();
-		// convert to milliseconds
-		return TimeUnit.NANOSECONDS.toMicros(totalNanos / count);
-	}
 	   
 	public synchronized void start() {
-		if (neuronTask != null && !neuronTask.isDone()) return; // already started
-		AtomicLong iterCounter = new AtomicLong(0);
+		if (neuronThread != null ) return; // already started
+		LongAdder iterCounter = new LongAdder();
+		LongAdder processCounter = new LongAdder();
+		LongAdder processTimeNanos = new LongAdder();
 		
 		Thread neuronThread = new Thread(() -> {
-			long localCounter = 0l
-			long localTime = 0l
+			long localCounter = 0l;
+			long localTime = 0l;
 		    while (!Thread.currentThread().isInterrupted()) {
 		        long now = System.nanoTime();
 		        tick(now);
 				localCounter++;
-				
-				// processCounter.incrementAndGet();
-				// iterCounter.incrementAndGet();
-				
+
 		        brain.streamActiveNeuron(n -> {
 					try {
 						return n.process(now);
@@ -109,11 +91,9 @@ public class NeuralEngine {
 					}
 				});
 				localTime += System.nanoTime()-now;
-				// processTimeNanos.add(System.nanoTime()-now);
 
 				if (localCounter%100==0){
-					processCounter.incrementAndGet(localCounter);
-					iterCounter.incrementAndGet(localCounter);
+					processCounter.add(localCounter);
 					processTimeNanos.add(localTime);
 					localTime = 0l;
 					localCounter = 0l;
@@ -123,6 +103,7 @@ public class NeuralEngine {
 		        LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
 		    }
 		});
+		neuronThread.start();
 
 		// IO loop for sensors/actuators/classifiers/supervisors
 		Runnable ioRunnable = () -> {
@@ -171,10 +152,20 @@ public class NeuralEngine {
 		if (metricsRecorder!=null) {
 			metricsRecorderTask = scheduler.scheduleAtFixedRate(
 				() -> {
-					long now = now();
+					long now = now();					
+					long count = processCounter.sumThenReset();
+					long totalNanos = processTimeNanos.sumThenReset();
+					long runs = iterCounter.sum();
+					long avgTimeProcessing = (count==0)?0:TimeUnit.NANOSECONDS.toMicros(totalNanos / count);
+					
 					for (Layer layer : brain.getAllLayers()) {
 						int layerId = layer.getLayerId();
-						metricsRecorder.pollLayerStats(now, getAverageProcessTimeMicros(), iterCounter.get(), layerId);
+						metricsRecorder.pollLayerStats(
+							now, 
+							avgTimeProcessing, 
+							runs, 
+							layerId
+						);
 					}
 				},
 				1_000,
@@ -185,10 +176,10 @@ public class NeuralEngine {
 	}
 
 	public synchronized void stop() {
-		if (neuronTask != null) neuronTask.cancel(true);
+		//if (neuronTask != null) neuronTask.cancel(true);
 		if (ioTask != null) ioTask.cancel(true);
 		if (metricsRecorderTask != null) metricsRecorderTask.cancel(true);
-
+		if (neuronThread!=null) neuronThread.interrupt();
 		scheduler.shutdownNow();
 		try {
 			if (!scheduler.awaitTermination(2, TimeUnit.SECONDS)) {

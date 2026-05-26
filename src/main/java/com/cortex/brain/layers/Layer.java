@@ -52,7 +52,11 @@ public abstract class Layer {
 
 		public float getRealDistance() {
 			return (float)Maths.sqrt(distance);
-		}		
+		}
+
+		public AbstractNeuron neuron() {
+			return neuron;
+		}	
 	}
 
 	public abstract Layer populate( CorticalNeuronFactory neuronFactory );
@@ -88,7 +92,7 @@ public abstract class Layer {
 
 		Arrays.stream(getNeurons()).parallel().forEach( n -> {	
 			int connsCounter = random.nextInt(config.MIN_CONNECTIONS, config.MAX_CONNECTIONS);
-			Collection<Neighbor> conns = findKNearestApprox(
+			Collection<Neighbor> conns = findNearest(	//TODO: use findKNearestApprox
 					getNeurons(), 
 					n.getPosition(), 
 					connsCounter, 

@@ -36,7 +36,7 @@ public class DiscreteAdaptiveStabilizer {
 		if (ema[lid]==null) {
 			ema[lid] = new StatsEMA();
 			ema[lid].fireAll   = (float) s.avgFiringRateAll();
-		    ema[lid].sparsity  = (float) effectiveSparsity;
+		    ema[lid].sparsity  = (float) s.sparsity(); //effectiveSparsity();
 		    ema[lid].satMax    = (float) s.saturatedMaxRatio();
 		    ema[lid].satMin    = (float) s.saturatedMinRatio();
 		    ema[lid].energy    = (float) s.energy();

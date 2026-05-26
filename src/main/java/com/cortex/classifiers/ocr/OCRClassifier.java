@@ -9,7 +9,7 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
     private final long windowNanos = 75_000_000l; // 75 ms
     
 	private final OCRCharacterNeuron[][] neurons;
-	
+	private float smoothed[];
     private float lastConfidence = 0f;
     private long lastClassificationTime = 0L;
 	private OCRCharacterNeuron result;
@@ -21,6 +21,7 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 		for (char c = 'A'; c <= 'Z'; c++) {
 			this.neurons[0][i++] = new OCRCharacterNeuron(counter++, c);
 		}
+		this.smoothed = new float[counter];
 	}
 	
 	public OCRCharacterNeuron getCharacterNeuronForLetter(char c) {
@@ -39,9 +40,9 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 	    float secondScore = 0f;
 	    float sum = 0f;
 	
-	    for (int i = 0; i < neurons.length; i++) {
+	    for (int i = 0; i < neurons[0].length; i++) {
 	
-	        float score = neurons[i].scoreSpikes(windowNanos, now);
+	        float score = neurons[0][i].scoreSpikes(windowNanos, now);
 	
 	        // smoothing
 	        smoothed[i] = 0.3f * score + 0.7f * smoothed[i];
@@ -72,7 +73,7 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 	    lastClassificationTime = now;
 	    lastApply = now;
 	
-	    result = neurons[best];
+	    result = neurons[0][best];
 	    return result;
 	}
 

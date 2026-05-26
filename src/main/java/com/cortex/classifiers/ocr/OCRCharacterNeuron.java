@@ -33,7 +33,7 @@ public class OCRCharacterNeuron extends AbstractNeuron {
 		return character;
 	}
 
-	public float scoreSpikes(long wnd, long currTimeNanos) throws InterruptedException {
+	public float scoreSpikes(long wnd, long currTimeNanos) {
 		AtomicDouble score = new AtomicDouble(0.0);
 		for (Synapse synapse : getInSynapses()) {
 			Function<Spike, Spike> spikesConsumer = spike -> {
