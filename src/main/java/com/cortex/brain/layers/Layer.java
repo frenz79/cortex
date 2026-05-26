@@ -179,7 +179,8 @@ public abstract class Layer {
     public IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance) {
     	return findKNearestApprox(p.x, p.y, p.z, k, cellSize, maxDistance);
     }
-    
+
+	// TODO: avoid self connections!
     public IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance) {
 		// buffer ordinato di dimensione k (distanze quadratiche)
 		IntFloatPair[] best = new IntFloatPair[k];
