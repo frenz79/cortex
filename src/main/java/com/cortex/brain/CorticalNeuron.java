@@ -20,7 +20,7 @@ public class CorticalNeuron extends AbstractNeuron {
 
 	private final CorticalNeuronsConfig config;
 	
-	private long lastProcessTime = 0l;
+	private long lastProcessTime = System.nanoTime();
 	private long lastSpikeTime = 0l;
 	private float potential = 0;
 
