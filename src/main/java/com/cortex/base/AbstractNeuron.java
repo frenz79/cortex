@@ -48,12 +48,13 @@ public abstract class AbstractNeuron implements IProcessable {
 	public void fire(Spike spike) throws InterruptedException {
 		for ( Synapse s : this.outSynapses  ) {
 			s.addSpike(spike);
-			firingRate += 1.0f;
-		    lastRateUpdate = spike.getCreationTimeNanos();
 		    s.getTarget().setActive(true);
-		    //GlobalContext.traceNeuronFire( lastRateUpdate, this, layerId );
-		    EventBus.fire(EventType.NEURON_FIRED, lastRateUpdate, this, null);
 		}
+		// Move out, otherwise firing rate would be affected by synapses count and not just by 
+		// real activity
+		firingRate += 1.0f;
+		lastRateUpdate = spike.getCreationTimeNanos();
+		EventBus.fire(EventType.NEURON_FIRED, lastRateUpdate, this, null);
 	}
 	/*	
 	public void synapseUpdated( long time, Synapse synapse, float oldW, float newW) {
