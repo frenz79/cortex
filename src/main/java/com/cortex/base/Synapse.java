@@ -115,11 +115,11 @@ public final class Synapse implements IPlasticSynapse {
 	// IPlasticSynapse
 	@Override
 	public void onPreSpike(long t) {
-		if (!pre.isInhibitor()) {
+	//	if (!pre.isInhibitor()) {
             if (this.plasticityRule.onPreSpike(t)) {
                 GlobalContext.addRecentlyActiveSynapses(this);
             }
-        }
+     //   }
     }
 	
 	@Override
