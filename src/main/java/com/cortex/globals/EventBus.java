@@ -9,6 +9,9 @@ import java.util.concurrent.Executors;
 
 public class EventBus {
 
+	// Add monitoring metrics
+	private static final AtomicLong pendingEvents;
+	
 	public static record SynapseUpdatedData (
 			float oldValue,
 			float newValue
@@ -46,13 +49,7 @@ public class EventBus {
 	}
 
 	public static void addListener( EventType type, EventListener l ) {
-		listeners.compute(type, (k,v) -> {
-			if (v==null) {
-				v = new ArrayList<>();
-			}
-			v.add(l);
-			return v;
-		} );
+		listeners.get(type).add(l);
 	}	
 
 	public static interface EventListener {
