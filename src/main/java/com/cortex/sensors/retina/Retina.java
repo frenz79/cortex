@@ -52,7 +52,7 @@ public class Retina implements ISensor {
     	
     	for (int x = 0; x < retinaConfig.RETINA_W; x++) {
     	    for (int y = 0; y < retinaConfig.RETINA_H; y++) {
-        		float lum = sampleLuminanceFromSource(x, y);
+        		float lum = sampleLuminanceFromIntegral(x, y); //sampleLuminanceFromSource(x, y);
         		 int c = retinaNeurons[x][y].process(currTimeNanos, lum);
         	        if (c > 0) {
      //   	            totalSpikes += c;
@@ -68,7 +68,28 @@ public class Retina implements ISensor {
     //	}
     	return true;
    	}
-    
+
+	
+	private float sampleLuminanceFromIntegral(int rx, int ry) {
+	
+	    int cx = (int)((rx + 0.5f + microDx) * sourceScaleX);
+	    int cy = (int)((ry + 0.5f + microDy) * sourceScaleY);
+	
+	    int r = retinaConfig.RECEPTIVE_RADIUS;
+	
+	    int x1 = Maths.clamp(cx - r, 0, sourceWidth - 1);
+	    int y1 = Maths.clamp(cy - r, 0, sourceHeight - 1);
+	    int x2 = Maths.clamp(cx + r, 0, sourceWidth - 1);
+	    int y2 = Maths.clamp(cy + r, 0, sourceHeight - 1);
+	
+	    float sum = sumRegion(integralImage, x1, y1, x2, y2);
+	
+	    int area = (x2 - x1 + 1) * (y2 - y1 + 1);
+	
+	    return Maths.clamp(sum / area, 0f, 1f);
+	}
+
+	
     private boolean updateMicrosaccades(long timeNanos) {
         if (timeNanos - lastSaccadeTime > (retinaConfig.MICROSACCADE_PERIOD_NANOS + ThreadLocalRandom.current().nextInt(1_000_000, 5_000_000))) {
             microDx = ISensor.randomGaussian() * retinaConfig.MICROSACCADE_AMPLITUDE;
@@ -122,8 +143,42 @@ public class Retina implements ISensor {
         	}
         }
 		
+		// costruisci integral image UNA volta
+		this.integralImage = buildIntegral(sourceLuminance, sourceWidth, sourceHeight);
+
 		System.out.println("Image loaded into retina");
 	}
+
+	
+	private float sumRegion(float[][] integral, int x1, int y1, int x2, int y2) {
+	    float A = (x1 > 0 && y1 > 0) ? integral[x1 - 1][y1 - 1] : 0;
+	    float B = (y1 > 0) ? integral[x2][y1 - 1] : 0;
+	    float C = (x1 > 0) ? integral[x1 - 1][y2] : 0;
+	    float D = integral[x2][y2];
+	
+	    return D - B - C + A;
+	}
+
+	private float[][] buildIntegral(float[][] src, int width, int height) {
+	    float[][] integral = new float[width][height];
+	
+	    for (int x = 0; x < width; x++) {
+	        float rowSum = 0f;
+	
+	        for (int y = 0; y < height; y++) {
+	            rowSum += src[x][y];
+	
+	            if (x == 0) {
+	                integral[x][y] = rowSum;
+	            } else {
+	                integral[x][y] = integral[x - 1][y] + rowSum;
+	            }
+	        }
+	    }
+	
+	    return integral;
+	}
+
 	
 	private static float calculateLuminance(int x, int y, BufferedImage image) {
 		int color = image.getRGB(x, y);
