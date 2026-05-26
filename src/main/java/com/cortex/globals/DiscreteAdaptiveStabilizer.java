@@ -35,17 +35,28 @@ public class DiscreteAdaptiveStabilizer {
 		int lid = s.layer().getLayerId();
 		if (ema[lid]==null) {
 			ema[lid] = new StatsEMA();
+			ema[lid].fireAll   = (float) s.avgFiringRateAll();
+		    ema[lid].sparsity  = (float) effectiveSparsity;
+		    ema[lid].satMax    = (float) s.saturatedMaxRatio();
+		    ema[lid].satMin    = (float) s.saturatedMinRatio();
+		    ema[lid].energy    = (float) s.energy();
+		    ema[lid].plast     = (float) s.totalPlasticity();
+		    ema[lid].stability = (float) s.activationStability();
+			return;
 		}
 		
 		double effectiveSparsity = 1.0 - (s.activeNeurons() / (double) s.layer().getNeuronsCount());
-		
-		ema[lid].fireAll = (float)( a * s.avgFiringRateAll() + (1-a) * ema[lid].fireAll);
-		ema[lid].sparsity =(float)( a * ema[lid].sparsity  + effectiveSparsity * (1 - a));
-		ema[lid].satMax = (float)(a * s.saturatedMaxRatio() + (1-a) * ema[lid].satMax);
-		ema[lid].satMin = (float)(a * s.saturatedMinRatio() + (1-a) * ema[lid].satMin);
-		ema[lid].energy = (float)(a * s.energy() + (1-a) * ema[lid].energy);
-		ema[lid].plast = (float)(a * s.totalPlasticity() + (1-a) * ema[lid].plast);
-		ema[lid].stability = (float)(a * s.activationStability() + (1-a) * ema[lid].stability);
+		ema[lid].fireAll   = ema(ema[lid].fireAll,   (float) s.avgFiringRateAll(), a);
+		ema[lid].sparsity  = ema(ema[lid].sparsity,  (float) effectiveSparsity,    a);
+		ema[lid].satMax    = ema(ema[lid].satMax,    (float) s.saturatedMaxRatio(),a);
+		ema[lid].satMin    = ema(ema[lid].satMin,    (float) s.saturatedMinRatio(),a);
+		ema[lid].energy    = ema(ema[lid].energy,    (float) s.energy(),           a);
+		ema[lid].plast     = ema(ema[lid].plast,     (float) s.totalPlasticity(),  a);
+		ema[lid].stability = ema(ema[lid].stability, (float) s.activationStability(), a);
+	}
+	
+	private float ema(float prev, float value, float alpha) {
+	    return alpha * value + (1f - alpha) * prev;
 	}
 
 	public DiscreteAdaptiveStabilizer( Brain brain, DiscreteAdaptiveStabilizerConfig config ) {
