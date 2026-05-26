@@ -117,7 +117,13 @@ public class CorticalNeuron extends AbstractNeuron {
 				newSpikes.clear();
 				// Must be called once per synapse even if fired multiple times
 				// TODO: first param should be affected by travel time
-				synapse.onPostSpike(currTimeNanos, currTimeNanos);
+				// synapse.onPostSpike(currTimeNanos, currTimeNanos);
+
+				// All synapses should be impacted -> TODO: check only active ones
+				for (Synapse s : getInSynapses()) {
+				    s.onPostSpike(currTimeNanos, currTimeNanos);
+				}
+
 			}
 
 	        // still call update even if no new spikes were fired to keep plasticity timing consistent
