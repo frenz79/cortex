@@ -28,7 +28,7 @@ public class BrainNeuromodulator {
 				int sign = n.getSpikeSign();
 				float scaledReward = scaleReward(((CorticalNeuron)(s.getTarget())).getLayerId(),reward);
 				
-				if ( scaledReward>0.0f ) {
+				if ( scaledReward!=0.0f ) {
 					s.applyReward( scaledReward*sign, now, neuromodulator);
 					appliedCount.incrementAndGet();
 				}
@@ -45,16 +45,18 @@ public class BrainNeuromodulator {
 
 	private static float scaleReward( int layerId, float reward ) {
 		switch(layerId) {
+		case -1:
+			return 0.0f;
 		case 1:
 			return 0.05f * reward;
 		case 2:
 			return 0.15f * reward;
 		case 3:
+		case 4:
+		case 5:
 			return 0.30f * reward;
-		case 8:
-			return 1.00f * reward;
 		default:
-			return 0.0f;
+			return 0.1f;
 		}
 	}
 }
