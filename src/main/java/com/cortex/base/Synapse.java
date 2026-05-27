@@ -51,8 +51,9 @@ public final class Synapse implements IPlasticSynapse {
 		return srcNeurons.size();
 	}
 	
-	public static void create( AbstractNeuron srcNeuron, Pair<AbstractNeuron, Float> toNeuron, SynapsePlasticityConfig plasticityCfg) {
-		link( srcNeuron, toNeuron.left(), toNeuron.right(), plasticityCfg );
+	public static int create( AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, SynapsePlasticityConfig plasticityCfg ) {
+		link( srcNeuron, toNeuron, distance, plasticityCfg );
+		return 1;
 	}
 	
 	private static void link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, SynapsePlasticityConfig plasticityCfg) {

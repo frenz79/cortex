@@ -159,7 +159,7 @@ public class PointMeshViewerFX extends Application {
 				synapseLines.getChildren().add(line);
 			}
 		}
-		/*
+		
 		for (Synapse s : n.getOutSynapses()) {
 			if (s.getTarget()!=null && s.getTarget().getPosition()!=null) {
 				Point3D a = neuronToLocal(s.getTarget());
@@ -167,7 +167,7 @@ public class PointMeshViewerFX extends Application {
 				synapseLines.getChildren().add(line);
 			}
 		}
-		*/
+		
 	}
 
 	private void buildNeuronSpheres() {
@@ -207,8 +207,8 @@ public class PointMeshViewerFX extends Application {
 	private Color getLayerColor(int layerId) {
 		Color startColor = Color.GREEN;
 		Color endColor = Color.BROWN;
-		double p = 1.0 / layerId;
-		
+
+		double p = 1.0 / (6-layerId);
 		double r = startColor.getRed() * p + endColor.getRed() * (1 - p);
 		double g = startColor.getGreen() * p + endColor.getGreen() * (1 - p);
 		double b = startColor.getBlue() * p + endColor.getBlue() * (1 - p);

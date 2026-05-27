@@ -1,13 +1,12 @@
 package com.cortex.brain.layers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.PriorityQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -55,6 +54,23 @@ public abstract class Layer {
 
 		public AbstractNeuron neuron() {
 			return neuron;
+		}
+
+		@Override
+		public int hashCode() {
+			return neuron.getIndex();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Neighbor other = (Neighbor) obj;
+			return Objects.equals(neuron, other.neuron);
 		}	
 	}
 
@@ -86,44 +102,51 @@ public abstract class Layer {
 
 	public Layer connectInternal( ) {
 		long startTime = System.nanoTime();
-		Map<AbstractNeuron,Collection<Neighbor>> tmp = new ConcurrentHashMap<>();
 		ThreadLocalRandom random = ThreadLocalRandom.current();
+		AbstractNeuron[] ns = getNeurons();
+		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>();
 
-		Arrays.stream(getNeurons()).parallel().forEach( n -> {	
+		for (AbstractNeuron n : ns) {
 			int connsCounter = random.nextInt(config.MIN_CONNECTIONS, config.MAX_CONNECTIONS);
-			Collection<Neighbor> conns = findNearest(	//TODO: use findKNearestApprox
-					getNeurons(), 
-					n.getPosition(), 
-					connsCounter, 
-					config.CONNECTION_FILTER);		
-			tmp.put(n, conns);
-		});
-
-		// Synapse creation made sync!
-		int connectionsCount = 0;
-		for ( Entry<AbstractNeuron, Collection<Neighbor>> e : tmp.entrySet() ) {
-			Synapse.create(e.getKey(), e.getValue(), config.SYNAPSE_PLASTICITY_CONFIG);
-			connectionsCount += e.getValue().size();
+			neighbors.put(n, new ArrayList<>(findNearest(ns, n, connsCounter, config.CONNECTION_FILTER)));
 		}
-
+		
+		int maxRounds = config.MAX_CONNECTIONS;
+		int connectionsCount = 0;
+		for (int round = 0; round < maxRounds; round++) {
+		    for (AbstractNeuron src : ns) {
+		        List<Neighbor> neigh = neighbors.get(src);
+		        while (!neigh.isEmpty()) {
+			        Neighbor target = neigh.remove(0);	
+			        AbstractNeuron dst = target.neuron();
+			        if (src != dst && !src.hasOutgoingTo(dst) && !dst.hasOutgoingTo(src)) {
+			        	connectionsCount += Synapse.create(
+			        		src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+			        	break;
+			        }
+		        }
+		    }
+		}
+		
 		long endTime = System.nanoTime();
 		System.out.println("L"+config.getLayerId()+" generated "+connectionsCount+" synapses in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
 		this.synapsesCount += connectionsCount;
 		return this;
 	}
 
-	public Collection<Neighbor> findNearest( AbstractNeuron[] neurons, Point3f target, int N, Predicate<AbstractNeuron> filter ) {
+	public Collection<Neighbor> findNearest( AbstractNeuron[] neurons, AbstractNeuron from, int N, Predicate<AbstractNeuron> filter ) {
 		PriorityQueue<Neighbor> pq =
 				new PriorityQueue<>((a,b) -> Float.compare(b.distance(), a.distance()));
 
 		for (int i = 0; i < neurons.length; i++) {
 			AbstractNeuron n = neurons[i];
-			if (filter.test(n)) {			
-				float dx = n.getPosition().x() - target.x();
-				float dy = n.getPosition().y() - target.y();
-				float dz = n.getPosition().z() - target.z();
+			// Avoid self connections and loops
+			if (n!=from && filter.test(n)) {			
+				float dx = n.getPosition().x() - from.getPosition().x();
+				float dy = n.getPosition().y() - from.getPosition().y();
+				float dz = n.getPosition().z() - from.getPosition().z();
 				float dist = dx*dx + dy*dy + dz*dz;
-
+					
 				if (pq.size() < N) {
 					pq.add(new Neighbor(n, dist));
 				} else if (dist < pq.peek().distance()) {

@@ -1,6 +1,10 @@
 package com.cortex.brain.layers;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +27,7 @@ public class SphericalLayer extends Layer {
 		super(config);
 	}
 
+	/*
 	@Override
 	public int link( Layer layer, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
 		Random rnd = ThreadLocalRandom.current();
@@ -59,7 +64,57 @@ public class SphericalLayer extends Layer {
 
 		return connections;
 	}
+	*/
+	
+	public int link(
+	        Layer targetLayer,
+	        int minConn,
+	        int maxConn,
+	        float maxDistance,
+	        Predicate<AbstractNeuron> filter,
+	        SynapsePlasticityConfig plasticityCfg) {
 
+	    AbstractNeuron[] srcs = this.getNeurons();
+	    AbstractNeuron[] dsts = targetLayer.getNeurons();
+
+	    int N = srcs.length;
+	    int connectionsCount = 0;
+
+	    // Precalcolo vicini per ogni sorgente
+	    Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
+	    for (AbstractNeuron src : srcs) {
+	        neighbors.put(src, new ArrayList<>(
+	            findNearest(dsts, src, maxConn, filter)
+	        ));
+	    }
+
+	    // Round-robin
+	    for (int round = 0; round < maxConn; round++) {
+	        for (AbstractNeuron src : srcs) {
+
+	            List<Neighbor> neigh = neighbors.get(src);
+	            if (neigh.isEmpty()) continue;
+
+	            int attempts = neigh.size();
+	            for (int i = 0; i < attempts; i++) {
+
+	                Neighbor target = neigh.remove(0);
+	                AbstractNeuron dst = target.neuron();
+
+	                if (src == dst) continue;
+	                if (src.hasOutgoingTo(dst)) continue;
+	                if (dst.hasOutgoingTo(src)) continue;
+
+	                Synapse.create(src, dst, target.getRealDistance(), plasticityCfg);
+	                connectionsCount++;
+	                break;
+	            }
+	        }
+	    }
+
+	    return connectionsCount;
+	}
+	
 	@Override
 	public int link(IClassifier<? extends AbstractNeuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
 		return link (classifier.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, true);
