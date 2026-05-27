@@ -102,7 +102,7 @@ public class Boostrap {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException { 
-		int totalNeurons = 10_000;
+		int totalNeurons = 40_000;
 		int fanOut = 500;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 

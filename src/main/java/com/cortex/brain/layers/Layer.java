@@ -100,38 +100,85 @@ public abstract class Layer {
 			Predicate<AbstractNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );	
 
-	public Layer connectInternal( ) {
-		long startTime = System.nanoTime();
-		ThreadLocalRandom random = ThreadLocalRandom.current();
-		AbstractNeuron[] ns = getNeurons();
-		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>();
+	public Layer connectInternal() {
+	    long startTime = System.nanoTime();
+	    AbstractNeuron[] ns = getNeurons();
+	    int N = ns.length;
 
-		for (AbstractNeuron n : ns) {
-			int connsCounter = random.nextInt(config.MIN_CONNECTIONS, config.MAX_CONNECTIONS);
-			neighbors.put(n, new ArrayList<>(findNearest(ns, n, connsCounter, config.CONNECTION_FILTER)));
-		}
-		
-		int maxRounds = config.MAX_CONNECTIONS;
-		int connectionsCount = 0;
-		for (int round = 0; round < maxRounds; round++) {
-		    for (AbstractNeuron src : ns) {
-		        List<Neighbor> neigh = neighbors.get(src);
-		        while (!neigh.isEmpty()) {
-			        Neighbor target = neigh.remove(0);	
-			        AbstractNeuron dst = target.neuron();
-			        if (src != dst && !src.hasOutgoingTo(dst) && !dst.hasOutgoingTo(src)) {
-			        	connectionsCount += Synapse.create(
-			        		src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
-			        	break;
-			        }
-		        }
-		    }
-		}
-		
-		long endTime = System.nanoTime();
-		System.out.println("L"+config.getLayerId()+" generated "+connectionsCount+" synapses in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
-		this.synapsesCount += connectionsCount;
-		return this;
+	    int localCount = (int)(config.MAX_CONNECTIONS * 0.8f);
+	    int farCount   = config.MAX_CONNECTIONS - localCount;
+
+	    Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
+
+	    for (AbstractNeuron n : ns) {
+
+	        List<Neighbor> local = new ArrayList<>(
+	            findNearest(ns, n, localCount, config.CONNECTION_FILTER)
+	        );
+
+	        List<Neighbor> far = pickRandomFarNeurons(ns, n, farCount);
+
+	        List<Neighbor> all = new ArrayList<>(local.size() + far.size());
+	        all.addAll(local);
+	        all.addAll(far);
+
+	        neighbors.put(n, all);
+	    }
+
+	    int connectionsCount = 0;
+
+	    for (int round = 0; round < config.MAX_CONNECTIONS; round++) {
+	        for (AbstractNeuron src : ns) {
+
+	            List<Neighbor> neigh = neighbors.get(src);
+	            if (neigh.isEmpty()) continue;
+
+	            int attempts = neigh.size();
+	            for (int i = 0; i < attempts; i++) {
+
+	                Neighbor target = neigh.remove(0);
+	                AbstractNeuron dst = target.neuron();
+
+	                if (src == dst) continue;
+	                if (src.hasOutgoingTo(dst)) continue;
+	                if (dst.hasOutgoingTo(src)) continue;
+
+	                Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+	                connectionsCount++;
+	                break;
+	            }
+	        }
+	    }
+
+	    long endTime = System.nanoTime();
+	    System.out.println(
+	        "L" + config.getLayerId() + " generated " +
+	        connectionsCount + " synapses in " +
+	        TimeUnit.NANOSECONDS.toMicros(endTime - startTime) + " micros"
+	    );
+
+	    this.synapsesCount += connectionsCount;
+	    return this;
+	}
+	
+	private List<Neighbor> pickRandomFarNeurons(AbstractNeuron[] all, AbstractNeuron src, int count) {
+	    List<Neighbor> far = new ArrayList<>(count);
+
+	    for (int i = 0; i < count; i++) {
+	        AbstractNeuron candidate;
+	        do {
+	            candidate = all[ThreadLocalRandom.current().nextInt(all.length)];
+	        } while (candidate == src);
+
+	        float dx = candidate.getPosition().x() - src.getPosition().x();
+	        float dy = candidate.getPosition().y() - src.getPosition().y();
+	        float dz = candidate.getPosition().z() - src.getPosition().z();
+	        float dist = dx*dx + dy*dy + dz*dz;
+
+	        far.add(new Neighbor(candidate, dist));
+	    }
+
+	    return far;
 	}
 
 	public Collection<Neighbor> findNearest( AbstractNeuron[] neurons, AbstractNeuron from, int N, Predicate<AbstractNeuron> filter ) {
