@@ -69,7 +69,6 @@ public class NeuralEngine {
 	   
 	public synchronized void start() {
 		if (neuronThread != null ) return; // already started
-		LongAdder iterCounter = new LongAdder();
 		LongAdder processCounter = new LongAdder();
 		LongAdder processTimeNanos = new LongAdder();
 		
@@ -100,7 +99,7 @@ public class NeuralEngine {
 				}
 			
 		        // spin / sleep controllato
-		        LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
+		       // LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
 		    }
 		});
 		neuronThread.start();
@@ -150,12 +149,13 @@ public class NeuralEngine {
 				);
 
 		if (metricsRecorder!=null) {
+			LongAdder runs = new LongAdder();
 			metricsRecorderTask = scheduler.scheduleAtFixedRate(
 				() -> {
 					long now = now();					
 					long count = processCounter.sumThenReset();
 					long totalNanos = processTimeNanos.sumThenReset();
-					long runs = iterCounter.sum();
+					runs.add( count );
 					long avgTimeProcessing = (count==0)?0:TimeUnit.NANOSECONDS.toMicros(totalNanos / count);
 					
 					for (Layer layer : brain.getAllLayers()) {
@@ -163,7 +163,7 @@ public class NeuralEngine {
 						metricsRecorder.pollLayerStats(
 							now, 
 							avgTimeProcessing, 
-							runs, 
+							runs.sum(), 
 							layerId
 						);
 					}

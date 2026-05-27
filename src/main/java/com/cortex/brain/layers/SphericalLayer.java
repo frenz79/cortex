@@ -6,8 +6,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import javax.vecmath.Point3f;
-
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.LayerConfig;
@@ -15,6 +13,7 @@ import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
 import com.cortex.commons.Maths;
+import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 
@@ -34,9 +33,9 @@ public class SphericalLayer extends Layer {
 		for (AbstractNeuron src : layer.getNeurons()) {
 			int k = rnd.nextInt(minConn, maxConn);
 			IntList idxs = findKNearestApprox(
-					src.getPosition().x,
-					src.getPosition().y,
-					src.getPosition().z,
+					src.getPosition().x(),
+					src.getPosition().y(),
+					src.getPosition().z(),
 					k,
 					cellSize,
 					maxDistance
@@ -46,9 +45,9 @@ public class SphericalLayer extends Layer {
 
 			Collection<Neighbor> conns =
 					toNeighbors(idxs, getNeurons(),
-							src.getPosition().x,
-							src.getPosition().y,
-							src.getPosition().z);
+							src.getPosition().x(),
+							src.getPosition().y(),
+							src.getPosition().z());
 
 			// applica filtro (inhibitory / excitatory)
 			conns.removeIf(n -> !filter.test(n.neuron()));

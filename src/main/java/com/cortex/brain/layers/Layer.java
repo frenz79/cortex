@@ -12,8 +12,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import javax.vecmath.Point3f;
-
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.LayerConfig;
@@ -21,6 +19,7 @@ import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.commons.IntList;
 import com.cortex.commons.Maths;
+import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.IClassifier;
 import com.cortex.commons.modules.ISensor;
 
@@ -120,9 +119,9 @@ public abstract class Layer {
 		for (int i = 0; i < neurons.length; i++) {
 			AbstractNeuron n = neurons[i];
 			if (filter.test(n)) {			
-				float dx = n.getPosition().x - target.x;
-				float dy = n.getPosition().y - target.y;
-				float dz = n.getPosition().z - target.z;
+				float dx = n.getPosition().x() - target.x();
+				float dy = n.getPosition().y() - target.y();
+				float dz = n.getPosition().z() - target.z();
 				float dist = dx*dx + dy*dy + dz*dz;
 
 				if (pq.size() < N) {
@@ -152,9 +151,9 @@ public abstract class Layer {
 		this.spatialHash = new HashMap<>( (Maths.floor(neurons.length*1.5)) );
 		int n = neurons.length;
 		for (int i = 0; i < n; i++) {
-			int cx = cellCoord(neurons[i].getPosition().x, cellSize);
-			int cy = cellCoord(neurons[i].getPosition().y, cellSize);
-			int cz = cellCoord(neurons[i].getPosition().z, cellSize);
+			int cx = cellCoord(neurons[i].getPosition().x(), cellSize);
+			int cy = cellCoord(neurons[i].getPosition().y(), cellSize);
+			int cz = cellCoord(neurons[i].getPosition().z(), cellSize);
 			long key = cellKey(cx, cy, cz);
 			IntList list = this.spatialHash.get(key);
 			if (list == null) {
@@ -181,7 +180,7 @@ public abstract class Layer {
     private static record IntFloatPair(int idx, float dist) {/**/  }
     
     public IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance) {
-    	return findKNearestApprox(p.x, p.y, p.z, k, cellSize, maxDistance);
+    	return findKNearestApprox(p.x(), p.y(), p.z(), k, cellSize, maxDistance);
     }
 
 	// TODO: avoid self connections!
@@ -206,9 +205,9 @@ public abstract class Layer {
 					if (bucket == null) continue;
 					for (int bi = 0; bi < bucket.size(); bi++) {
 						int ni = bucket.get(bi);
-						float vx = getNeurons()[ni].getPosition().x - x;
-						float vy = getNeurons()[ni].getPosition().y - y;
-						float vz = getNeurons()[ni].getPosition().z - z;
+						float vx = getNeurons()[ni].getPosition().x() - x;
+						float vy = getNeurons()[ni].getPosition().y() - y;
+						float vz = getNeurons()[ni].getPosition().z() - z;
 						float d2 = vx*vx + vy*vy + vz*vz;
 						if (d2 > maxDist2) continue; // applica maxDistance
 						// inserimento ordinato in best (k piccolo => O(k) è ok)
@@ -235,9 +234,9 @@ public abstract class Layer {
         ArrayList<Neighbor> out = new ArrayList<>(idxs.size());
         for (int i = 0; i < idxs.size(); i++) {
             int ni = idxs.get(i);
-            float vx = neurons[ni].getPosition().x - px;
-            float vy = neurons[ni].getPosition().y - py;
-            float vz = neurons[ni].getPosition().z - pz;
+            float vx = neurons[ni].getPosition().x() - px;
+            float vy = neurons[ni].getPosition().y() - py;
+            float vz = neurons[ni].getPosition().z() - pz;
             float d = (float)Maths.sqrt(vx*vx + vy*vy + vz*vz);
             out.add(new Neighbor(neurons[ni], d));
         }

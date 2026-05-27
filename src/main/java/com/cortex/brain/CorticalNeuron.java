@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.vecmath.Point3f;
-
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.CorticalNeuronsConfig;
 import com.cortex.commons.Maths;
+import com.cortex.commons.Point3f;
 
 /**
  *  Event-driven, analog-spike, delayed, plastic Neuron

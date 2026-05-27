@@ -5,13 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
-import javax.vecmath.Point3f;
-
+import com.cortex.base.AbstractNeuron;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.LayerConnectionsConfig;
 import com.cortex.brain.layers.Layer;
 import com.cortex.brain.layers.MultiLayer;
 import com.cortex.brain.layers.SphericalLayer;
+import com.cortex.commons.Point3f;
 
 public class Brain extends MultiLayer<SphericalLayer>{
 
@@ -153,5 +153,9 @@ public class Brain extends MultiLayer<SphericalLayer>{
 
 	public Layer getClassifiersSourceLayer() {
 		return getLayer(CLASSIFIERS_TARGET_LAYER);
+	}
+
+	public AbstractNeuron[] getAllNeurons() {
+		return neurons;
 	}
 }

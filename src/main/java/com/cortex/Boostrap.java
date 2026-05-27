@@ -28,6 +28,7 @@ import com.cortex.metrics.MetricsRecorder;
 import com.cortex.sensors.retina.Retina;
 import com.cortex.sensors.retina.RetinaConfig;
 import com.cortex.sensors.retina.RetinaNeuronConfig;
+import com.cortex.viewer.PointMeshViewerFX;
 
 public class Boostrap {
 
@@ -101,8 +102,8 @@ public class Boostrap {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException { 
-		int totalNeurons = 40_000;
-		int fanOut = 150;
+		int totalNeurons = 1_000;
+		int fanOut = 100;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
 		// Create Brain
@@ -177,8 +178,9 @@ public class Boostrap {
 		}));
 
 		// Open UI
-		// new SimpleViewer( layer, true, false );
-
+		// new SimpleViewer( brain, true, false );
+		PointMeshViewerFX.launchViewer(brain);
+		
 		// ..give the life!
 		engine.start();
 		Thread.sleep(200); // breve delay per garantire che il thinker sia operativo

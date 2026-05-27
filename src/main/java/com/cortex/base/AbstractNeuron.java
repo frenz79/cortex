@@ -4,9 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.vecmath.Point3f;
-
 import com.cortex.commons.IProcessable;
+import com.cortex.commons.Point3f;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 
