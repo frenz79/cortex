@@ -1,9 +1,9 @@
-# 🧠 Spiking Neural Engine
+# Spiking Neural Engine
 ### A biologically-inspired, event-driven neural system with reinforcement learning
 
 ---
 
-## 🚀 Overview
+## Overview
 
 This project implements a **spiking neural network (SNN)** inspired by biological brain systems, designed to process information through **time, space, and events** rather than static tensors.
 
@@ -24,7 +24,7 @@ The system integrates:
 
 ---
 
-## 🧩 High-Level Architecture
+## High-Level Architecture
 [ Retina (input) ]
 ↓
 [ Cortical Layers (Spherical, 3D) ]
@@ -35,7 +35,7 @@ The system integrates:
 
 ---
 
-## 👁️ Retina (Input Encoding)
+## Retina (Input Encoding)
 
 The retina converts an image into spikes using a biologically-inspired mechanism:
 
@@ -48,26 +48,26 @@ The retina converts an image into spikes using a biologically-inspired mechanism
 
 ---
 
-## 🧠 Brain (Core SNN)
+## Brain (Core SNN)
 
-### 🌐 Spatial Structure
+### Spatial Structure
 - Neurons arranged on a **3D spherical surface**
 - Distributed using **Fibonacci sphere**
 - Connections are **local and distance-based**
 
-### 🔗 Synapses
+### Synapses
 - Transmit spikes with **propagation delays**
 - Maintain spike queues (event-driven)
 - Apply **plasticity rules**
 
-### ⚡ Execution Model
+### Execution Model
 - Fully **event-driven**
 - Only active neurons are processed
 - Supports **parallel execution**
 
 ---
 
-## 🧬 Learning System
+## Learning System
 
 ### 1. STDP (Timing-Based Learning)
 
@@ -109,7 +109,7 @@ This allows:
 
 ---
 
-## 🎯 OCR Classifier
+## OCR Classifier
 
 The system performs character recognition using:
 
@@ -144,26 +144,26 @@ The system then:
 
 ---
 
-## ⚖️ Adaptive Stabilization
+## Adaptive Stabilization
 
 A built-in controller continuously regulates the network:
 
-### 🧠 Local (per layer)
+### Local (per layer)
 - firing threshold  
 - membrane leak  
 - STDP parameters  
 
-### 🔁 Inter-layer
+### Inter-layer
 - signal propagation strength  
 
-### 🌍 Global
+### Global
 - prevents:
   - inactivity (“dead network”)  
   - runaway excitation  
 
 ---
 
-## 📊 Metrics & Observability
+## Metrics & Observability
 
 The system tracks:
 
@@ -179,7 +179,7 @@ These metrics drive the stabilizer.
 
 ---
 
-## ⚙️ Execution Model
+## Execution Model
 
 The engine runs as a continuous loop:
 
@@ -197,7 +197,7 @@ update metrics
 
 ---
 
-## 💡 Key Features
+## Key Features
 
 ✅ Event-driven processing  
 ✅ Temporal learning  
@@ -208,7 +208,7 @@ update metrics
 
 ---
 
-## ⚠️ Trade-offs
+## Trade-offs
 
 - Non-deterministic (parallelism + timing)
 - Requires parameter tuning
@@ -217,7 +217,7 @@ update metrics
 
 ---
 
-## 🧪 Use Cases
+## Use Cases
 
 - OCR (implemented example)
 - Temporal pattern recognition
@@ -227,7 +227,7 @@ update metrics
 
 ---
 
-## 🔮 Future Improvements
+## Future Improvements
 
 - Center-surround retina (edge detection)
 - Motion detection (temporal filters)
@@ -237,7 +237,7 @@ update metrics
 
 ---
 
-## 🧠 Philosophy
+## Philosophy
 
 This project does **not** aim to replicate deep learning models.
 
@@ -248,7 +248,7 @@ Instead, it explores:
 
 ---
 
-## 🚀 Status
+## Status
 
 ✅ Fully functional  
 ✅ OCR pipeline implemented  
@@ -257,16 +257,16 @@ Instead, it explores:
 
 ---
 
-## 📌 Summary
+## Summary
 
 This is not just a neural network.
 
-> 🧠 It is a dynamic spiking system combining  
+> It is a dynamic spiking system combining  
 > biology-inspired learning, temporal processing, and reinforcement.
 
 ---
 
-## 👋 Contributing / Experiments
+## Contributing / Experiments
 
 You can experiment with:
 
