@@ -11,7 +11,18 @@ public class RewardSystem {
         switch (t) {
             case FOOD: return 1f;
             case DANGER: return -1f;
-            default: return -0.001f;
+            default: return evaluateReward();
         }
+    }
+
+    private float evaluateReward(){
+        reward += speed * 0.02f;
+        
+        // penalità collisioni
+        if (collision) reward -= 1f;
+        
+        // penalità debole inattività
+        if (speed < 0.01f) reward -= 0.001f;
+        return reward;
     }
 }
