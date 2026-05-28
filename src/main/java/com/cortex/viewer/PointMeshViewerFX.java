@@ -62,8 +62,8 @@ public class PointMeshViewerFX extends Application {
 		selectedSphere.setVisible(false);
 		root3d.getChildren().add(selectedSphere);
 
-		// meshView = buildPointMesh();
-		buildNeuronSpheres();
+		// buildNeuronSpheres();
+		buildNeuronMesh();
 		root3d.getChildren().addAll(synapseLines);
 
 		subScene = new SubScene(root3d, 800, 600, true, SceneAntialiasing.BALANCED);
@@ -112,7 +112,7 @@ public class PointMeshViewerFX extends Application {
 			mouseOldY = e.getSceneY();
 		});
 
-		// ⭐ CLICK 3D REALE
+		// CLICK 3D REALE
 		subScene.setOnMouseClicked(e -> {
 			if (e.getButton() == MouseButton.PRIMARY) {
 
@@ -120,12 +120,26 @@ public class PointMeshViewerFX extends Application {
 				if (pr == null)
 					return;
 
+				// Works withe neuron meshes
+				Point3D hitPoint = pr.getIntersectedPoint();
+		        if (hitPoint == null) return;
+		
+		        // trova neurone più vicino
+		        AbstractNeuron hit = findClosestNeuron(hitPoint);
+		
+		        if (hit != null) {
+		            highlightNeuron(hit);
+		            highlightSynapses(hit);
+		        }
+				
+				/* works with neuron spheres
 				Node node = pr.getIntersectedNode();
 				if (node instanceof Sphere && node.getUserData() instanceof AbstractNeuron) {
 					AbstractNeuron hit = (AbstractNeuron) node.getUserData();
 					highlightNeuron(hit);
 					highlightSynapses(hit);
 				}
+				*/
 			}
 		});
 
@@ -134,6 +148,29 @@ public class PointMeshViewerFX extends Application {
 		});
 	}
 
+	// Picking with Neuron meshes
+private AbstractNeuron findClosestNeuron(Point3D hitPoint) {
+    AbstractNeuron best = null;
+    double bestDist = Double.MAX_VALUE;
+
+    // tolleranza selezione (adattiva)
+	double camDist = Math.abs(translate.getZ());
+	double tolerance = 0.02 * camDist;
+    // double tolerance = 0.08;
+    for (AbstractNeuron n : brain.getAllNeurons()) {
+        Point3D p = neuronToLocal(n);
+        double dist = p.distance(hitPoint);
+		// Click on empty space
+		if (bestDist > tolerance * 1.5) return null;
+        if (dist < tolerance && dist < bestDist) {
+            bestDist = dist;
+            best = n;
+        }
+    }
+    return best;
+}
+
+	
 	private void highlightNeuron(AbstractNeuron n) {
 		Point3D p = neuronToLocal(n);
 		selectedSphere.setTranslateX(p.getX());
@@ -166,10 +203,50 @@ public class PointMeshViewerFX extends Application {
 				Node line = makeConnection(a, b, Color.BLUE);
 				synapseLines.getChildren().add(line);
 			}
-		}
-		
+		}		
 	}
 
+private void buildNeuronMesh() {
+    Map<Integer, TriangleMesh> map = new HashMap<>();
+
+    for (AbstractNeuron n : brain.getAllNeurons()) {
+        int layer = n.getLayerId();
+        map.putIfAbsent(layer, new TriangleMesh());
+        TriangleMesh mesh = map.get(layer);
+
+        Point3f p = n.getPosition();
+        float x = -p.x();
+        float y = p.y();
+        float z = p.z();
+
+        float size = 0.01f;
+        int base = mesh.getPoints().size() / 3;
+
+        mesh.getPoints().addAll(
+            x, y, z,
+            x + size, y, z,
+            x, y + size, z
+        );
+
+        mesh.getTexCoords().addAll(0,0);
+        mesh.getFaces().addAll(
+            base, 0,
+            base+1, 0,
+            base+2, 0
+        );
+    }
+
+    Group g = new Group();
+    for (var entry : map.entrySet()) {
+        MeshView mv = new MeshView(entry.getValue());
+        mv.setMaterial(new PhongMaterial(getLayerColor(entry.getKey())));
+        g.getChildren().add(mv);
+    }
+	root3d.getChildren().add(g);
+}
+
+
+	
 	private void buildNeuronSpheres() {
 		for (AbstractNeuron n : brain.getAllNeurons()) {
 			Point3f p = n.getPosition();
