@@ -309,6 +309,7 @@ private void buildNeuronMesh() {
 
     Group g = new Group();
     for (var entry : map.entrySet()) {
+		// TODO: check visibleLayers
         MeshView mv = new MeshView(entry.getValue());
         mv.setMaterial(new PhongMaterial(getLayerColor(entry.getKey())));
         g.getChildren().add(mv);
