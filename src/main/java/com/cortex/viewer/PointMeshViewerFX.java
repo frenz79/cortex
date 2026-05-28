@@ -50,6 +50,8 @@ public class PointMeshViewerFX extends Application {
 	private Group root3d;
 	private SubScene subScene;
 
+	private Set<Integer> visibleLayers = new HashSet<>();
+	
 	public static void launchViewer(Brain b) {
 		brain = b;
 		launch();
@@ -83,6 +85,20 @@ public class PointMeshViewerFX extends Application {
 
 		subScene.setCamera(camera);
 
+		CockpitPanel panel = new CockpitPanel(6); // numero layer
+		panel.setOnLayerChange(layers -> {
+		    visibleLayers = layers;
+		    updateVisibility();
+		});
+		
+		panel.setOnShowInSynChange(v -> showInputSynapses = v);
+		panel.setOnShowOutSynChange(v -> showOutputSynapses = v);
+		panel.setOnHighlightSensorsChange(v -> highlightSensorPaths = v);
+		
+		BorderPane pane = new BorderPane(subScene);
+		pane.setLeft(panel);
+
+		
 		BorderPane pane = new BorderPane(subScene);
 		Scene scene = new Scene(pane);
 
@@ -93,6 +109,15 @@ public class PointMeshViewerFX extends Application {
 		stage.show();
 	}
 
+	
+	private void updateVisibility() {
+	    for (Sphere s : neuronSpheres) {
+	        AbstractNeuron n = (AbstractNeuron) s.getUserData();
+	        s.setVisible(visibleLayers.contains(n.getLayerId()));
+	    }
+	}
+
+	
 	private void enableMouseControls(Scene scene) {		
 		subScene.setOnMouseMoved(e -> {			
 			long now = System.nanoTime();
