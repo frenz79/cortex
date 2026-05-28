@@ -86,11 +86,13 @@ public class PointMeshViewerFX extends Application {
 		subScene.setCamera(camera);
 
 		CockpitPanel panel = new CockpitPanel(6); // numero layer
-		panel.setOnLayerChange(layers -> {
-		    visibleLayers = layers;
-		    updateVisibility();
+
+		panel.setOnLayerChange(visibleLayers -> {
+		    for (var entry : layerMeshes.entrySet()) {
+		        boolean visible = visibleLayers.contains(entry.getKey());
+		        entry.getValue().setVisible(visible);
+		    }
 		});
-		
 		panel.setOnShowInSynChange(v -> showInputSynapses = v);
 		panel.setOnShowOutSynChange(v -> showOutputSynapses = v);
 		panel.setOnHighlightSensorsChange(v -> highlightSensorPaths = v);
@@ -309,9 +311,10 @@ private void buildNeuronMesh() {
 
     Group g = new Group();
     for (var entry : map.entrySet()) {
-		// TODO: check visibleLayers
         MeshView mv = new MeshView(entry.getValue());
         mv.setMaterial(new PhongMaterial(getLayerColor(entry.getKey())));
+
+        layerMeshes.put(entry.getKey(), mv);
         g.getChildren().add(mv);
     }
 	root3d.getChildren().add(g);
