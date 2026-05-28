@@ -36,5 +36,39 @@ public class WorldRenderer {
             (agent.x + Math.cos(agent.angle)) * tileSize,
             (agent.y + Math.sin(agent.angle)) * tileSize
         );
+
+        renderFOV(g, world, tileSize);
     }
+
+    
+public void renderFOV(GraphicsContext g, TileWorld world, double tileSize) {
+
+    Agent agent = world.getAgent();
+
+    float fov = (float)Math.toRadians(120); // stesso del lidar
+    float radius = 5f; // visivo
+
+    int segments = 20; // qualità
+
+    g.setStroke(Color.color(0, 1, 0, 0.5));
+    g.setLineWidth(1);
+
+    double cx = agent.x * tileSize;
+    double cy = agent.y * tileSize;
+
+    for (int i = 0; i <= segments; i++) {
+
+        float t = (i / (float)segments) - 0.5f;
+        float angle = agent.angle + t * fov;
+
+        float dx = (float)Math.cos(angle);
+        float dy = (float)Math.sin(angle);
+
+        double ex = (agent.x + dx * radius) * tileSize;
+        double ey = (agent.y + dy * radius) * tileSize;
+
+        g.strokeLine(cx, cy, ex, ey);
+    }
+}
+
 }
