@@ -126,29 +126,26 @@ public abstract class Layer {
 	    }
 
 	    int connectionsCount = 0;
-
-	    for (int round = 0; round < config.MAX_CONNECTIONS; round++) {
-	        for (AbstractNeuron src : ns) {
-
-	            List<Neighbor> neigh = neighbors.get(src);
-	            if (neigh.isEmpty()) continue;
-
-	            int attempts = neigh.size();
-	            for (int i = 0; i < attempts; i++) {
-
-	                Neighbor target = neigh.remove(0);
-	                AbstractNeuron dst = target.neuron();
-
-	                if (src == dst) continue;
-	                if (src.hasOutgoingTo(dst)) continue;
-	                if (dst.hasOutgoingTo(src)) continue;
-
-	                Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
-	                connectionsCount++;
-	                break;
-	            }
-	        }
-	    }
+	    
+		for (int round = 0; round < config.MAX_CONNECTIONS; round++) {
+		    for (AbstractNeuron src : ns) {
+		
+		        List<Neighbor> neigh = neighbors.get(src);
+		        if (neigh.isEmpty()) continue;
+		
+		        Neighbor target = neigh.remove(neigh.size() - 1);
+		        AbstractNeuron dst = target.neuron();
+		
+		        if (src == dst) continue;
+		        float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
+				float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
+				
+				if (ds >= dd) continue;
+		
+		        Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+		        connectionsCount++;
+		    }
+		}
 
 	    long endTime = System.nanoTime();
 	    System.out.println(
