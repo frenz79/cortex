@@ -44,6 +44,9 @@ public class PointMeshViewerFX extends Application {
 	private final PhongMaterial selectedMaterial = new PhongMaterial(Color.YELLOW);
 	private final List<Sphere> neuronSpheres = new ArrayList<>();
 
+	private final Tooltip dynamicTooltip = new Tooltip();
+	private long lastTooltipUpdate = 0;
+	
 	private Group root3d;
 	private SubScene subScene;
 
@@ -69,6 +72,8 @@ public class PointMeshViewerFX extends Application {
 		subScene = new SubScene(root3d, 800, 600, true, SceneAntialiasing.BALANCED);
 		subScene.setFill(Color.BLACK);
 
+		Tooltip.install(subScene, dynamicTooltip);
+		
 		PerspectiveCamera camera = new PerspectiveCamera(true);
 		camera.setNearClip(0.0001);
 		camera.setFarClip(10);
@@ -88,8 +93,49 @@ public class PointMeshViewerFX extends Application {
 		stage.show();
 	}
 
-	private void enableMouseControls(Scene scene) {
+	private void enableMouseControls(Scene scene) {		
+		subScene.setOnMouseMoved(e -> {			
+			long now = System.nanoTime();
+			if (now - lastTooltipUpdate < 30_000_000) return; // 30 ms
+			
+			lastTooltipUpdate = now;
+			
+		    PickResult pr = e.getPickResult();
+		    if (pr == null) {
+		        dynamicTooltip.hide();
+		        return;
+		    }
+		
+		    Point3D hitPoint = pr.getIntersectedPoint();
+		    if (hitPoint == null) {
+		        dynamicTooltip.hide();
+		        return;
+		    }
+		
+		    AbstractNeuron n = findClosestNeuron(hitPoint);
+		
+		    if (n == null) {
+		        dynamicTooltip.hide();
+		        return;
+		    }
+		
+		    dynamicTooltip.setText(
+		        "Neuron " + n.getIndex() +
+		        "\nLayer: " + n.getLayerId() +
+		        "\nType: " + n.getClass().getSimpleName() +
+		        "\nInSyn: " + n.getInSynapses().size() +
+		        "\nOutSyn: " + n.getOutSynapses().size()
+		    );
+		
+		    dynamicTooltip.show(
+		        subScene,
+		        e.getScreenX() + 10,
+		        e.getScreenY() + 10
+		    );
 
+			highlightNeuron(n);
+		});
+		
 		scene.setOnMousePressed(e -> {
 			mouseOldX = e.getSceneX();
 			mouseOldY = e.getSceneY();
@@ -258,7 +304,7 @@ private void buildNeuronMesh() {
 			s.setTranslateX(-p.x());
 			s.setTranslateY(p.y());
 			s.setTranslateZ(p.z());
-
+			
 			// tooltip
 			Tooltip t = new Tooltip(
 				    "Neuron " + n.getIndex() +
@@ -275,7 +321,7 @@ private void buildNeuronMesh() {
 			
 			// salva per picking
 			s.setUserData(n);
-
+			
 			neuronSpheres.add(s);
 			root3d.getChildren().add(s);
 		}
