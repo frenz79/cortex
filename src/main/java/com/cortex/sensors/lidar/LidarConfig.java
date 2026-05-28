@@ -1,3 +1,5 @@
+package com.cortex.sensors.lidar;
+
 public class LidarConfig {
 
     public int RAYS = 16;

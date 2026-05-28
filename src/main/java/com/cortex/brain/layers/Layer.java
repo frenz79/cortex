@@ -137,6 +137,10 @@ public abstract class Layer {
 		        AbstractNeuron dst = target.neuron();
 		
 		        if (src == dst) continue;
+		        
+		        Point3f ps = src.getPosition();
+		        Point3f pd = dst.getPosition();
+		        
 		        float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
 				float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
 				

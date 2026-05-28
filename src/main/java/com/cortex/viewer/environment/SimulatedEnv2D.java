@@ -1,14 +1,7 @@
+package com.cortex.viewer.environment;
 
-TileWorld world = new TileWorld(40, 40);
-WorldRenderer renderer = new WorldRenderer();
-
-
-AnimationTimer timer = new AnimationTimer() {
-
-    @Override
-    public void handle(long now) {
-
-        // 1️⃣ sensing
+/*
+// 1️⃣ sensing
         float[] lidar = world.sense();
 
         // 2️⃣ input → rete
@@ -27,6 +20,19 @@ AnimationTimer timer = new AnimationTimer() {
         supervisor.applyReward(reward, now);
 
         // 6️⃣ rendering
+package com;
+
+
+TileWorld world = new TileWorld(40, 40);
+WorldRenderer renderer = new WorldRenderer();
+
+
+AnimationTimer timer = new AnimationTimer() {
+
+    @Override
+    public void handle(long now) {
+
+        
         renderer.render(gc, world, tileSize);
         renderer.drawLidar(gc, world, lidar, tileSize);
     }
@@ -34,3 +40,4 @@ AnimationTimer timer = new AnimationTimer() {
 
 
 timer.start();
+*/

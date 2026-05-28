@@ -1,9 +1,17 @@
-import javafx.geometry.Insets;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
+package com.cortex.viewer;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Consumer;
+
+import javafx.geometry.Insets;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
+import javafx.scene.layout.VBox;
 
 public class CockpitPanel extends VBox {
 
@@ -15,14 +23,12 @@ public class CockpitPanel extends VBox {
     private final CheckBox showOutSynCheck = new CheckBox("Show output synapses");
     private final CheckBox highlightSensorsCheck = new CheckBox("Highlight sensor paths");
 
-    // --- callback verso viewer
     private Consumer<Set<Integer>> onLayerChange;
     private Consumer<Boolean> onShowInSynChange;
     private Consumer<Boolean> onShowOutSynChange;
     private Consumer<Boolean> onHighlightSensorsChange;
 
     public CockpitPanel(int numLayers) {
-
         setSpacing(10);
         setPadding(new Insets(10));
         setPrefWidth(220);
@@ -39,6 +45,7 @@ public class CockpitPanel extends VBox {
         showAllLayersCheck.setSelected(true);
         showInSynCheck.setSelected(true);
         showOutSynCheck.setSelected(true);
+        highlightSensorsCheck.setSelected(false);
 
         // --- layer section
         VBox layerBox = new VBox(5);
@@ -85,3 +92,37 @@ public class CockpitPanel extends VBox {
                 new Separator(),
                 highlightSensorsCheck
         );
+    }
+
+	private void notifyLayerChange() {
+		Set<Integer> selectedLayers = new HashSet<>();
+		for ( Entry<Integer, CheckBox> e : layerCheckboxes.entrySet() ) {
+			if (e.getValue().isSelected()) {
+				selectedLayers.add(e.getKey());
+			}
+		}		
+		onLayerChange.accept(selectedLayers);
+		return;
+	}
+
+	private void styleCheck(CheckBox chk) {
+		chk.setStyle("-fx-text-fill: white;");
+	}
+
+	public void setOnLayerChange(Consumer<Set<Integer>>  c) {
+		this.onLayerChange = c;
+	}
+
+	public void setOnShowInSynChange(Consumer<Boolean> c) {
+		this.onShowInSynChange = c;
+	}
+
+	public void setOnShowOutSynChange(Consumer<Boolean> c) {
+		this.onShowOutSynChange = c;
+	}
+
+	public void setOnHighlightSensorsChange(Consumer<Boolean> c) {
+		this.onHighlightSensorsChange = c;
+	}
+
+}

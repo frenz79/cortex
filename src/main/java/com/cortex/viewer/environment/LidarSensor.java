@@ -1,3 +1,4 @@
+package com.cortex.viewer.environment;
 
 public class LidarSensor {
 

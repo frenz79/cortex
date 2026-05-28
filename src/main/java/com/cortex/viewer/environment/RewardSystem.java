@@ -1,3 +1,4 @@
+package com.cortex.viewer.environment;
 
 public class RewardSystem {
 
@@ -16,6 +17,7 @@ public class RewardSystem {
     }
 
     private float evaluateReward(){
+    	/*
         reward += speed * 0.02f;
         
         // penalità collisioni
@@ -24,5 +26,7 @@ public class RewardSystem {
         // penalità debole inattività
         if (speed < 0.01f) reward -= 0.001f;
         return reward;
+        */
+    	return 0.0f;
     }
 }

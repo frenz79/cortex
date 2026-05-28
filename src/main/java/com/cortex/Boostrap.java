@@ -103,7 +103,7 @@ public class Boostrap {
 
 	public static void main(String[] args) throws IOException, InterruptedException { 
 		int totalNeurons = 40_000;
-		int fanOut = 500;
+		int fanOut = 1000;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
 		// Create Brain
@@ -179,7 +179,7 @@ public class Boostrap {
 
 		// Open UI
 		// new SimpleViewer( brain, true, false );
-		PointMeshViewerFX.launchViewer(brain);
+		PointMeshViewerFX.launchViewer(brain, retina);
 		
 		// ..give the life!
 		engine.start();

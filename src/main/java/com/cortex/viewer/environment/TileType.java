@@ -1,5 +1,7 @@
+package com.cortex.viewer.environment;
 
-public enum TileType {public enum Tile EMPTY,
+public enum TileType {
+	EMPTY,
     WALL,
     FOOD,
     DANGER;

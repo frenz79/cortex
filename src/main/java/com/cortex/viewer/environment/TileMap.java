@@ -1,3 +1,4 @@
+package com.cortex.viewer.environment;
 
 public class TileMap {
 
@@ -25,7 +26,7 @@ public class TileMap {
     }
 
     public TileType get(int x, int y) {
-        if (!isInside(x, y)) return TileType.WALL;
+    	if (!isInside(x, y)) return TileType.WALL;
         return grid[x][y];
     }
 

@@ -1,3 +1,12 @@
+package com.cortex.sensors.lidar;
+
+import java.util.List;
+
+import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Spike;
+import com.cortex.commons.Maths;
+import com.cortex.commons.modules.ISensor;
+
 public class Lidar implements ISensor {
 
     private static final String SENSOR_ID = "LIDAR";
@@ -10,7 +19,7 @@ public class Lidar implements ISensor {
     private volatile boolean active;
     private volatile long lastProcessTime = 0;
 
-    public LidarSensor(LidarConfig config, LidarNeuronConfig neuronConfig) {
+    public Lidar(LidarConfig config, LidarNeuronConfig neuronConfig) {
         this.config = config;
         this.neurons = new LidarNeuron[config.RAYS];
 
@@ -20,7 +29,7 @@ public class Lidar implements ISensor {
     }
 
     @Override
-    public boolean process(long currTimeNanos) {
+    public boolean process(long currTimeNanos) throws InterruptedException {
 
         this.lastProcessTime = currTimeNanos;
 

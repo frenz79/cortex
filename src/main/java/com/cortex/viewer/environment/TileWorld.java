@@ -1,5 +1,8 @@
+package com.cortex.viewer.environment;
 
-public class TileWorld {public class TileWorld final TileMap map;
+public class TileWorld {
+	
+	private final TileMap map;
     private final Agent agent;
     private final LidarSensor lidar;
     private final RewardSystem reward;
