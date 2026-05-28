@@ -2,26 +2,35 @@
 TileWorld world = new TileWorld(40, 40);
 WorldRenderer renderer = new WorldRenderer();
 
+
 AnimationTimer timer = new AnimationTimer() {
 
     @Override
     public void handle(long now) {
 
+        // 1️⃣ sensing
         float[] lidar = world.sense();
 
-        // 👉 qui colleghi la tua rete
-        // retina/lidar → neuroni → output
+        // 2️⃣ input → rete
+        // (qui colleghi il lidar ai neuroni input)
+        retina.setFromLidar(lidar, now);
 
+        // 3️⃣ output dalla rete
         float left = motorLeft.getRecentFiringRate(now);
         float right = motorRight.getRecentFiringRate(now);
 
+        // 4️⃣ update mondo
         world.update(left, right);
 
+        // 5️⃣ reward
         float reward = world.reward();
-        supervisor.processReward(reward, now);
+        supervisor.applyReward(reward, now);
 
-        renderer.render(gc, world, 20);
+        // 6️⃣ rendering
+        renderer.render(gc, world, tileSize);
+        renderer.drawLidar(gc, world, lidar, tileSize);
     }
 };
+
 
 timer.start();
