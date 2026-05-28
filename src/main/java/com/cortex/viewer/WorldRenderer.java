@@ -40,6 +40,34 @@ public class WorldRenderer {
         renderFOV(g, world, tileSize);
     }
 
+
+    
+public void drawLidar(GraphicsContext g, TileWorld world, float[] distances, double tileSize) {
+
+    Agent agent = world.getAgent();
+
+    int rays = distances.length;
+    float fov = (float)Math.toRadians(120);
+
+    double cx = agent.x * tileSize;
+    double cy = agent.y * tileSize;
+
+    g.setStroke(Color.LIMEGREEN);
+
+    for (int i = 0; i < rays; i++) {
+
+        float t = (i / (float)(rays - 1)) - 0.5f;
+        float rayAngle = agent.angle + t * fov;
+
+        float dist = distances[i];
+
+        double ex = (agent.x + Math.cos(rayAngle) * dist) * tileSize;
+        double ey = (agent.y + Math.sin(rayAngle) * dist) * tileSize;
+
+        g.strokeLine(cx, cy, ex, ey);
+    }
+}
+
     
 public void renderFOV(GraphicsContext g, TileWorld world, double tileSize) {
 
@@ -70,5 +98,41 @@ public void renderFOV(GraphicsContext g, TileWorld world, double tileSize) {
         g.strokeLine(cx, cy, ex, ey);
     }
 }
+
+
+    
+public void fillFOV(GraphicsContext g, TileWorld world, float[] distances, double tileSize) {
+
+    Agent agent = world.getAgent();
+    int rays = distances.length;
+    float fov = (float)Math.toRadians(120);
+
+    double cx = agent.x * tileSize;
+    double cy = agent.y * tileSize;
+
+    double[] xs = new double[rays + 2];
+    double[] ys = new double[rays + 2];
+
+    xs[0] = cx;
+    ys[0] = cy;
+
+    for (int i = 0; i < rays; i++) {
+
+        float t = (i / (float)(rays - 1)) - 0.5f;
+        float angle = agent.angle + t * fov;
+
+        float dist = distances[i];
+
+        xs[i + 1] = (agent.x + Math.cos(angle) * dist) * tileSize;
+        ys[i + 1] = (agent.y + Math.sin(angle) * dist) * tileSize;
+    }
+
+    xs[rays + 1] = cx;
+    ys[rays + 1] = cy;
+
+    g.setFill(Color.color(0, 1, 0, 0.15));
+    g.fillPolygon(xs, ys, rays + 2);
+}
+
 
 }
