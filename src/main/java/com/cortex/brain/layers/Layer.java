@@ -11,6 +11,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.LayerConfig;
@@ -24,6 +27,8 @@ import com.cortex.commons.modules.ISensor;
 
 public abstract class Layer {
 
+	final Logger logger = LogManager.getLogger(this.getClass());
+	
 	protected final LayerConfig config;
 	protected AbstractNeuron[] neurons;
 	private int synapsesCount = 0;
@@ -152,10 +157,60 @@ public abstract class Layer {
 		    }
 		}
 
+		// Check all neurons have at least one input / output
+		for (AbstractNeuron src : ns) {
+			if (src.getOutSynapses().isEmpty()) {
+				List<Neighbor> far = pickRandomFarNeurons(ns, src, farCount);
+				while(!far.isEmpty()) {
+				 
+				 Neighbor target = far.remove(far.size() - 1);
+				 AbstractNeuron dst = target.neuron();
+				 
+			        if (src == dst) continue;
+			        
+			        Point3f ps = src.getPosition();
+			        Point3f pd = dst.getPosition();
+			        
+			        float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
+					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
+					
+					if (ds >= dd) continue;
+			        Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+			        connectionsCount++;
+			        logger.info("Amended src:{} not having any output", src);
+			        break;
+				}
+			}
+			if (src.getInSynapses().isEmpty()) {
+				List<Neighbor> far = pickRandomFarNeurons(ns, src, farCount);
+				while(!far.isEmpty()) {
+				 
+				 Neighbor target = far.remove(far.size() - 1);
+				 AbstractNeuron dst = target.neuron();
+				 
+			        if (src == dst) continue;
+			        
+			        Point3f ps = src.getPosition();
+			        Point3f pd = dst.getPosition();
+			        
+			        float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
+					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
+					
+					if (ds >= dd) continue;
+			        Synapse.create(dst, src, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+			        connectionsCount++;
+			        
+			        logger.info("Amended src:{} not having any input", src);
+			        break;
+				}
+			}
+		}
+		
 	    long endTime = System.nanoTime();
-	    System.out.println(
-	        "L" + config.getLayerId() + " generated " +
-	        connectionsCount + " synapses in " +
+	    logger.info(
+	        "L{} generated {} synapses in {}",
+	        config.getLayerId(),
+	        connectionsCount,
 	        TimeUnit.NANOSECONDS.toMicros(endTime - startTime) + " micros"
 	    );
 

@@ -160,7 +160,11 @@ public class SphericalLayer extends Layer {
 		buildSpatialHash(config.DIMENSION / 2.0f);
 
 		long endTime = System.nanoTime();
-		System.out.println("L"+getLayerId()+" generated "+getNeuronsCount()+" neurons in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
+		logger.info("L{} generated {} neurons in {} micros",
+			getLayerId(),
+			getNeuronsCount(),
+			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
+		);
 		return this;
 	}   
 }

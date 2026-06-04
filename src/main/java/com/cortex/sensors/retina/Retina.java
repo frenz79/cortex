@@ -4,6 +4,9 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.commons.Maths;
@@ -11,6 +14,8 @@ import com.cortex.commons.modules.ISensor;
 
 public class Retina implements ISensor {
 
+	private final Logger logger = LogManager.getLogger(this.getClass());
+	
 	private static final String SENSOR_ID = "RETINA";
 
 	private final RetinaConfig retinaConfig;
@@ -141,7 +146,7 @@ public class Retina implements ISensor {
 		// costruisci integral image UNA volta
 		this.integralImage = buildIntegral(sourceLuminance, sourceWidth, sourceHeight);
 
-		System.out.println("Image loaded into retina");
+		logger.info("Image loaded into retina");
 	}
 
 

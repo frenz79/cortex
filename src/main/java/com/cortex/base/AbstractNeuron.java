@@ -4,12 +4,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.commons.IProcessable;
 import com.cortex.commons.Point3f;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 
 public abstract class AbstractNeuron implements IProcessable {
+
+	protected final Logger logger = LogManager.getLogger(this.getClass());
 
 	final List<Synapse> inSynapses;
 	final List<Synapse> outSynapses;
@@ -80,7 +85,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		try {
 			this.inSynapses.add(s);
 		} catch (Exception ex) {
-			System.out.println("Failed to add incoming synapse to:"+this.toString());
+			logger.error("Failed to add incoming synapse to:{}",this.toString());
 			throw ex;
 		}
 	}
@@ -89,7 +94,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		try {
 			this.outSynapses.add(s);
 		} catch (Exception ex) {
-			System.out.println("Failed to add outgoing synapse to:"+this.toString());
+			logger.error("Failed to add outgoing synapse to:{}",this.toString());
 			throw ex;
 		}
 	}
@@ -112,5 +117,10 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public List<Synapse> getOutSynapses() {
 		return outSynapses;
+	}
+
+	@Override
+	public String toString() {
+		return "AbstractNeuron [layerId=" + layerId + ", index=" + index + ", position=" + position + "]";
 	}
 }

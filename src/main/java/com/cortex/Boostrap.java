@@ -7,6 +7,9 @@ import java.util.concurrent.CountDownLatch;
 
 import javax.imageio.ImageIO;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.Synapse;
 import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.config.InhibitorySynapticPlasticityConfig;
@@ -32,6 +35,8 @@ import com.cortex.viewer.PointMeshViewerFX;
 
 public class Boostrap {
 
+	private final static Logger logger = LogManager.getLogger(Boostrap.class);
+	
 	public static Brain buildBrain( int totalNeurons, int connScale ) {
 		BrainLayersConfig layersCfg = new BrainLayersConfig();	
 		
@@ -108,16 +113,16 @@ public class Boostrap {
 
 		// Create Brain
 		Brain brain = buildBrain(totalNeurons, connScale);
-		System.out.println("Number of Neurons:"+brain.getNeuronsCount());
-		System.out.println("Number of Synapses:"+brain.getSynapsesCount());
+		logger.info("Number of Neurons:{}",brain.getNeuronsCount());
+		logger.info("Number of Synapses:{}",brain.getSynapsesCount());
 
 		// Create sensors
 		ISensor retina = buildAndConnectRetina( brain );
-		System.out.println("Number of Retina Synapses:"+retina.getSynapsesCount());
+		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
 
 		// Connect OCR Classifier to L4
 		ISupervisor<OCRCharacterNeuron> ocrSupervisor = buildAndConnectOCR( brain );		
-		System.out.println("Number of OCR Synapses:"+ocrSupervisor.getClassifier().getSynapsesCount());
+		logger.info("Number of OCR Synapses{}",ocrSupervisor.getClassifier().getSynapsesCount());
 
 		// Stabilizer
 		DiscreteAdaptiveStabilizer stabilizer = new DiscreteAdaptiveStabilizer( brain,
@@ -167,7 +172,7 @@ public class Boostrap {
 
 		CountDownLatch keepAlive = new CountDownLatch(1);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			System.out.println("Shutting down...");
+			logger.info("Shutting down...");
 			try {
 				retina.stop();
 			} catch (Exception ignored) {}
@@ -188,7 +193,7 @@ public class Boostrap {
 		retina.start();
 
 		keepAlive.await();
-		System.out.println("Main exiting");
+		logger.info("Main exiting");
 	}
 
 	private static BufferedImage loadImage(String path) throws IOException {

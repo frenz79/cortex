@@ -9,7 +9,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.brain.Brain;
@@ -21,6 +23,8 @@ import com.cortex.commons.modules.ISupervisor;
 import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {
+
+	private final Logger logger = LogManager.getLogger(this.getClass());
 
 	private static final AtomicLong GLOBAL_TIME = new AtomicLong();
 
@@ -122,7 +126,7 @@ public class NeuralEngine {
 					try {
 						AbstractNeuron result = c.classify(now);
 						if (result != null) {
-							System.out.println("Classifier result:" + result);
+							logger.info("Classifier result:{}", result);
 						}
 					} catch (Exception ex) {
 						ex.printStackTrace();

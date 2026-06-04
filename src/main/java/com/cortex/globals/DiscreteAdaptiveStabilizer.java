@@ -1,17 +1,21 @@
 package com.cortex.globals;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.config.CorticalNeuronsConfig;
 import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.brain.Brain;
 import com.cortex.brain.layers.Layer;
 import com.cortex.commons.Maths;
-import com.cortex.globals.DiscreteAdaptiveStabilizerConfig.LayerAdaptiveParams;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.metrics.LayerStats;
 
 public class DiscreteAdaptiveStabilizer {
+
+	private final Logger logger = LogManager.getLogger(this.getClass());
 
 	private final Brain brain;
 	private final DiscreteAdaptiveStabilizerConfig config;
@@ -432,7 +436,6 @@ public class DiscreteAdaptiveStabilizer {
 	}
 
 	private void log(Layer layer, String msg) {
-		// puoi sostituire con logger
-		// System.out.println("[Stabilizer][L" + layer.getLayerId() + "] " + msg);
+		// logger.info("[Stabilizer][L" + layer.getLayerId() + "] " + msg);
 	}
 }

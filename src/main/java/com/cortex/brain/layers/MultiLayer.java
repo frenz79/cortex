@@ -3,11 +3,16 @@ package com.cortex.brain.layers;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.LayerConnectionsConfig;
 
 public abstract class MultiLayer<L extends Layer> {
 
+	final Logger logger = LogManager.getLogger(this.getClass());
+	
 	protected List<L> layers = new ArrayList<>();
 	protected List<LayerConnectionsConfig>	layersConnConfig = new ArrayList<>();
 	
@@ -40,7 +45,11 @@ public abstract class MultiLayer<L extends Layer> {
 				e.SYNAPSE_PLASTICITY_CONFIG
 			);
 			
-			System.out.println("L"+srcLayer.getLayerId()+" -> L"+dstLayer.getLayerId()+" : created "+connections+" synapses");
+			logger.info("L{} -> L{} : created {} synapses",
+				srcLayer.getLayerId(),	
+				dstLayer.getLayerId(),
+				connections
+			);
 		};
 	}
 	

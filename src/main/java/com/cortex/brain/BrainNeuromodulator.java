@@ -3,12 +3,17 @@ package com.cortex.brain;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.globals.GlobalContext;
 
 public class BrainNeuromodulator {
 
+	final Logger logger = LogManager.getLogger(this.getClass());
+	
 	public static void broadcastReward(
 			float reward,
 			long now,

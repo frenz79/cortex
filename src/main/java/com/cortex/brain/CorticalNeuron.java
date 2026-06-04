@@ -59,7 +59,7 @@ public class CorticalNeuron extends AbstractNeuron {
 	    long ageNanos = currTimeNanos - spike.getCreationTimeNanos();
 	    long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
 	    if (ageNanos < 0) {
-	        System.out.println("Spike nel futuro: age=" + ageNanos);
+	        logger.warn("Spike nel futuro: age={}", ageNanos);
 	    }
 	    if (ageNanos >= travelTimeNanos) {
 	        synapse.onPreSpike(currTimeNanos);

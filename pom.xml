@@ -33,6 +33,13 @@
             <version>${maven.version}</version>
         </dependency>
         
+   	<!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
+	<dependency>
+		<groupId>org.apache.logging.log4j</groupId>
+		<artifactId>log4j-core</artifactId>
+		<version>3.0.0-beta3</version>
+	</dependency>
+			
 	<!-- Source: https://mvnrepository.com/artifact/net.jafama/jafama -->
 	<dependency>
 	    <groupId>net.jafama</groupId>
