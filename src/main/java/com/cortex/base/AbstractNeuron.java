@@ -93,24 +93,6 @@ public abstract class AbstractNeuron implements IProcessable {
 			throw ex;
 		}
 	}
-
-	public boolean hasOutgoingTo(AbstractNeuron target) {
-	    for (Synapse s : outSynapses) {
-	        if (s.getTarget() == target) return true;
-	    }
-	    return false;
-	}
-
-	public boolean hasIncomingFrom(AbstractNeuron source) {
-	    for (Synapse s : inSynapses) {
-	        if (s.getSource() == source) return true;
-	    }
-	    return false;
-	}
-	
-	public boolean isLinkedTo(AbstractNeuron n) {
-		return hasOutgoingTo(n) || hasIncomingFrom(n);
-	}
 	
 	public List<Synapse> getInSynapses() {
 		return inSynapses;

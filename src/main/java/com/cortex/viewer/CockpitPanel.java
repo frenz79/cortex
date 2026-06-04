@@ -22,12 +22,14 @@ public class CockpitPanel extends VBox {
     private final CheckBox showInSynCheck = new CheckBox("Show input synapses");
     private final CheckBox showOutSynCheck = new CheckBox("Show output synapses");
     private final CheckBox highlightSensorsCheck = new CheckBox("Highlight sensor paths");
-
+    private final CheckBox showSpatialCellCheck = new CheckBox("Neuron spatial cell");
+    
     private Consumer<Set<Integer>> onLayerChange;
     private Consumer<Boolean> onShowInSynChange;
     private Consumer<Boolean> onShowOutSynChange;
     private Consumer<Boolean> onHighlightSensorsChange;
-
+    private Consumer<Boolean> onShowNeuronSpatialCell;
+    
     public CockpitPanel(int numLayers) {
         setSpacing(10);
         setPadding(new Insets(10));
@@ -38,15 +40,18 @@ public class CockpitPanel extends VBox {
         title.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
 
         styleCheck(showAllLayersCheck);
-        styleCheck(showInSynCheck);
-        styleCheck(showOutSynCheck);
+        styleCheck(showInSynCheck, "yellow");
+        styleCheck(showOutSynCheck, "blue");
         styleCheck(highlightSensorsCheck);
-
+        styleCheck(showSpatialCellCheck);
+        
         showAllLayersCheck.setSelected(true);
         showInSynCheck.setSelected(true);
         showOutSynCheck.setSelected(true);
         highlightSensorsCheck.setSelected(false);
-
+        highlightSensorsCheck.setSelected(false);
+        showSpatialCellCheck.setSelected(false);
+        
         // --- layer section
         VBox layerBox = new VBox(5);
 
@@ -80,7 +85,11 @@ public class CockpitPanel extends VBox {
         highlightSensorsCheck.selectedProperty().addListener((obs, o, n) -> {
             if (onHighlightSensorsChange != null) onHighlightSensorsChange.accept(n);
         });
-
+        
+        showSpatialCellCheck.selectedProperty().addListener((obs, o, n) -> {
+            if (onShowNeuronSpatialCell != null) onShowNeuronSpatialCell.accept(n);
+        });
+        
         getChildren().addAll(
                 title,
                 new Separator(),
@@ -90,7 +99,8 @@ public class CockpitPanel extends VBox {
                 showInSynCheck,
                 showOutSynCheck,
                 new Separator(),
-                highlightSensorsCheck
+                highlightSensorsCheck,
+                showSpatialCellCheck
         );
     }
 
@@ -107,6 +117,10 @@ public class CockpitPanel extends VBox {
 
 	private void styleCheck(CheckBox chk) {
 		chk.setStyle("-fx-text-fill: white;");
+	}
+	
+	private void styleCheck(CheckBox chk, String color) {
+		chk.setStyle("-fx-text-fill: "+color+";");
 	}
 
 	public void setOnLayerChange(Consumer<Set<Integer>>  c) {
@@ -125,4 +139,8 @@ public class CockpitPanel extends VBox {
 		this.onHighlightSensorsChange = c;
 	}
 
+	public void setOnShowNeuronSpatialCell(Consumer<Boolean> c) {
+		this.onShowNeuronSpatialCell = c;
+	}
+	
 }

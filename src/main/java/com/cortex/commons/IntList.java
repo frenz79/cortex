@@ -41,4 +41,8 @@ public final class IntList {
 		return size==0;
 	}
 
+	public int[] getData() {
+		return data;
+	}
+
 }

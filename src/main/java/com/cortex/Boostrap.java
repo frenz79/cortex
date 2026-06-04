@@ -49,24 +49,24 @@ public class Boostrap {
 
 	public static ISensor buildAndConnectRetina( Brain brain ) throws IOException {
 		Retina retina = new Retina(
-				RetinaConfig.newBuilder(70, 70).build(),
-				RetinaNeuronConfig.newBuilder().build()
-				);
+			RetinaConfig.newBuilder(70, 70).build(),
+			RetinaNeuronConfig.newBuilder().build()
+		);
 		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
 
 		// Connect retina to L0
-		brain.getSensorsTargetLayer().link(retina, 10, 40, 0.5f, 
+		brain.getSensorsTargetLayer().link(retina, 1, 5, 0.5f, 
 				Synapse.SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
-						ExcitatorySynapticPlasticityConfig.newBuilder()
+					ExcitatorySynapticPlasticityConfig.newBuilder()
 						.withSTDP(0.0015f, 0.0025f, 40_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
 						.withWeights(0.04f, 0.12f, 0.01f, 0.08f)// INITIAL, W_MAX, W_MIN, W_BASELINE
-						.withEligibilityDecaySeconds(0.997f) 				// ELIGIBILITY_DECAY
+						.withEligibilityDecaySeconds(0.997f) 	// ELIGIBILITY_DECAY
 						.withPlasticity(20f, 5f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 						.withHomeostaticRate(0.02f) 			// HOMEOSTATIC_RATE
 						.withInitialDelay(1.2f)
 						.build(),
-						InhibitorySynapticPlasticityConfig.newBuilder()
+					InhibitorySynapticPlasticityConfig.newBuilder()
 						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
 						.withLearningRate(0.005f)				// LEARNING_RATE
 						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
@@ -78,18 +78,18 @@ public class Boostrap {
 
 	public static ISupervisor<OCRCharacterNeuron> buildAndConnectOCR( Brain brain ) {
 		OCRClassifier ocrClassifier = new OCRClassifier();		
-		brain.getClassifiersSourceLayer().link( ocrClassifier, 10, 40, 0.5f, 
+		brain.getClassifiersSourceLayer().link( ocrClassifier, 10, 40, 2.5f, 
 				Synapse.SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
-						ExcitatorySynapticPlasticityConfig.newBuilder()
+					ExcitatorySynapticPlasticityConfig.newBuilder()
 						.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
 						.withWeights(0.11f, 0.30f, 0.10f, 0.20f)// INITIAL, W_MAX, W_MIN, W_BASELINE
-						.withEligibilityDecaySeconds(0.990f) 				// ELIGIBILITY_DECAY
+						.withEligibilityDecaySeconds(0.990f) 	// ELIGIBILITY_DECAY
 						.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 						.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
 						.withInitialDelay(1.2f)
 						.build(),
-						InhibitorySynapticPlasticityConfig.newBuilder()
+					InhibitorySynapticPlasticityConfig.newBuilder()
 						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
 						.withLearningRate(0.005f)				// LEARNING_RATE
 						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
@@ -103,7 +103,7 @@ public class Boostrap {
 
 	public static void main(String[] args) throws IOException, InterruptedException { 
 		int totalNeurons = 40_000;
-		int fanOut = 200;
+		int fanOut = 120;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
 		// Create Brain
@@ -123,17 +123,17 @@ public class Boostrap {
 		DiscreteAdaptiveStabilizer stabilizer = new DiscreteAdaptiveStabilizer( brain,
 			DiscreteAdaptiveStabilizerConfig.newBuilder()
 			.addLayerParams(0, new LayerAdaptiveParams(
-			        0.10f, 0.30f,			// TARGET_FIRING_LOW - HIGH
+			        0.10f, 0.30f,		// TARGET_FIRING_LOW - HIGH
 			        0.90f, 0.98f,		// TARGET_SPARSITY_MIN - HIGH
 			        150_000f			// MAX_ENERGY
 			    ))
 			    .addLayerParams(1, new LayerAdaptiveParams(
-			        0.05f, 0.15f,				// TARGET_FIRING_LOW - HIGH
+			        0.05f, 0.15f,		// TARGET_FIRING_LOW - HIGH
 			        0.95f, 0.995f,		// TARGET_SPARSITY_MIN - HIGH
 			        50_000f				// MAX_ENERGY
 			    ))
 			    .addLayerParams(2, new LayerAdaptiveParams(
-			        0.02f, 0.10f,			// TARGET_FIRING_LOW - HIGH
+			        0.02f, 0.10f,		// TARGET_FIRING_LOW - HIGH
 			        0.97f, 0.999f,		// TARGET_SPARSITY_MIN - HIGH
 			        20_000f				// MAX_ENERGY
 			    ))

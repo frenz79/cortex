@@ -10,6 +10,8 @@ import java.util.Set;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.brain.Brain;
+import com.cortex.brain.layers.Layer;
+import com.cortex.commons.IntList;
 import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.ISensor;
 
@@ -35,7 +37,6 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 public class PointMeshViewerFX extends Application {
 
@@ -62,7 +63,7 @@ public class PointMeshViewerFX extends Application {
 	private boolean showInputSynapses = true;
 	private boolean showOutputSynapses = true;
 	private boolean highlightSensorPaths = false;
-
+	private boolean showNeuronSpatialCell = false;
 
 	private Map<Integer, MeshView> layerMeshes = new HashMap<>();
 
@@ -122,6 +123,11 @@ public class PointMeshViewerFX extends Application {
 			buildSensorNeuronSpheres();
 		});
 
+		panel.setOnShowNeuronSpatialCell(v -> {
+			showNeuronSpatialCell = v;
+			// repaint();
+		});
+		
 		BorderPane pane = new BorderPane(subScene);
 		pane.setLeft(panel);
 
@@ -217,6 +223,7 @@ public class PointMeshViewerFX extends Application {
 				if (hit != null) {
 					highlightNeuron(hit);
 					highlightSynapses(hit);
+					highlightSpatialCell(hit);
 				}
 			}
 		});
@@ -284,6 +291,30 @@ public class PointMeshViewerFX extends Application {
 				}
 			}
 		}
+	}
+	
+	private void highlightSpatialCell(AbstractNeuron hit) {
+		if (!showNeuronSpatialCell) return;
+		
+		Layer layer = brain.getLayer(hit.getLayerId());
+		IntList cell = layer.getSpatialHashCell(hit);
+		
+		PhongMaterial mat = new PhongMaterial(Color.YELLOWGREEN);
+		
+		for (int i : cell.getData()) {
+			AbstractNeuron n = layer.getNeurons()[i];
+			
+			Point3f p = n.getPosition();
+	
+			Sphere sphere = new Sphere(0.01);
+			sphere.setMaterial(mat);
+			sphere.setTranslateX(-p.x());
+			sphere.setTranslateY(p.y());
+			sphere.setTranslateZ(p.z());
+			
+			neuronSpheres.add(sphere);
+			root3d.getChildren().add(sphere);	
+		}		
 	}
 
 	private void buildNeuronMesh() {

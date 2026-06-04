@@ -28,7 +28,8 @@ public abstract class Layer {
 	protected AbstractNeuron[] neurons;
 	private int synapsesCount = 0;
 	private Map<Long, IntList> spatialHash;
-
+	private float cellSize;
+	
 	public Layer(LayerConfig config) {
 		super();
 		this.config = config;
@@ -219,16 +220,14 @@ public abstract class Layer {
 	}
 
 	public void buildSpatialHash(float cellSize) {
+		this.cellSize = cellSize;
 		this.spatialHash = new HashMap<>( (Maths.floor(neurons.length*1.5)) );
 		int n = neurons.length;
 		for (int i = 0; i < n; i++) {
-			int cx = cellCoord(neurons[i].getPosition().x(), cellSize);
-			int cy = cellCoord(neurons[i].getPosition().y(), cellSize);
-			int cz = cellCoord(neurons[i].getPosition().z(), cellSize);
-			long key = cellKey(cx, cy, cz);
+			long key = getCellKey(neurons[i]);
 			IntList list = this.spatialHash.get(key);
 			if (list == null) {
-				list = new IntList(4);
+				list = new IntList(32);
 				this.spatialHash.put(key, list);
 			}
 			list.add(i);
@@ -236,25 +235,31 @@ public abstract class Layer {
 		return;
 	}
 
-	private static long cellKey(int cx, int cy, int cz) {
-		// pack three 21-bit signed ints into a long
-		long a = (long)(cx & 0x1FFFFF);
-		long b = (long)(cy & 0x1FFFFF);
-		long c = (long)(cz & 0x1FFFFF);
-		return (a << 42) | (b << 21) | c;
+	public IntList getSpatialHashCell( AbstractNeuron n ) {
+		return this.spatialHash.get(getCellKey(n));
+	}
+	
+	private long getCellKey( AbstractNeuron n ) {
+		int cx = cellCoord(n.getPosition().x(), cellSize);
+		int cy = cellCoord(n.getPosition().y(), cellSize);
+		int cz = cellCoord(n.getPosition().z(), cellSize);
+		return cellKey(cx, cy, cz);
+	}
+	
+	private static final long cellKey(int cx, int cy, int cz) {
+		return (((long)cx) << 42) ^ (((long)cy) << 21) ^ (long)cz;
 	}
 
-	private static int cellCoord(float v, float cellSize) {
+	private static final int cellCoord(float v, float cellSize) {
 		return Maths.floor(v / cellSize);
 	}
 
-    private static record IntFloatPair(int idx, float dist) {/**/  }
+    private static final record IntFloatPair(int idx, float dist) {/**/}
     
     public IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance) {
     	return findKNearestApprox(p.x(), p.y(), p.z(), k, cellSize, maxDistance);
     }
 
-	// TODO: avoid self connections!
     public IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance) {
 		// buffer ordinato di dimensione k (distanze quadratiche)
 		IntFloatPair[] best = new IntFloatPair[k];
@@ -316,5 +321,9 @@ public abstract class Layer {
 
 	public LayerConfig getConfig() {
 		return config;
+	}
+
+	public Map<Long, IntList> getSpatialHash() {
+		return spatialHash;
 	}
 }

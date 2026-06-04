@@ -100,7 +100,7 @@ public class Brain extends MultiLayer<SphericalLayer>{
 		this.neuronFactory = new CorticalNeuronFactory( this.layersConfigs );
 		var layers = generateLayers(layersConfigs);
 		this.layersConnConfig = this.brainLayersConnConfig.getLayersConnectionsConfig(layers.getAllLayers());
-		generateConnections(this.layersConnConfig);
+	//	generateConnections(this.layersConnConfig);
 		return this;
 	}
 

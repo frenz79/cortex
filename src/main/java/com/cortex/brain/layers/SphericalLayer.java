@@ -26,45 +26,6 @@ public class SphericalLayer extends Layer {
 	public SphericalLayer(LayerConfig config) {
 		super(config);
 	}
-
-	/*
-	@Override
-	public int link( Layer layer, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
-		Random rnd = ThreadLocalRandom.current();
-		int connections = 0;
-
-		float cellSize = maxDistance; // scelta naturale
-
-		for (AbstractNeuron src : layer.getNeurons()) {
-			int k = rnd.nextInt(minConn, maxConn);
-			IntList idxs = findKNearestApprox(
-					src.getPosition().x(),
-					src.getPosition().y(),
-					src.getPosition().z(),
-					k,
-					cellSize,
-					maxDistance
-					);
-
-			if (idxs.isEmpty()) continue;
-
-			Collection<Neighbor> conns =
-					toNeighbors(idxs, getNeurons(),
-							src.getPosition().x(),
-							src.getPosition().y(),
-							src.getPosition().z());
-
-			// applica filtro (inhibitory / excitatory)
-			conns.removeIf(n -> !filter.test(n.neuron()));
-
-			if (!conns.isEmpty()) {
-				connections += Synapse.create(src, conns, synCfg);
-			}
-		}
-
-		return connections;
-	}
-	*/
 	
 	public int link(
 	        Layer targetLayer,
@@ -102,8 +63,14 @@ public class SphericalLayer extends Layer {
 	                AbstractNeuron dst = target.neuron();
 
 	                if (src == dst) continue;
-	                if (src.hasOutgoingTo(dst)) continue;
-	                if (dst.hasOutgoingTo(src)) continue;
+			        
+			        Point3f ps = src.getPosition();
+			        Point3f pd = dst.getPosition();
+			        // Don't mind Z pos for inter-layers connections
+			        float ds = ps.x()*ps.x() + ps.y()*ps.y();// + ps.z()*ps.z();
+					float dd = pd.x()*pd.x() + pd.y()*pd.y();// + pd.z()*pd.z();
+					
+					if (ds >= dd) continue;
 
 	                Synapse.create(src, dst, target.getRealDistance(), plasticityCfg);
 	                connectionsCount++;
@@ -190,7 +157,7 @@ public class SphericalLayer extends Layer {
 			);
 		}
 
-		buildSpatialHash(config.DIMENSION / 2f);
+		buildSpatialHash(config.DIMENSION / 2.0f);
 
 		long endTime = System.nanoTime();
 		System.out.println("L"+getLayerId()+" generated "+getNeuronsCount()+" neurons in "+TimeUnit.NANOSECONDS.toMicros(endTime-startTime)+" micros");
