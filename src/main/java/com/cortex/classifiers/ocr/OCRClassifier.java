@@ -1,6 +1,7 @@
 package com.cortex.classifiers.ocr;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.IClassifier;
 
 public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
@@ -103,5 +104,11 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
     	    ret += neurons[0][x].getInSynapses().size();
     	}
 		return ret;
+	}
+
+	@Override
+	public Point3f getPluginSite() {
+		// TODO Auto-generated method stub
+		return new Point3f(0f,0f,0f);
 	}
 }

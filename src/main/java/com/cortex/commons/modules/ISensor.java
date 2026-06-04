@@ -4,6 +4,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.IProcessable;
+import com.cortex.commons.Point3f;
 
 public interface ISensor extends IProcessable {
 
@@ -26,4 +27,6 @@ public interface ISensor extends IProcessable {
 	}
 
 	public int getSynapsesCount();
+	
+	public Point3f getPluginSite();
 }

@@ -84,21 +84,60 @@ public class SphericalLayer extends Layer {
 	
 	@Override
 	public int link(IClassifier<? extends AbstractNeuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
-		return link (classifier.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, true);
+		return link (classifier.getPluginSite(), classifier.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, true);
 	}
 
 	@Override
 	public int link( ISensor sensor, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg ) {
-		return link (sensor.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, false);
+		return link (sensor.getPluginSite(), sensor.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, false);
 	}
 
-	private final int link( AbstractNeuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
+	private final int link(Point3f pluginSite, AbstractNeuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
 		int w = matrix.length;
 		int h = matrix[0].length;
 		int connections = 0;
 
 	    float cellSize = maxDistance;
 	    
+		// Sphere projection
+		float u = (pluginSite.x() + 0.5f) / w; // 0..1
+		float v = (pluginSite.y() + 0.5f) / h; // 0..1
+		
+		float theta = (float)(2 * Maths.PI * u);     // longitude
+		float phi   = (float)(Maths.PI * (v - 0.5)); // latitude
+		float cosPhi = (float)Maths.cos(phi);
+
+		float x = (float)(cosPhi * Maths.cos(theta) * config.DIMENSION);
+		float y = (float)(cosPhi * Maths.sin(theta) * config.DIMENSION);
+		float z = (float)(Maths.sin(phi) * config.DIMENSION);
+		
+	    Random rnd = ThreadLocalRandom.current();
+		IntList neighborsIdx = findKNearestApprox(
+			x,y,z, rnd.nextInt(minConn, maxConn), 1.5f/*cellSize*/, 2.6f/*maxDistance*/);
+
+		List<Neighbor> conns = toNeighbors(neighborsIdx, getNeurons(), x,y,z);
+		conns.removeIf(n -> !filter.test(n.neuron()));
+		//conns.removeIf(n -> n.getRealDistance() > maxDistance);
+		
+		//for ( Neighbor n : conns ) {
+			for (int rx = 0; rx < w; rx++) {
+				for (int ry = 0; ry < h; ry++) {
+					List<Integer> rndIdx = new ArrayList<>(60);
+					for (int j=0; j<60; j++ ) {
+						rndIdx.add( rnd.nextInt(0, conns.size()) );
+					}
+					
+					for ( int i : rndIdx ) {
+					if (!isIncoming)
+						connections += Synapse.create( matrix[rx][ry], conns.get(i), synCfg );
+					else
+						connections += Synapse.create( conns.get(i), matrix[rx][ry], synCfg );
+					}
+				}
+			}			
+		//}
+	    
+	    /*
 		Random rnd = ThreadLocalRandom.current();
 		for (int rx = 0; rx < w; rx++) {
 			for (int ry = 0; ry < h; ry++) {
@@ -127,6 +166,7 @@ public class SphericalLayer extends Layer {
 				}
 			}
 		}
+		*/
 		return connections;
 	}
 

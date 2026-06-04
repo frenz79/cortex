@@ -60,7 +60,7 @@ public class Boostrap {
 		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
 
 		// Connect retina to L0
-		brain.getSensorsTargetLayer().link(retina, 1, 5, 0.5f, 
+		brain.getSensorsTargetLayer().link(retina, 4500, 5000, 0.5f, 
 				Synapse.SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
 					ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -108,7 +108,7 @@ public class Boostrap {
 
 	public static void main(String[] args) throws IOException, InterruptedException { 
 		int totalNeurons = 40_000;
-		int fanOut = 120;
+		int fanOut = 1500;
 		int connScale = (fanOut>=1000)?100:(fanOut>=100)?10:1;
 
 		// Create Brain

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.commons.Maths;
+import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.ISensor;
 
 public class Retina implements ISensor {
@@ -224,5 +225,10 @@ public class Retina implements ISensor {
 			}
 		}
 		return ret;
+	}
+
+	@Override
+	public Point3f getPluginSite() {
+		return new Point3f(0.0f, 0.0f, 0.0f);
 	}
 }

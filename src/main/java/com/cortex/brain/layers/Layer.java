@@ -177,7 +177,7 @@ public abstract class Layer {
 					if (ds >= dd) continue;
 			        Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
 			        connectionsCount++;
-			        logger.info("Amended src:{} not having any output", src);
+			    //    logger.info("Amended src:{} not having any output", src);
 			        break;
 				}
 			}
@@ -200,7 +200,7 @@ public abstract class Layer {
 			        Synapse.create(dst, src, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
 			        connectionsCount++;
 			        
-			        logger.info("Amended src:{} not having any input", src);
+			     //   logger.info("Amended src:{} not having any input", src);
 			        break;
 				}
 			}
@@ -361,7 +361,7 @@ public abstract class Layer {
 		return result;
 	}
     
-    public static Collection<Neighbor> toNeighbors(IntList idxs, AbstractNeuron[] neurons, float px, float py, float pz) {
+    public static List<Neighbor> toNeighbors(IntList idxs, AbstractNeuron[] neurons, float px, float py, float pz) {
         ArrayList<Neighbor> out = new ArrayList<>(idxs.size());
         for (int i = 0; i < idxs.size(); i++) {
             int ni = idxs.get(i);

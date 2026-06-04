@@ -36,12 +36,21 @@ public final class Synapse implements IPlasticSynapse {
 		this.length = length;
 		this.plasticityRule = plasticityRule;
 	}
-	
+	public static int create( AbstractNeuron srcNeuron, Neighbor toNeuron, SynapsePlasticityConfig plasticityCfg ) {
+		link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), plasticityCfg );
+		return 1;
+	}
+		
 	public static int create( AbstractNeuron srcNeuron, Collection<Neighbor> toNeurons, SynapsePlasticityConfig plasticityCfg ) {
 		for (Neighbor toNeuron : toNeurons) {
 			link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), plasticityCfg );
 		}
 		return toNeurons.size();
+	}
+	
+	public static int create( Neighbor srcNeuron, AbstractNeuron toNeuron, SynapsePlasticityConfig plasticityCfg ) {
+		link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), plasticityCfg );
+		return 1;
 	}
 	
 	public static int create( Collection<Neighbor> srcNeurons, AbstractNeuron toNeuron, SynapsePlasticityConfig plasticityCfg ) {

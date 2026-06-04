@@ -5,6 +5,7 @@ import java.util.List;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.commons.Maths;
+import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.ISensor;
 
 public class Lidar implements ISensor {
@@ -118,4 +119,10 @@ public class Lidar implements ISensor {
         }
         return ret;
     }
+
+	@Override
+	public Point3f getPluginSite() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
