@@ -205,7 +205,7 @@ public class LayerConfig {
         // -------------------------
         // Esempio: layer più profondi devono essere più selettivi
         if (this.LAYER_ID > 0) {
-            if (n.FIRING_THRESHOLD < 0.05f)
+            if (n.FIRING_THRESHOLD < 0.042f)
                 errors.add("Layer " + LAYER_ID + ": FIRING_THRESHOLD troppo basso per un layer profondo");
 
             if (n.REPOLARIZATION_PER_NANOS < 0.05f)

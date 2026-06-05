@@ -116,6 +116,6 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 
 	@Override
 	public String toString() {
-		return "OCRClassifier [neurons=" + Arrays.toString(neurons) + "]";
+		return "OCRClassifier [neurons=" + neurons.length + "]";
 	}
 }

@@ -2,10 +2,10 @@ package com.cortex.sensors.retina;
 
 public class RetinaConfig {
 
-	public long SAMPLING_PERIOD_NANOS = 10_000_000; 
-	public long MICROSACCADE_PERIOD_NANOS = 30_000_000; 
-	public float MICROSACCADE_AMPLITUDE = 0.5f;
-	public int RECEPTIVE_RADIUS = 1;
+	public long SAMPLING_PERIOD_NANOS = 5_000_000; 
+	public long MICROSACCADE_PERIOD_NANOS = 5_000_000; 
+	public float MICROSACCADE_AMPLITUDE = 1.5f;
+	public int RECEPTIVE_RADIUS = 2;
 	public final int RETINA_W;
 	public final int RETINA_H;
 

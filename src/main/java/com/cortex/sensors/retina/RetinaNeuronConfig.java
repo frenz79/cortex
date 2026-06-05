@@ -1,11 +1,11 @@
 package com.cortex.sensors.retina;
 
 public class RetinaNeuronConfig {
-	public float TAU  = 1.0f;
-	public float ON_GAIN  = 1.0f;
-	public float OFF_GAIN = 1.0f;
-	public float THRESHOLD = 0.065f;
-	public int MAX_SPIKES_PER_SAMPLE = 2;
+	public float TAU  = .99f;
+	public float ON_GAIN  = 3.0f;
+	public float OFF_GAIN = 3.0f;
+	public float THRESHOLD = 0.030f;
+	public int MAX_SPIKES_PER_SAMPLE = 10;
 
 	public static Builder newBuilder() {
 		return new Builder();

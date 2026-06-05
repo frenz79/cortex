@@ -235,8 +235,7 @@ public class Retina implements ISensor {
 
 	@Override
 	public String toString() {
-		return "Retina [retinaNeurons=" + Arrays.toString(retinaNeurons) + ", integralImage="
-				+ Arrays.toString(integralImage) + ", sourceWidth=" + sourceWidth + ", sourceHeight=" + sourceHeight
+		return "Retina [retinaNeurons=" + retinaNeurons.length + ", sourceWidth=" + sourceWidth + ", sourceHeight=" + sourceHeight
 				+ ", sourceScaleX=" + sourceScaleX + ", sourceScaleY=" + sourceScaleY + ", microDx=" + microDx
 				+ ", microDy=" + microDy + "]";
 	}

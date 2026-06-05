@@ -129,7 +129,7 @@ public class BrainLayersConnConfig {
 		// L2 -> L3
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L2).to(L3)
-				.withConnections((int)(4.0*connScale), (int)(6.0*connScale), 0.70f)
+				.withConnections((int)(5.0*connScale), (int)(7.0*connScale), 0.75f)
 				.withSynapsePlasticityConfig(ffPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
