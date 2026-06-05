@@ -86,7 +86,7 @@ public class BrainLayersConfig {
 	        .withCorticalNeuronsConfig(CorticalNeuronsConfig.newBuilder()
 	            .withFiringThreshold(0.045f)
 	            .withRepolarizationPerSecond(0.18f)
-	            .withRatePerSecond(50_000_000L, 0.85f)
+	            .withRatePerSecond(50_000_000L, 0.80f)
 	            .build()
 	        )
 	        .withSynapsePlasticityConfig(new SynapsePlasticityConfig(
