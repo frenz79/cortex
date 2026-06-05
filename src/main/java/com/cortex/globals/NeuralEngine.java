@@ -73,10 +73,14 @@ public class NeuralEngine {
 	   
 	public synchronized void start() {
 		if (neuronThread != null ) return; // already started
+		
+		logger.info("Engine started!");
+		
 		LongAdder processCounter = new LongAdder();
 		LongAdder processTimeNanos = new LongAdder();
 		
 		Thread neuronThread = new Thread(() -> {
+			logger.info("neuronThread started!");
 			long localCounter = 0l;
 			long localTime = 0l;
 		    while (!Thread.currentThread().isInterrupted()) {
@@ -109,6 +113,7 @@ public class NeuralEngine {
 		neuronThread.start();
 
 		// IO loop for sensors/actuators/classifiers/supervisors
+		logger.info("sensors/actuators/classifiers/supervisors thread started!");
 		Runnable ioRunnable = () -> {
 			long now = now();
 			try {
@@ -180,6 +185,8 @@ public class NeuralEngine {
 	}
 
 	public synchronized void stop() {
+		logger.info("Engine stopped!");
+		
 		//if (neuronTask != null) neuronTask.cancel(true);
 		if (ioTask != null) ioTask.cancel(true);
 		if (metricsRecorderTask != null) metricsRecorderTask.cancel(true);
@@ -195,18 +202,22 @@ public class NeuralEngine {
 	}
 
 	public void attachSensor(ISensor s) {
+		logger.info("Sensor attached:{}",s );
 		this.sensors.add(Objects.requireNonNull(s));
 	}
 
 	public void attachActuator(IActuator a) {
+		logger.info("Actuator attached:{}",a );
 		this.actuators.add(Objects.requireNonNull(a));
 	}
 
 	public void attachClassifier(IClassifier<?> c) {
+		logger.info("Classifier attached:{}",c );
 		this.classifiers.add(Objects.requireNonNull(c));
 	}
 
 	public void attachSupervisor(ISupervisor<?> s) {
+		logger.info("Supervisor attached:{}", s );
 		this.supervisors.add(Objects.requireNonNull(s));
 	}
 }

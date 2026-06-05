@@ -2,6 +2,8 @@ package com.cortex.brain.layers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,14 +25,30 @@ public abstract class MultiLayer<L extends Layer> {
 	}
 	
 	public MultiLayer<L> generateLayers( List<LayerConfig> configs ) {
+		/*
 		for ( LayerConfig c : configs ) {
 			this.layers.add(c.getLayerId(),	buildLayer(c) );
 		}
+		*/
+		
+		Map<Integer,L> layersBld = new ConcurrentHashMap<Integer, L>();
+		
+		configs.parallelStream().forEach( c -> {
+			layersBld.put(c.getLayerId(), buildLayer(c));
+		});
+		
+		for (int i=0; i<configs.size(); i++) {
+			this.layers.add( layersBld.get(i) );
+		}
+		
 		return this;
 	}
 		
 	public void generateConnections( List<LayerConnectionsConfig> configs ) {
-		for (LayerConnectionsConfig e : configs) {
+		//for (LayerConnectionsConfig e : configs) {
+		
+		configs.parallelStream().forEach(
+			e -> {
 			
 			Layer srcLayer = e.SOURCE_LAYER;
 			Layer dstLayer = e.TARGET_LAYER;
@@ -50,7 +68,8 @@ public abstract class MultiLayer<L extends Layer> {
 				dstLayer.getLayerId(),
 				connections
 			);
-		};
+			});
+		//};
 	}
 	
 	public List<L> getAllLayers() {

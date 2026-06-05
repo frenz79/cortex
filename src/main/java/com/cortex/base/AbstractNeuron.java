@@ -83,7 +83,9 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public void addIncomingSynapse(Synapse s) {
 		try {
-			this.inSynapses.add(s);
+			synchronized(inSynapses) {
+				this.inSynapses.add(s);
+			}
 		} catch (Exception ex) {
 			logger.error("Failed to add incoming synapse to:{}",this.toString());
 			throw ex;
@@ -92,7 +94,9 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public void addOutgoingSynapse(Synapse s) {
 		try {
-			this.outSynapses.add(s);
+			synchronized(outSynapses) {
+				this.outSynapses.add(s);
+			}
 		} catch (Exception ex) {
 			logger.error("Failed to add outgoing synapse to:{}",this.toString());
 			throw ex;

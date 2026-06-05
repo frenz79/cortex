@@ -33,6 +33,23 @@ import com.cortex.sensors.retina.RetinaConfig;
 import com.cortex.sensors.retina.RetinaNeuronConfig;
 import com.cortex.viewer.PointMeshViewerFX;
 
+/**
+ * How to launch:
+ * CMD args:
+ *  +ui -> to show cockpit
+ * VM Args
+ * -XX:+UseCompactObjectHeaders
+ * -Xmx24000m
+ * --module-path D:/SourceCode/Incubator/cortex/lib/javafx/
+ * --add-modules javafx.controls,javafx.fxml,javafx.graphics
+ * --enable-native-access=ALL-UNNAMED
+ * --enable-native-access=javafx.graphics
+ * --add-modules javafx.controls,javafx.base,javafx.fxml,javafx.graphics,javafx.media,javafx.web 
+ * --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED 
+ * --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED
+ * 
+ * 
+ */
 public class Boostrap {
 
 	private final static Logger logger = LogManager.getLogger(Boostrap.class);
@@ -183,8 +200,9 @@ public class Boostrap {
 		}));
 
 		// Open UI
-		// new SimpleViewer( brain, true, false );
-		PointMeshViewerFX.launchViewer(brain, retina);
+		if (args.length>0 && args[0].equals("+ui")) {
+			PointMeshViewerFX.launchViewer(brain, retina);
+		}
 		
 		// ..give the life!
 		engine.start();

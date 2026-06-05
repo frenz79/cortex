@@ -134,8 +134,7 @@ public abstract class Layer {
 	    int connectionsCount = 0;
 	    
 		for (int round = 0; round < config.MAX_CONNECTIONS; round++) {
-		    for (AbstractNeuron src : ns) {
-		
+		    for (AbstractNeuron src : ns) {		
 		        List<Neighbor> neigh = neighbors.get(src);
 		        if (neigh.isEmpty()) continue;
 		
@@ -159,7 +158,7 @@ public abstract class Layer {
 
 		// Check all neurons have at least one input / output
 		for (AbstractNeuron src : ns) {
-			if (src.getOutSynapses().isEmpty()) {
+			if ( src.getOutSynapses().isEmpty() || src.getInSynapses().isEmpty() ) {
 				List<Neighbor> far = pickRandomFarNeurons(ns, src, farCount);
 				while(!far.isEmpty()) {
 				 
@@ -175,32 +174,12 @@ public abstract class Layer {
 					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
 					
 					if (ds >= dd) continue;
-			        Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+					if (src.getOutSynapses().isEmpty()) {
+						Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+					} else {
+						Synapse.create(dst, src, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+					}
 			        connectionsCount++;
-			    //    logger.info("Amended src:{} not having any output", src);
-			        break;
-				}
-			}
-			if (src.getInSynapses().isEmpty()) {
-				List<Neighbor> far = pickRandomFarNeurons(ns, src, farCount);
-				while(!far.isEmpty()) {
-				 
-				 Neighbor target = far.remove(far.size() - 1);
-				 AbstractNeuron dst = target.neuron();
-				 
-			        if (src == dst) continue;
-			        
-			        Point3f ps = src.getPosition();
-			        Point3f pd = dst.getPosition();
-			        
-			        float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
-					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
-					
-					if (ds >= dd) continue;
-			        Synapse.create(dst, src, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
-			        connectionsCount++;
-			        
-			     //   logger.info("Amended src:{} not having any input", src);
 			        break;
 				}
 			}

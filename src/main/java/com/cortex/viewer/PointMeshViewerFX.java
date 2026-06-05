@@ -69,8 +69,8 @@ public class PointMeshViewerFX extends Application {
 
 	public static void launchViewer(Brain b, ISensor r) {
 		brain = b;
-		retina = r;
-		launch();
+		retina = r;		
+		new Thread(() -> Application.launch(PointMeshViewerFX.class)).start();
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.cortex.classifiers.ocr;
 
+import java.util.Arrays;
+
 import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.IClassifier;
@@ -110,5 +112,10 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 	public Point3f getPluginSite() {
 		// TODO Auto-generated method stub
 		return new Point3f(0f,0f,0f);
+	}
+
+	@Override
+	public String toString() {
+		return "OCRClassifier [neurons=" + Arrays.toString(neurons) + "]";
 	}
 }

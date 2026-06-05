@@ -1,6 +1,7 @@
 package com.cortex.sensors.retina;
 
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -230,5 +231,13 @@ public class Retina implements ISensor {
 	@Override
 	public Point3f getPluginSite() {
 		return new Point3f(0.0f, 0.0f, 0.0f);
+	}
+
+	@Override
+	public String toString() {
+		return "Retina [retinaNeurons=" + Arrays.toString(retinaNeurons) + ", integralImage="
+				+ Arrays.toString(integralImage) + ", sourceWidth=" + sourceWidth + ", sourceHeight=" + sourceHeight
+				+ ", sourceScaleX=" + sourceScaleX + ", sourceScaleY=" + sourceScaleY + ", microDx=" + microDx
+				+ ", microDy=" + microDy + "]";
 	}
 }
