@@ -101,7 +101,14 @@ public class Brain extends MultiLayer<SphericalLayer>{
 		var layers = generateLayers(layersConfigs);
 		this.layersConnConfig = this.brainLayersConnConfig.getLayersConnectionsConfig(layers.getAllLayers());
 		generateConnections(this.layersConnConfig);
+		compact();
 		return this;
+	}
+
+	private void compact() {
+		for( CorticalNeuron n : this.neurons ) {
+			n.compact();
+		}
 	}
 
 	// Called by superclass
@@ -120,18 +127,18 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	public void streamActiveNeuron(Function<CorticalNeuron, Boolean> consumer) {
 		CorticalNeuron[] snapshot = neurons; // volatile read
 		if (snapshot == null) return;
-		 Arrays.stream(snapshot).parallel().forEach( n -> {
-			 if (n != null && n.isActive()) {
-					Boolean stay = Boolean.TRUE;
-					try {
-						stay = consumer.apply(n);
-					} catch (RuntimeException ex) {
-						ex.printStackTrace();
-						stay = Boolean.TRUE;
-					}
-					n.setActive( Boolean.TRUE.equals(stay) );
-				} 
-		 });
+		Arrays.stream(snapshot).parallel().forEach( n -> {
+			if (n != null && n.isActive()) {
+				boolean stay = true;
+				try {
+					stay = consumer.apply(n);
+				} catch (RuntimeException ex) {
+					ex.printStackTrace();
+					stay = true;
+				}
+				n.setActive( stay );
+			} 
+		});
 	}
 
 	public void streamAllNeurons(Function<CorticalNeuron, Boolean> consumer) {

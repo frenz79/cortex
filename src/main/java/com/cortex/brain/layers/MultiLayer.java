@@ -44,9 +44,7 @@ public abstract class MultiLayer<L extends Layer> {
 		return this;
 	}
 		
-	public void generateConnections( List<LayerConnectionsConfig> configs ) {
-		//for (LayerConnectionsConfig e : configs) {
-		
+	public void generateConnections( List<LayerConnectionsConfig> configs ) {	
 		configs.parallelStream().forEach(
 			e -> {
 			
@@ -68,8 +66,7 @@ public abstract class MultiLayer<L extends Layer> {
 				dstLayer.getLayerId(),
 				connections
 			);
-			});
-		//};
+		});
 	}
 	
 	public List<L> getAllLayers() {

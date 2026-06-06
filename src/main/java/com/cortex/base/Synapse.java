@@ -6,6 +6,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.layers.Layer.Neighbor;
 import com.cortex.commons.IPlasticSynapse;
@@ -17,6 +20,8 @@ import com.cortex.globals.EventBus.SynapseUpdatedData;
 
 public final class Synapse implements IPlasticSynapse {
 
+	protected final Logger logger = LogManager.getLogger(this.getClass());
+	
     public static final Predicate<AbstractNeuron> ALWAYS_CONNECT_PREDICATE = n -> true;
     public static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
     public static final Predicate<AbstractNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = AbstractNeuron::isInhibitor;
@@ -115,6 +120,7 @@ public final class Synapse implements IPlasticSynapse {
 	
 	public void addSpike(Spike spike) throws InterruptedException {
 		this.spikes.add(spike);
+		this.getTarget().setActive(true);
 	}
 	
 	public boolean isEmpty() {
@@ -125,14 +131,14 @@ public final class Synapse implements IPlasticSynapse {
 	@Override
 	public void onPreSpike(long now) {
 		if (this.plasticityRule.onPreSpike(now)) {
-			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.forPreSpikeData());
+			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.preSpikeData());
         }
     }
 	
 	@Override
     public void onPostSpike(long postSpikeTime, long now) {
 		if ( this.plasticityRule.onPostSpike(this, postSpikeTime, now) ) {
-			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.forPostSpikeData());
+			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.postSpikeData());
 		}
 		this.plasticityRule.updateDelay(postSpikeTime);
     }

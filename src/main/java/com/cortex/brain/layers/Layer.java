@@ -28,13 +28,13 @@ import com.cortex.commons.modules.ISensor;
 public abstract class Layer {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
-	
+
 	protected final LayerConfig config;
 	protected AbstractNeuron[] neurons;
 	private int synapsesCount = 0;
 	private Map<Long, IntList> spatialHash;
 	private float cellSize;
-	
+
 	public Layer(LayerConfig config) {
 		super();
 		this.config = config;
@@ -43,7 +43,7 @@ public abstract class Layer {
 	public int getLayerId() {
 		return config.getLayerId();
 	} 
-	
+
 	protected boolean randomBoolean( float trueProbability ) {
 		return ThreadLocalRandom.current().nextFloat(0.0f, 1.0f)<=trueProbability;
 	}
@@ -107,53 +107,50 @@ public abstract class Layer {
 			SynapsePlasticityConfig synapsePlasticityConfig );	
 
 	public Layer connectInternal() {
-	    long startTime = System.nanoTime();
-	    AbstractNeuron[] ns = getNeurons();
-	    int N = ns.length;
+		long startTime = System.nanoTime();
+		AbstractNeuron[] ns = getNeurons();
+		int N = ns.length;
 
-	    int localCount = (int)(config.MAX_CONNECTIONS * 0.8f);
-	    int farCount   = config.MAX_CONNECTIONS - localCount;
+		int localCount = (int)(config.MAX_CONNECTIONS * 0.8f);
+		int farCount   = config.MAX_CONNECTIONS - localCount;
 
-	    Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
+		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
 
-	    for (AbstractNeuron n : ns) {
+		for (AbstractNeuron n : ns) {
+			List<Neighbor> local = new ArrayList<>(
+				findNearest(ns, n, localCount, config.CONNECTION_FILTER)
+			);
 
-	        List<Neighbor> local = new ArrayList<>(
-	            findNearest(ns, n, localCount, config.CONNECTION_FILTER)
-	        );
+			List<Neighbor> far = pickRandomFarNeurons(ns, n, farCount);
+			List<Neighbor> all = new ArrayList<>(local.size() + far.size());
+			all.addAll(local);
+			all.addAll(far);
+			neighbors.put(n, all);
+		}
 
-	        List<Neighbor> far = pickRandomFarNeurons(ns, n, farCount);
+		int connectionsCount = 0;
 
-	        List<Neighbor> all = new ArrayList<>(local.size() + far.size());
-	        all.addAll(local);
-	        all.addAll(far);
-
-	        neighbors.put(n, all);
-	    }
-
-	    int connectionsCount = 0;
-	    
 		for (int round = 0; round < config.MAX_CONNECTIONS; round++) {
-		    for (AbstractNeuron src : ns) {		
-		        List<Neighbor> neigh = neighbors.get(src);
-		        if (neigh.isEmpty()) continue;
-		
-		        Neighbor target = neigh.remove(neigh.size() - 1);
-		        AbstractNeuron dst = target.neuron();
-		
-		        if (src == dst) continue;
-		        
-		        Point3f ps = src.getPosition();
-		        Point3f pd = dst.getPosition();
-		        
-		        float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
+			for (AbstractNeuron src : ns) {		
+				List<Neighbor> neigh = neighbors.get(src);
+				if (neigh.isEmpty()) continue;
+
+				Neighbor target = neigh.remove(neigh.size() - 1);
+				AbstractNeuron dst = target.neuron();
+
+				if (src == dst) continue;
+
+				Point3f ps = src.getPosition();
+				Point3f pd = dst.getPosition();
+
+				float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
 				float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
-				
+
 				if (ds >= dd) continue;
-		
-		        Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
-		        connectionsCount++;
-		    }
+
+				Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+				connectionsCount++;
+			}
 		}
 
 		// Check all neurons have at least one input / output
@@ -161,60 +158,60 @@ public abstract class Layer {
 			if ( src.getOutSynapses().isEmpty() || src.getInSynapses().isEmpty() ) {
 				List<Neighbor> far = pickRandomFarNeurons(ns, src, farCount);
 				while(!far.isEmpty()) {
-				 
-				 Neighbor target = far.remove(far.size() - 1);
-				 AbstractNeuron dst = target.neuron();
-				 
-			        if (src == dst) continue;
-			        
-			        Point3f ps = src.getPosition();
-			        Point3f pd = dst.getPosition();
-			        
-			        float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
+
+					Neighbor target = far.remove(far.size() - 1);
+					AbstractNeuron dst = target.neuron();
+
+					if (src == dst) continue;
+
+					Point3f ps = src.getPosition();
+					Point3f pd = dst.getPosition();
+
+					float ds = ps.x()*ps.x() + ps.y()*ps.y() + ps.z()*ps.z();
 					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
-					
+
 					if (ds >= dd) continue;
 					if (src.getOutSynapses().isEmpty()) {
 						Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
 					} else {
 						Synapse.create(dst, src, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
 					}
-			        connectionsCount++;
-			        break;
+					connectionsCount++;
+					break;
 				}
 			}
 		}
-		
-	    long endTime = System.nanoTime();
-	    logger.info(
-	        "L{} generated {} synapses in {}",
-	        config.getLayerId(),
-	        connectionsCount,
-	        TimeUnit.NANOSECONDS.toMicros(endTime - startTime) + " micros"
-	    );
 
-	    this.synapsesCount += connectionsCount;
-	    return this;
+		long endTime = System.nanoTime();
+		logger.info(
+				"L{} generated {} synapses in {}",
+				config.getLayerId(),
+				connectionsCount,
+				TimeUnit.NANOSECONDS.toMicros(endTime - startTime) + " micros"
+				);
+
+		this.synapsesCount += connectionsCount;
+		return this;
 	}
-	
+
 	private List<Neighbor> pickRandomFarNeurons(AbstractNeuron[] all, AbstractNeuron src, int count) {
-	    List<Neighbor> far = new ArrayList<>(count);
+		List<Neighbor> far = new ArrayList<>(count);
 
-	    for (int i = 0; i < count; i++) {
-	        AbstractNeuron candidate;
-	        do {
-	            candidate = all[ThreadLocalRandom.current().nextInt(all.length)];
-	        } while (candidate == src);
+		for (int i = 0; i < count; i++) {
+			AbstractNeuron candidate;
+			do {
+				candidate = all[ThreadLocalRandom.current().nextInt(all.length)];
+			} while (candidate == src);
 
-	        float dx = candidate.getPosition().x() - src.getPosition().x();
-	        float dy = candidate.getPosition().y() - src.getPosition().y();
-	        float dz = candidate.getPosition().z() - src.getPosition().z();
-	        float dist = dx*dx + dy*dy + dz*dz;
+			float dx = candidate.getPosition().x() - src.getPosition().x();
+			float dy = candidate.getPosition().y() - src.getPosition().y();
+			float dz = candidate.getPosition().z() - src.getPosition().z();
+			float dist = dx*dx + dy*dy + dz*dz;
 
-	        far.add(new Neighbor(candidate, dist));
-	    }
+			far.add(new Neighbor(candidate, dist));
+		}
 
-	    return far;
+		return far;
 	}
 
 	public Collection<Neighbor> findNearest( AbstractNeuron[] neurons, AbstractNeuron from, int N, Predicate<AbstractNeuron> filter ) {
@@ -229,7 +226,7 @@ public abstract class Layer {
 				float dy = n.getPosition().y() - from.getPosition().y();
 				float dz = n.getPosition().z() - from.getPosition().z();
 				float dist = dx*dx + dy*dy + dz*dz;
-					
+
 				if (pq.size() < N) {
 					pq.add(new Neighbor(n, dist));
 				} else if (dist < pq.peek().distance()) {
@@ -272,14 +269,14 @@ public abstract class Layer {
 	public IntList getSpatialHashCell( AbstractNeuron n ) {
 		return this.spatialHash.get(getCellKey(n));
 	}
-	
+
 	private long getCellKey( AbstractNeuron n ) {
 		int cx = cellCoord(n.getPosition().x(), cellSize);
 		int cy = cellCoord(n.getPosition().y(), cellSize);
 		int cz = cellCoord(n.getPosition().z(), cellSize);
 		return cellKey(cx, cy, cz);
 	}
-	
+
 	private static final long cellKey(int cx, int cy, int cz) {
 		return (((long)cx) << 42) ^ (((long)cy) << 21) ^ (long)cz;
 	}
@@ -288,17 +285,17 @@ public abstract class Layer {
 		return Maths.floor(v / cellSize);
 	}
 
-    private static final record IntFloatPair(int idx, float dist) {/**/}
-    
-    public IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance) {
-    	return findKNearestApprox(p.x(), p.y(), p.z(), k, cellSize, maxDistance);
-    }
+	private static final record IntFloatPair(int idx, float dist) {/**/}
 
-    public IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance) {
+	public IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance) {
+		return findKNearestApprox(p.x(), p.y(), p.z(), k, cellSize, maxDistance);
+	}
+
+	public IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance) {
 		// buffer ordinato di dimensione k (distanze quadratiche)
 		IntFloatPair[] best = new IntFloatPair[k];
 		for (int i = 0; i < k; i++) best[i] = new IntFloatPair(-1, Float.POSITIVE_INFINITY);
-		
+
 		int cx = cellCoord(x, cellSize);
 		int cy = cellCoord(y, cellSize);
 		int cz = cellCoord(z, cellSize);
@@ -339,19 +336,19 @@ public abstract class Layer {
 		}
 		return result;
 	}
-    
-    public static List<Neighbor> toNeighbors(IntList idxs, AbstractNeuron[] neurons, float px, float py, float pz) {
-        ArrayList<Neighbor> out = new ArrayList<>(idxs.size());
-        for (int i = 0; i < idxs.size(); i++) {
-            int ni = idxs.get(i);
-            float vx = neurons[ni].getPosition().x() - px;
-            float vy = neurons[ni].getPosition().y() - py;
-            float vz = neurons[ni].getPosition().z() - pz;
-            float d = (float)Maths.sqrt(vx*vx + vy*vy + vz*vz);
-            out.add(new Neighbor(neurons[ni], d));
-        }
-        return out;
-    }
+
+	public static List<Neighbor> toNeighbors(IntList idxs, AbstractNeuron[] neurons, float px, float py, float pz) {
+		ArrayList<Neighbor> out = new ArrayList<>(idxs.size());
+		for (int i = 0; i < idxs.size(); i++) {
+			int ni = idxs.get(i);
+			float vx = neurons[ni].getPosition().x() - px;
+			float vy = neurons[ni].getPosition().y() - py;
+			float vz = neurons[ni].getPosition().z() - pz;
+			float d = (float)Maths.sqrt(vx*vx + vy*vy + vz*vz);
+			out.add(new Neighbor(neurons[ni], d));
+		}
+		return out;
+	}
 
 	public LayerConfig getConfig() {
 		return config;

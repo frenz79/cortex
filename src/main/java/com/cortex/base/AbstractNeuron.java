@@ -16,8 +16,8 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	protected final Logger logger = LogManager.getLogger(this.getClass());
 
-	final List<Synapse> inSynapses;
-	final List<Synapse> outSynapses;
+	private final ArrayList<Synapse> inSynapses;
+	private final ArrayList<Synapse> outSynapses;
 	private final int layerId;
 	private final int index;
 	private final Point3f position;	
@@ -33,9 +33,9 @@ public abstract class AbstractNeuron implements IProcessable {
 	
 	public AbstractNeuron(int layerId, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position) {
 		this.inSynapses = (hasIncoming)
-			? new ArrayList<>():Collections.emptyList();
+			? new ArrayList<>():null;
 		this.outSynapses = (hasOutgoing)
-			? new ArrayList<>():Collections.emptyList();
+			? new ArrayList<>():null;
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
 		this.position = position;
@@ -49,10 +49,14 @@ public abstract class AbstractNeuron implements IProcessable {
 		}
 	}
 	
+	public void compact() {
+		inSynapses.trimToSize();
+		outSynapses.trimToSize();
+	}
+	
 	public void fire(Spike spike) throws InterruptedException {
 		for ( Synapse s : this.outSynapses  ) {
 			s.addSpike(spike);
-		    s.getTarget().setActive(true);
 		}
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
@@ -60,11 +64,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		lastRateUpdate = spike.getCreationTimeNanos();
 		EventBus.fire(EventType.NEURON_FIRED, lastRateUpdate, this, null);
 	}
-	/*	
-	public void synapseUpdated( long time, Synapse synapse, float oldW, float newW) {
-		GlobalContext.traceSynapseWeightUpdated(time, layerId, oldW, newW);
-	}
-	*/
+
 	public int getIndex() {
 		return index;
 	}

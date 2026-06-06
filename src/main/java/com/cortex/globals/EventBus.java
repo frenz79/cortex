@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EventBus {
 
-	// Add monitoring metrics
-	private static final AtomicLong pendingEvents = new AtomicLong(0);
-	
+	protected static final Logger logger = LogManager.getLogger(EventBus.class);
+		
 	public static record SynapseUpdatedData (
 			float oldValue,
 			float newValue
@@ -24,11 +25,11 @@ public class EventBus {
 		private static final SynapseSpikedData PRE_SPIKE = new SynapseSpikedData(true);
 		private static final SynapseSpikedData POST_SPIKE = new SynapseSpikedData(false);
 		
-		public static SynapseSpikedData forPreSpikeData() {
+		public static SynapseSpikedData preSpikeData() {
 			return PRE_SPIKE;
 		}
 		
-		public static SynapseSpikedData forPostSpikeData() {
+		public static SynapseSpikedData postSpikeData() {
 			return POST_SPIKE;
 		}
 	}
@@ -59,7 +60,7 @@ public class EventBus {
 				try {
 					l.onEvent(type, time, source, data);
 				} catch (Exception ex) {
-					System.err.println("EventBus listener error: " + ex.getMessage());
+					logger.error("EventBus listener error:", ex);
 				}
 			}
 		});

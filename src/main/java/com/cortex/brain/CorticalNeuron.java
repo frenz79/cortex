@@ -57,10 +57,11 @@ public class CorticalNeuron extends AbstractNeuron {
 	 */
 	private Spike integrateInputAndFire(long currTimeNanos, Spike spike, Synapse synapse) {
 	    long ageNanos = currTimeNanos - spike.getCreationTimeNanos();
-	    long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
 	    if (ageNanos < 0) {
 	        logger.warn("Spike nel futuro: age={}", ageNanos);
 	    }
+
+	    long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
 	    if (ageNanos >= travelTimeNanos) {
 	        synapse.onPreSpike(currTimeNanos);
 	        float spikeIntensity = synapse.getWeight() * spike.getAmplitude();
@@ -71,9 +72,8 @@ public class CorticalNeuron extends AbstractNeuron {
 	            return new Spike(spikeIntensity, currTimeNanos, isInhibitor());
 	        }
 	        return null;
-	    } else {
-	        return spike; // still in flight
 	    }
+	    return spike; // still in flight
 	}
 	
 	/**
@@ -107,7 +107,7 @@ public class CorticalNeuron extends AbstractNeuron {
 						return s;
 					}					
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error("Exception handled in Neuron process()", e);
 				}
 				return null;
 			} );	
@@ -122,7 +122,6 @@ public class CorticalNeuron extends AbstractNeuron {
 				for (Synapse s : getInSynapses()) {
 				    s.onPostSpike(currTimeNanos, currTimeNanos);
 				}
-
 			}
 
 	        // still call update even if no new spikes were fired to keep plasticity timing consistent

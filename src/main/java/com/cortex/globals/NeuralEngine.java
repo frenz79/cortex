@@ -99,7 +99,7 @@ public class NeuralEngine {
 				});
 				localTime += System.nanoTime()-now;
 
-				if (localCounter%100==0){
+				if (localCounter%1000==0){
 					processCounter.add(localCounter);
 					processTimeNanos.add(localTime);
 					localTime = 0l;
