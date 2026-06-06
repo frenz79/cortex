@@ -17,10 +17,27 @@ public class EventBus {
 			float newValue
 			) {}
 
+	public static record SynapseSpikedData (
+			boolean isPre
+			) {
+		
+		private static final SynapseSpikedData PRE_SPIKE = new SynapseSpikedData(true);
+		private static final SynapseSpikedData POST_SPIKE = new SynapseSpikedData(false);
+		
+		public static SynapseSpikedData forPreSpikeData() {
+			return PRE_SPIKE;
+		}
+		
+		public static SynapseSpikedData forPostSpikeData() {
+			return POST_SPIKE;
+		}
+	}
+	
 	public static enum EventType {
 		NEURON_FIRED,
 		SYNAPSE_UPDATED,
-		LAYER_STATS
+		LAYER_STATS,
+		SYNAPSE_SPIKED
 	}
 
 	public static final EnumMap<EventType, List<EventListener>> listeners = new EnumMap<>(EventType.class);

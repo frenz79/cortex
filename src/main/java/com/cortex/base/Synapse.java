@@ -10,11 +10,10 @@ import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.layers.Layer.Neighbor;
 import com.cortex.commons.IPlasticSynapse;
 import com.cortex.commons.IPlasticityRule;
-import com.cortex.commons.Pair;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
+import com.cortex.globals.EventBus.SynapseSpikedData;
 import com.cortex.globals.EventBus.SynapseUpdatedData;
-import com.cortex.globals.GlobalContext;
 
 public final class Synapse implements IPlasticSynapse {
 
@@ -124,35 +123,32 @@ public final class Synapse implements IPlasticSynapse {
 	
 	// IPlasticSynapse
 	@Override
-	public void onPreSpike(long t) {
-	//	if (!pre.isInhibitor()) {
-            if (this.plasticityRule.onPreSpike(t)) {
-                GlobalContext.addRecentlyActiveSynapses(this);
-            }
-     //   }
+	public void onPreSpike(long now) {
+		if (this.plasticityRule.onPreSpike(now)) {
+			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.forPreSpikeData());
+        }
     }
 	
 	@Override
     public void onPostSpike(long postSpikeTime, long now) {
 		if ( this.plasticityRule.onPostSpike(this, postSpikeTime, now) ) {
-			GlobalContext.addRecentlyActiveSynapses(this);
+			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.forPostSpikeData());
 		}
 		this.plasticityRule.updateDelay(postSpikeTime);
     }
 	
 	@Override
-    public void applyReward(float deltaW, long now, float neuromodulator) {
-		this.plasticityRule.applyReward(deltaW, now, neuromodulator);
-	}
-	
-	@Override
     public void update(long t) {
 		float oldValue = this.plasticityRule.getWeight();
 		this.plasticityRule.update(t, this);
-		// pre.synapseUpdated( t, this, oldValue, this.plasticityRule.getWeight() );
 		EventBus.fire(EventType.SYNAPSE_UPDATED, t, this, new SynapseUpdatedData(oldValue, this.plasticityRule.getWeight()));
-		
     }
+	
+	@Override
+    public void applyReward(float deltaW, long now, float reward) {
+		this.plasticityRule.applyReward(deltaW, now, reward);
+	}
+	
 	@Override
     public float getWeight() {
 		return this.plasticityRule.getWeight();

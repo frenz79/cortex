@@ -87,4 +87,10 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 	public OCRClassifier getClassifier() {
 		return classifier;
 	}
+
+	@Override
+	public String toString() {
+		return "OCRSupervisor [expected=" + expected + ", WC=" + WC + ", WE=" + WE + ", WT=" + WT
+				+ ", TIMING_TAU_NANOS=" + TIMING_TAU_NANOS + "]";
+	}
 }

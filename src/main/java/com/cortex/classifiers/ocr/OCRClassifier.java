@@ -1,7 +1,5 @@
 package com.cortex.classifiers.ocr;
 
-import java.util.Arrays;
-
 import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.IClassifier;
