@@ -386,8 +386,8 @@ public class DiscreteAdaptiveStabilizer {
 	    }
 
 	    float ratio = pcfg.A_PLUS / pcfg.A_MINUS;
-	    if (ratio < 0.5f) pcfg.A_PLUS  *= 1.05f;
-	    if (ratio > 2.0f) pcfg.A_MINUS *= 1.05f;
+	    if (ratio < 0.5f) pcfg.A_PLUS  *= 1.01f;
+	    if (ratio > 2.0f) pcfg.A_MINUS *= 1.01f;
 
 	    clampNeuronParams(ncfg);
 	    clampPlasticityParams(pcfg);
@@ -399,18 +399,16 @@ public class DiscreteAdaptiveStabilizer {
 	        ncfg.FIRING_THRESHOLD         -= 0.02f;
 	        ncfg.REPOLARIZATION_PER_NANOS -= 0.02f;
 
-	        pcfg.INITIAL_WEIGHT    += 0.02f;
-	        pcfg.W_BASELINE        += 0.02f;
-	        pcfg.HOMEOSTATIC_RATE  *= 0.95f;
+	        pcfg.INITIAL_WEIGHT    += 0.005f;
+	        pcfg.W_BASELINE        += 0.005f;
+	        pcfg.HOMEOSTATIC_RATE  *= 1.05f;
 
 	        clampWeights(pcfg);
 
-	        ncfg.FIRING_THRESHOLD         = Maths.max(0.15f, ncfg.FIRING_THRESHOLD);
+	        ncfg.FIRING_THRESHOLD         = Maths.max(0.03f, ncfg.FIRING_THRESHOLD);
 	        ncfg.REPOLARIZATION_PER_NANOS = Maths.max(0.02f, ncfg.REPOLARIZATION_PER_NANOS);
 	    }
 	}
-
-
 
 	private final static float clampDelta(float delta, float maxStep) {
 		if (delta > maxStep) return maxStep;
@@ -419,8 +417,8 @@ public class DiscreteAdaptiveStabilizer {
 	}
 
 	private final static void clampNeuronParams(CorticalNeuronsConfig ncfg) {
-		ncfg.FIRING_THRESHOLD = Maths.clamp(ncfg.FIRING_THRESHOLD, 0.1f, 2.0f );
-		ncfg.REPOLARIZATION_PER_NANOS = Maths.clamp(ncfg.REPOLARIZATION_PER_NANOS, 0.02f, 1.0f );
+		ncfg.FIRING_THRESHOLD = Maths.clamp(ncfg.FIRING_THRESHOLD, 0.2f, 2.0f );
+		ncfg.REPOLARIZATION_PER_NANOS = Maths.clamp(ncfg.REPOLARIZATION_PER_NANOS, 0.05f, 1.0f );
 	}
 
 	private final static void clampPlasticityParams(ExcitatorySynapticPlasticityConfig pcfg) {
@@ -436,6 +434,6 @@ public class DiscreteAdaptiveStabilizer {
 	}
 
 	private void log(Layer layer, String msg) {
-		// logger.info("[Stabilizer][L" + layer.getLayerId() + "] " + msg);
+		logger.info("[Stabilizer][L" + layer.getLayerId() + "] " + msg);
 	}
 }
