@@ -159,21 +159,18 @@ public class NeuralEngine {
 				);
 
 		if (metricsRecorder!=null) {
-			LongAdder runs = new LongAdder();
 			metricsRecorderTask = scheduler.scheduleWithFixedDelay(
 				() -> {
-					long now = now();					
-					long count = processCounter.sumThenReset();
-					long totalNanos = processTimeNanos.sumThenReset();
-					runs.add( count );
-					long avgTimeProcessing = (count==0)?0:TimeUnit.NANOSECONDS.toMicros(totalNanos / count);
+					long now = now();	
+					long processCount = processCounter.sum();
+					long avgTimeProcessing = (processCount==0)?0l:TimeUnit.NANOSECONDS.toMicros(processTimeNanos.sumThenReset() / samplingInterval);
 					
 					for (Layer layer : brain.getAllLayers()) {
 						int layerId = layer.getLayerId();
 						metricsRecorder.pollLayerStats(
 							now, 
 							avgTimeProcessing, 
-							runs.sum(), 
+							processCount, 
 							layerId
 						);
 					}

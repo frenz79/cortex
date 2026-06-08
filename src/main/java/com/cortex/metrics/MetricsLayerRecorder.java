@@ -79,8 +79,8 @@ public class MetricsLayerRecorder {
 		double sparsity = 1.0 - ((double) activeCount / totalNeurons);
 
 		long count = layer.getSynapsesCount();
-		double sum = sumWeights.sumThenReset();
-		double sum2 = sumWeights2.sumThenReset();
+		double sum = sumWeights.sum();   // NON reset
+		double sum2 = sumWeights2.sum(); // NON reset
 		double satMin = saturatedMin.sumThenReset();
 		double satMax = saturatedMax.sumThenReset();
 		
