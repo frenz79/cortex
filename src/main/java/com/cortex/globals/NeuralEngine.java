@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.LockSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,7 +76,7 @@ public class NeuralEngine {
 		if (neuronThread != null ) return; // already started
 		
 		logger.info("Engine started!");
-		
+		final int samplingInterval = 100;
 		LongAdder processCounter = new LongAdder();
 		LongAdder processTimeNanos = new LongAdder();
 		
@@ -99,15 +100,15 @@ public class NeuralEngine {
 				});
 				localTime += System.nanoTime()-now;
 
-				if (localCounter%1000==0){
-					processCounter.add(localCounter);
+				if (localCounter%samplingInterval==0){
+					processCounter.add(samplingInterval);
 					processTimeNanos.add(localTime);
 					localTime = 0l;
 					localCounter = 0l;
 				}
 			
 		        // spin / sleep controllato
-		       // LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
+		       LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
 		    }
 		});
 		neuronThread.start();
@@ -159,7 +160,7 @@ public class NeuralEngine {
 
 		if (metricsRecorder!=null) {
 			LongAdder runs = new LongAdder();
-			metricsRecorderTask = scheduler.scheduleAtFixedRate(
+			metricsRecorderTask = scheduler.scheduleWithFixedDelay(
 				() -> {
 					long now = now();					
 					long count = processCounter.sumThenReset();

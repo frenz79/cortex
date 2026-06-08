@@ -23,37 +23,35 @@ public abstract class AbstractNeuron implements IProcessable {
 	private final boolean inhibitor;
 	private volatile boolean isActive = false;
 	private final int spikeSign;
-	
-    protected float firingRate = 0.0f;
-    protected long lastRateUpdate = System.nanoTime();
-    
+
+	protected float firingRate = 0.0f;
+	protected long lastRateUpdate = System.nanoTime();
+
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
-	
+
 	public AbstractNeuron(int layerId, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position) {
 		this.inSynapses = (hasIncoming)
-			? new ArrayList<>():null;
+				? new ArrayList<>():null;
 		this.outSynapses = (hasOutgoing)
-			? new ArrayList<>():null;
+				? new ArrayList<>():null;
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
 		this.position = position;
 		this.index = index;
 		this.layerId = layerId;
 	}
-		
+
 	public void compact() {
 		inSynapses.trimToSize();
 		outSynapses.trimToSize();
 	}
-	
+
 	public void fire( long now, boolean inhibitor ) throws InterruptedException {
 		for ( Synapse s : this.outSynapses  ) {
-		    long delay = s.getTraversalTimeNanos(now);
-		    long arrival = now + delay;
-			s.addSpike(
-				Spike.createWithJitter(isInhibitor(), arrival)
-			);
+			long delay = s.getTraversalTimeNanos(now);
+			long arrival = now + delay;
+			s.addSpike(	Spike.createWithJitter(isInhibitor(), arrival));
 		}
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
@@ -65,15 +63,15 @@ public abstract class AbstractNeuron implements IProcessable {
 	public int getIndex() {
 		return index;
 	}
-	
+
 	public boolean isInhibitor() {
 		return inhibitor;
 	}
-	
+
 	public int getSpikeSign() {
 		return spikeSign;
 	}
-	
+
 	public Point3f getPosition() {
 		return position;
 	}
@@ -99,7 +97,7 @@ public abstract class AbstractNeuron implements IProcessable {
 			throw ex;
 		}
 	}
-	
+
 	public List<Synapse> getInSynapses() {
 		return inSynapses;
 	}

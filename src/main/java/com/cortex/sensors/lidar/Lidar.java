@@ -48,7 +48,7 @@ public class Lidar implements ISensor {
 					for ( Synapse syn : neurons[i].getOutSynapses()  ) {
 						// No real delay, "ideal source"
 						syn.addSpike(
-							Spike.createWithJitter(amplitude, (amplitude>0), now)
+							Spike.createWithJitter(amplitude, (amplitude<0), now)
 						);
 					}
 				}

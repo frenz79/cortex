@@ -92,7 +92,6 @@ public class CorticalNeuron extends AbstractNeuron {
 				} catch (Exception e) {
 					logger.error("Exception handled in Neuron process()", e);
 				}
-				return null;
 			} ));	
 			
 			if (!synapse.isEmpty()) {

@@ -1,9 +1,9 @@
 package com.cortex.base;
 
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.PriorityQueue;
-import java.util.function.Function;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +21,7 @@ import com.cortex.globals.EventBus.SynapseUpdatedData;
 
 public final class Synapse implements IPlasticSynapse {
 
-	protected final Logger logger = LogManager.getLogger(this.getClass());
+	static final Logger logger = LogManager.getLogger(Synapse.class);
 
 	public static final Predicate<AbstractNeuron> ALWAYS_CONNECT_PREDICATE = n -> true;
 	public static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
@@ -42,9 +42,43 @@ public final class Synapse implements IPlasticSynapse {
 	private static final int ACTIVITY_THRESHOLD = 5;
 	private int activityCounter;
 	private long lastDecayTime = System.nanoTime();
+	private static final int BUFFER_SIZE = 8; // potenza di 2 per modulo veloce
 
-	private final PriorityQueue<Spike> spikes =
-			new PriorityQueue<>(Comparator.comparingLong(Spike::arrivalTime));
+	private final Spike[] buffer = new Spike[BUFFER_SIZE];
+	private final AtomicInteger writeIndex = new AtomicInteger(0);
+	private final AtomicInteger readIndex  = new AtomicInteger(0);
+
+	public void addSpike(Spike spike) {
+		int w = writeIndex.get();
+		int r = readIndex.get();
+
+		// buffer pieno → drop dello spike più vecchio
+		if (((w + 1) & (BUFFER_SIZE - 1)) == (r & (BUFFER_SIZE - 1))) {
+			readIndex.incrementAndGet();
+		}
+
+		buffer[w & (BUFFER_SIZE - 1)] = spike;
+		writeIndex.incrementAndGet();
+		this.getTarget().setActive(true);
+	}
+
+	public void forEachSpike(long now, Consumer<Spike> consumer) {
+		//logger.info("forEachSpike s:{} START", this);
+		int r = readIndex.get();
+		int w = writeIndex.get();
+		while (r != w) {
+			Spike s = buffer[r & (BUFFER_SIZE - 1)];
+			if (s.arrivalTime() > now)
+				break;
+			consumer.accept(s);
+			r++;
+			readIndex.incrementAndGet();
+		}
+	}
+
+	public boolean isEmpty() {
+		return writeIndex.get() == readIndex.get();
+	}
 
 	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
 		super();
@@ -118,11 +152,16 @@ public final class Synapse implements IPlasticSynapse {
 	 *
 	 * The consumer must be fast and non-blocking; heavy work should be deferred.
 	 */
-	public void forEachSpike(long now, Function<Spike, Spike> consumer) {
+/*
+	private final PriorityBlockingQueue<Spike> spikes =
+				new PriorityBlockingQueue<>(8,Comparator.comparingLong(Spike::arrivalTime));
+
+	public void forEachSpike(long now, Consumer<Spike> consumer) {
 		while (true) {
 			Spike head = spikes.peek();
-			if (head == null || head.arrivalTime() > now) break;
-			consumer.apply(head);
+			if (head == null) break;
+			if (head.arrivalTime() > now) break;
+			consumer.accept(head)
 			spikes.poll();
 		}
 	}
@@ -135,7 +174,7 @@ public final class Synapse implements IPlasticSynapse {
 	public boolean isEmpty() {
 		return spikes.isEmpty();
 	}
-
+	*/
 	// IPlasticSynapse
 	@Override
 	public void onPreSpike(long now) {
@@ -189,5 +228,24 @@ public final class Synapse implements IPlasticSynapse {
 
 	public AbstractNeuron getSource() {
 		return pre;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(activityCounter, length, post, pre);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Synapse other = (Synapse) obj;
+		return activityCounter == other.activityCounter
+				&& Float.floatToIntBits(length) == Float.floatToIntBits(other.length)
+				&& Objects.equals(post, other.post) && Objects.equals(pre, other.pre);
 	}
 }

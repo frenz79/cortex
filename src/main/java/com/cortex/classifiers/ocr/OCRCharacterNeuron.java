@@ -1,6 +1,6 @@
 package com.cortex.classifiers.ocr;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
@@ -36,13 +36,12 @@ public class OCRCharacterNeuron extends AbstractNeuron {
 	public float scoreSpikes(long wnd, long now) {
 		AtomicDouble score = new AtomicDouble(0.0);
 		for (Synapse synapse : getInSynapses()) {
-			Function<Spike, Spike> spikesConsumer = spike -> {
+			Consumer<Spike> spikesConsumer = spike -> {
 				try {
 					score.addAndGet(spike.signedAmplitude());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				return spike; // tieni lo spike se non ancora arrivato
 			};
 			synapse.forEachSpike(now, spikesConsumer);
 		}

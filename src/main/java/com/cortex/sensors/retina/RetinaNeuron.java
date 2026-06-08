@@ -54,7 +54,7 @@ public class RetinaNeuron extends AbstractNeuron {
 		
 		int spikeCount = 0;
 
-		if (amplitude > 0f) {
+		if (amplitude != 0f) {
 			// mapping robusto
 			float raw = amplitude * 0.3f; // più sensibile
 			spikeCount = (int)raw;

@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.LayerConnectionsConfig;
@@ -15,6 +18,8 @@ import com.cortex.commons.Point3f;
 
 public class Brain extends MultiLayer<SphericalLayer>{
 
+	private final Logger logger = LogManager.getLogger(this.getClass());
+	
 	private static final int CLASSIFIERS_TARGET_LAYER = 4;
 
 	private static final int SENSORS_TARGET_LAYER = 0;
@@ -106,6 +111,7 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	}
 
 	private void compact() {
+		logger.info("Compacting cortical neurons");
 		for( CorticalNeuron n : this.neurons ) {
 			n.compact();
 		}
@@ -133,7 +139,7 @@ public class Brain extends MultiLayer<SphericalLayer>{
 				try {
 					stay = consumer.apply(n);
 				} catch (RuntimeException ex) {
-					ex.printStackTrace();
+					logger.error("Handled Exception:", ex);
 					stay = true;
 				}
 				n.setActive( stay );
@@ -142,16 +148,11 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	}
 
 	public void streamAllNeurons(Function<CorticalNeuron, Boolean> consumer) {
-		//	long start = System.nanoTime();
 		CorticalNeuron[] snapshot = neurons; // volatile read
 		if (snapshot == null) return;
 		for (int i = 0; i < snapshot.length; i++) {
-			CorticalNeuron entry = snapshot[i];
-			consumer.apply(entry);
+			consumer.apply(snapshot[i]);
 		}
-		//   long end = System.nanoTime();
-		//   processTimeNanos.add(end - start);
-		//   processCounter.incrementAndGet();
 	}
 
 	public Layer getSensorsTargetLayer() {

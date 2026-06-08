@@ -65,9 +65,10 @@ public class Retina implements ISensor {
 					List<Float> spikesAmplitude = retinaNeurons[x][y].drainSpikes();
 					for (Float amplitude : spikesAmplitude) {
 						for ( Synapse syn : n.getOutSynapses()  ) {
+							logger.debug("Retina firing to:{}", syn);
 							// No real delay, "ideal source"
 							syn.addSpike(
-								Spike.createWithJitter(amplitude, (amplitude>0), now)
+								Spike.createWithJitter(amplitude, (amplitude<0), now)
 							);
 						}
 					}

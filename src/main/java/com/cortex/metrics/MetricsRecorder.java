@@ -3,6 +3,9 @@ package com.cortex.metrics;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
 import com.cortex.brain.Brain;
@@ -14,6 +17,8 @@ import com.cortex.globals.EventBus.SynapseUpdatedData;
 
 public class MetricsRecorder {
 
+	protected final Logger logger = LogManager.getLogger(this.getClass());
+	
 	private final Brain brain;
 	private final ConcurrentHashMap<Integer, MetricsLayerRecorder> layersStats = new ConcurrentHashMap<>();	
 	
@@ -42,13 +47,17 @@ public class MetricsRecorder {
 			
 			@Override
 			public void onEvent(EventType type, long time, Object source, Object data) {
-				Synapse s =(Synapse)source;
-				int layerId = s.getSource().getLayerId();
-				if (layerId<0) return;
-				
-		        layersStats.computeIfAbsent(layerId, 
-		           	k -> new MetricsLayerRecorder(brain.getLayer(layerId)))
-		        		.sumSynapticWeights((SynapseUpdatedData)data);
+				try {
+					Synapse s =(Synapse)source;
+					int layerId = s.getSource().getLayerId();
+					if (layerId<0) return;
+					
+			        layersStats.computeIfAbsent(layerId, 
+			           	k -> new MetricsLayerRecorder(brain.getLayer(layerId)))
+			        		.updateSynapticStatistics( (Synapse)source, (SynapseUpdatedData)data);
+				} catch (Exception ex) {
+					logger.error("Handled Exception:", ex);
+				}
 			}
 		});
 	}
@@ -58,16 +67,17 @@ public class MetricsRecorder {
         return (s != null) ? s.getStatsAndReset() : null;
     }
     
-    public LayerStats pollLayerStats(long time, long avgProcTime, long runs, int layerId) {
+    public void pollLayerStats(long time, long avgProcTime, long runs, int layerId) {
+    	//logger.info("Calculating layers stats..");
     	LayerStats stats = getAndResetStats(layerId);
-    	EventBus.fire(EventType.LAYER_STATS, time, this, stats);
-    	
+
     	if (dumpStatsTimeNanos>0 && time - lastDumpTimeNanos > dumpStatsTimeNanos) {
 			System.out.println("== Now: "+time+" - Avg Time:" + String.format("%,.2f",(avgProcTime/1000.0f)) + "ms Runs:"+runs+" ===========");
     		dumpStats(time);
     		lastDumpTimeNanos = time;
     	}
-        return stats;
+    	
+    	EventBus.fire(EventType.LAYER_STATS, time, this, stats);
     }
     
 	private void dumpStats(long time) {
