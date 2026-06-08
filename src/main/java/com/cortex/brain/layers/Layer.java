@@ -19,6 +19,7 @@ import com.cortex.base.Synapse;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
+import com.cortex.brain.BrainLayersConnConfig.SYNAPSE_SPEED;
 import com.cortex.commons.IntList;
 import com.cortex.commons.Maths;
 import com.cortex.commons.Point3f;
@@ -87,6 +88,7 @@ public abstract class Layer {
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 
+			long baseSpeed,
 			Predicate<AbstractNeuron> filter, 
 			SynapsePlasticityConfig synapsePlasticityConfig );
 
@@ -113,7 +115,8 @@ public abstract class Layer {
 
 		int localCount = (int)(config.MAX_CONNECTIONS * 0.8f);
 		int farCount   = config.MAX_CONNECTIONS - localCount;
-
+		long baseSpeed = SYNAPSE_SPEED.FAST.getBaseSpeed();
+		
 		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
 
 		for (AbstractNeuron n : ns) {
@@ -148,7 +151,7 @@ public abstract class Layer {
 
 				if (ds >= dd) continue;
 
-				Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+				Synapse.create(src, dst, target.getRealDistance(), baseSpeed, config.SYNAPSE_PLASTICITY_CONFIG);
 				connectionsCount++;
 			}
 		}
@@ -172,9 +175,9 @@ public abstract class Layer {
 
 					if (ds >= dd) continue;
 					if (src.getOutSynapses().isEmpty()) {
-						Synapse.create(src, dst, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+						Synapse.create(src, dst, target.getRealDistance(), baseSpeed, config.SYNAPSE_PLASTICITY_CONFIG);
 					} else {
-						Synapse.create(dst, src, target.getRealDistance(), config.SYNAPSE_PLASTICITY_CONFIG);
+						Synapse.create(dst, src, target.getRealDistance(), baseSpeed, config.SYNAPSE_PLASTICITY_CONFIG);
 					}
 					connectionsCount++;
 					break;

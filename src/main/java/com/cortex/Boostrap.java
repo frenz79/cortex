@@ -86,7 +86,6 @@ public class Boostrap {
 						.withEligibilityDecaySeconds(0.997f) 	// ELIGIBILITY_DECAY
 						.withPlasticity(20f, 5f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 						.withHomeostaticRate(0.02f) 			// HOMEOSTATIC_RATE
-						.withInitialDelay(1.2f)
 						.build(),
 					InhibitorySynapticPlasticityConfig.newBuilder()
 						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
@@ -109,7 +108,6 @@ public class Boostrap {
 						.withEligibilityDecaySeconds(0.990f) 	// ELIGIBILITY_DECAY
 						.withPlasticity(20f, 1f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 						.withHomeostaticRate(0.01f) 			// HOMEOSTATIC_RATE
-						.withInitialDelay(1.2f)
 						.build(),
 					InhibitorySynapticPlasticityConfig.newBuilder()
 						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,

@@ -7,14 +7,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Spike;
 import com.cortex.commons.Maths;
 
 public class RetinaNeuron extends AbstractNeuron {
 
 	private float lastLuminance = Float.NaN;
 
-	private final Queue<Spike> spikes = new ConcurrentLinkedQueue<>();
+	private final Queue<Float> spikesAmplitude = new ConcurrentLinkedQueue<>();
 
 	private final RetinaNeuronConfig retinaNeuronConfig;
 
@@ -46,14 +45,11 @@ public class RetinaNeuron extends AbstractNeuron {
 		
 		float delta = luminance - this.lastLuminance;
 		float amplitude = 0f;
-		boolean isInhibitory = false;
 
 		if (delta > this.retinaNeuronConfig.THRESHOLD) { // ON
 			amplitude = delta * this.retinaNeuronConfig.ON_GAIN;
-			isInhibitory = false;
 		} else if (delta < -this.retinaNeuronConfig.THRESHOLD) { // OFF
 			amplitude = -delta * this.retinaNeuronConfig.OFF_GAIN;
-			isInhibitory = true;
 		}
 		
 		int spikeCount = 0;
@@ -70,7 +66,7 @@ public class RetinaNeuron extends AbstractNeuron {
 			spikeCount = Maths.min(spikeCount, this.retinaNeuronConfig.MAX_SPIKES_PER_SAMPLE);
 
 			for (int i = 0; i < spikeCount; i++) {
-				spikes.add(new Spike(amplitude, currTimeNanos, isInhibitory));
+				spikesAmplitude.add(amplitude);
 			}
 		}
 
@@ -78,10 +74,10 @@ public class RetinaNeuron extends AbstractNeuron {
 		this.firingRate += spikeCount;
 		return spikeCount;
 	}
-
-	public List<Spike> drainSpikes() {
-		List<Spike> out = new ArrayList<>(spikes);
-		spikes.clear();
+	
+	public List<Float> drainSpikes() {
+		List<Float> out = new ArrayList<>(spikesAmplitude);
+		spikesAmplitude.clear();
 		return out;
 	}
 

@@ -20,7 +20,6 @@ public class ExcitatorySynapticPlasticityConfig {
 	public float PLASTIC_DELAY_MAX;
 	
 	public float INITIAL_WEIGHT;
-	public float INITIAL_DELAY = 1.0f;
 	
 	public static class Builder {
 		private final ExcitatorySynapticPlasticityConfig ret;
@@ -64,12 +63,7 @@ public class ExcitatorySynapticPlasticityConfig {
 			ret.PLASTIC_DELAY_MIN = PLASTIC_DELAY_MIN;
 			return this;
 		}
-		
-		public Builder withInitialDelay(float INITIAL_DELAY) {
-			ret.INITIAL_DELAY = INITIAL_DELAY;
-			return this;
-		}
-		
+
 		public Builder withHomeostaticRate(float HOMEOSTATIC_RATE) {
 			ret.HOMEOSTATIC_RATE = HOMEOSTATIC_RATE;
 			return this;

@@ -1,7 +1,6 @@
 package com.cortex.base;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -42,26 +41,24 @@ public abstract class AbstractNeuron implements IProcessable {
 		this.index = index;
 		this.layerId = layerId;
 	}
-	
-	public void fire(List<Spike> spikes) throws InterruptedException {
-		for ( Spike spike : spikes ) {
-			fire( spike );
-		}
-	}
-	
+		
 	public void compact() {
 		inSynapses.trimToSize();
 		outSynapses.trimToSize();
 	}
 	
-	public void fire(Spike spike) throws InterruptedException {
+	public void fire( long now, boolean inhibitor ) throws InterruptedException {
 		for ( Synapse s : this.outSynapses  ) {
-			s.addSpike(spike);
+		    long delay = s.getTraversalTimeNanos(now);
+		    long arrival = now + delay;
+			s.addSpike(
+				Spike.createWithJitter(isInhibitor(), arrival)
+			);
 		}
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
 		firingRate += 1.0f;
-		lastRateUpdate = spike.getCreationTimeNanos();
+		lastRateUpdate = now;
 		EventBus.fire(EventType.NEURON_FIRED, lastRateUpdate, this, null);
 	}
 

@@ -32,7 +32,6 @@ public class BrainLayersConfig {
 	                .withEligibilityDecaySeconds(0.995f)
 	                .withPlasticity(30f, 5f)
 	                .withHomeostaticRate(0.010f)
-	                .withInitialDelay(1.2f)
 	                .build(),
 	            InhibitorySynapticPlasticityConfig.newBuilder()
 	                .withWeights(0.60f, 2.5f, 0.15f)
@@ -64,7 +63,6 @@ public class BrainLayersConfig {
 	                .withEligibilityDecaySeconds(0.995f)
 	                .withPlasticity(25f, 5f)
 	                .withHomeostaticRate(0.0015f)
-	                .withInitialDelay(1.0f)
 	                .build(),
 	            InhibitorySynapticPlasticityConfig.newBuilder()
 	                .withWeights(0.35f, 1.5f, 0.10f)
@@ -79,7 +77,7 @@ public class BrainLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.10f)
-	        .withDimension(0.65f)
+	        .withDimension(0.70f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
 	        .withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
@@ -96,7 +94,6 @@ public class BrainLayersConfig {
 	                .withEligibilityDecaySeconds(0.993f)
 	                .withPlasticity(15f, 3f)
 	                .withHomeostaticRate(0.002f)
-	                .withInitialDelay(0.3f)
 	                .build(),
 	            InhibitorySynapticPlasticityConfig.newBuilder()
 	                .withWeights(0.30f, 1.4f, 0.10f)
@@ -111,7 +108,7 @@ public class BrainLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.06f)
-	        .withDimension(0.60f)
+	        .withDimension(0.55f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
 	        .withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
@@ -128,7 +125,6 @@ public class BrainLayersConfig {
 	                .withEligibilityDecaySeconds(0.993f)
 	                .withPlasticity(35f, 6f)
 	                .withHomeostaticRate(0.010f)
-	                .withInitialDelay(0.1f)
 	                .build(),
 	            InhibitorySynapticPlasticityConfig.newBuilder()
 	                .withWeights(0.22f, 0.9f, 0.08f)
@@ -143,7 +139,7 @@ public class BrainLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.12f)
-	        .withDimension(0.30f)
+	        .withDimension(0.40f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
 	        .withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
@@ -160,7 +156,6 @@ public class BrainLayersConfig {
 	                .withEligibilityDecaySeconds(0.992f)
 	                .withPlasticity(40f, 7f)
 	                .withHomeostaticRate(0.001f)
-	                .withInitialDelay(1.5f)
 	                .build(),
 	            InhibitorySynapticPlasticityConfig.newBuilder()
 	                .withWeights(0.27f, 1.5f, 0.10f)
@@ -175,7 +170,7 @@ public class BrainLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.03f)
-	        .withDimension(0.15f)
+	        .withDimension(0.20f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
 	        .withConnectionFilter(ALWAYS_CONNECT_PREDICATE)
@@ -192,7 +187,6 @@ public class BrainLayersConfig {
 	                .withEligibilityDecaySeconds(0.991f)
 	                .withPlasticity(70f, 12f)
 	                .withHomeostaticRate(0.004f)
-	                .withInitialDelay(1.2f)
 	                .build(),
 	            InhibitorySynapticPlasticityConfig.newBuilder()
 	                .withWeights(0.18f, 1.3f, 0.09f)

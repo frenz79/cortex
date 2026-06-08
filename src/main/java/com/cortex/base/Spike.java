@@ -1,59 +1,47 @@
 package com.cortex.base;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import com.cortex.commons.Maths;
 
 public record Spike(
 		float amplitude,
-		long creationTimeNanos,
-		boolean inhibitor ) {
+		boolean inhibitor,
+		long arrivalTime) {
 	
 	private static final float MAX_AMPLITUDE = 200.0f;
 	private static final float DEFAULT_AMPLITUDE = 100.0f;
-	private static final float DEFAULT_SPEED = 10.0f;
 	
-	public Spike(float amplitude, long creationTimeNanos, boolean inhibitor) {
+	public Spike(float amplitude, boolean inhibitor, long arrivalTime) {
 		this.amplitude = Maths.min(amplitude, MAX_AMPLITUDE);
 		this.inhibitor = inhibitor;
-		this.creationTimeNanos = creationTimeNanos;
+		this.arrivalTime = arrivalTime;
 	}
 		
-	public Spike(long creationTimeNanos, boolean inhibitor) {
-		this(DEFAULT_AMPLITUDE,creationTimeNanos,inhibitor);
-	}
-	
-	private static float clampAmplitude(float a) {
-        if (Float.isNaN(a) || a <= 0f) return 0f;
-        return Maths.min(a, MAX_AMPLITUDE);
-    }
-	
-	public long getCreationTimeNanos() {
-		return creationTimeNanos;
+	public Spike(boolean inhibitor, long arrivalTime) {
+		this(DEFAULT_AMPLITUDE,inhibitor, arrivalTime);
 	}
 
-	public float getSpeed() {
-		return DEFAULT_SPEED;
+	public static Spike createWithJitter(float amplitude, boolean inhibitor, long arrivalTime) {
+	    long jitter = ThreadLocalRandom.current().nextLong(-50, 50); // ±50 ns
+	    return new Spike(amplitude, inhibitor, arrivalTime + jitter);
+	}
+	
+	public static Spike createWithJitter(boolean inhibitor, long arrivalTime) {
+	    long jitter = ThreadLocalRandom.current().nextLong(-50, 50); // ±50 ns
+	    return new Spike(DEFAULT_AMPLITUDE, inhibitor, arrivalTime + jitter);
 	}
 	
 	public int getSign() {
 		return (inhibitor)?-1:1;
 	}
 
-	public float getAmplitude() {
-		return amplitude;
+	public float signedAmplitude() {
+	    return amplitude * (inhibitor ? -1f : 1f);
 	}
 	
-	/**
-     * Calcola il tempo di viaggio in nanosecondi per una distanza (same units as speed).
-     * Assumiamo speed in unità/secondo; conversione a nanos effettuata qui.
-     */
-	public long travelTimeNanos(float length) {
-	    if (length <= 0f) return 0L;
-	    double microseconds = (length / getSpeed()) * 1_000.0; // 1 unità = 1 µs
-	    return (long)(microseconds * 1_000L); // µs → ns
-	}
-
 	@Override
 	public String toString() {
-		return "Spike [ creationTimeNanos=" + creationTimeNanos + ", amplitude=" + amplitude + "]";
+		return "Spike [ arrivalTime=" + arrivalTime + ", amplitude=" + amplitude + "]";
 	}
 }

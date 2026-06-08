@@ -1,7 +1,6 @@
 package com.cortex.brain.layers;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +14,7 @@ import com.cortex.base.Synapse;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
+import com.cortex.brain.BrainLayersConnConfig.SYNAPSE_SPEED;
 import com.cortex.commons.IntList;
 import com.cortex.commons.Maths;
 import com.cortex.commons.Point3f;
@@ -32,6 +32,7 @@ public class SphericalLayer extends Layer {
 	        int minConn,
 	        int maxConn,
 	        float maxDistance,
+	        long baseSpeed,
 	        Predicate<AbstractNeuron> filter,
 	        SynapsePlasticityConfig plasticityCfg) {
 
@@ -72,7 +73,7 @@ public class SphericalLayer extends Layer {
 					
 					if (ds >= dd) continue;
 
-	                Synapse.create(src, dst, target.getRealDistance(), plasticityCfg);
+	                Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
 	                connectionsCount++;
 	                break;
 	            }
@@ -96,7 +97,8 @@ public class SphericalLayer extends Layer {
 		int w = matrix.length;
 		int h = matrix[0].length;
 		int connections = 0;
-
+		long baseSpeed = SYNAPSE_SPEED.FAST.getBaseSpeed();
+		
 	    float cellSize = maxDistance;
 	    
 		// Sphere projection
@@ -129,9 +131,9 @@ public class SphericalLayer extends Layer {
 					
 					for ( int i : rndIdx ) {
 					if (!isIncoming)
-						connections += Synapse.create( matrix[rx][ry], conns.get(i), synCfg );
+						connections += Synapse.create( matrix[rx][ry], conns.get(i), baseSpeed, synCfg );
 					else
-						connections += Synapse.create( conns.get(i), matrix[rx][ry], synCfg );
+						connections += Synapse.create( conns.get(i), matrix[rx][ry], baseSpeed, synCfg );
 					}
 				}
 			}			

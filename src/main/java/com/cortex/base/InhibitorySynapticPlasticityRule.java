@@ -4,13 +4,13 @@ import com.cortex.base.config.InhibitorySynapticPlasticityConfig;
 import com.cortex.commons.IPlasticityRule;
 import com.cortex.commons.Maths;
 
-public class InhibitorySynapticPlasticity implements IPlasticityRule {
+public class InhibitorySynapticPlasticityRule implements IPlasticityRule {
 	
     private float currentWeight;
     
 	private final InhibitorySynapticPlasticityConfig config;
 
-	public InhibitorySynapticPlasticity(InhibitorySynapticPlasticityConfig config) {
+	public InhibitorySynapticPlasticityRule(InhibitorySynapticPlasticityConfig config) {
 		this.config = config;
 		this.currentWeight = config.INITIAL_WEIGHT;
 	}
@@ -36,15 +36,18 @@ public class InhibitorySynapticPlasticity implements IPlasticityRule {
 	}
 
 	@Override
+	public boolean hadSignificantPairing() {
+		// TODO
+		return false;
+	}
+	
+	@Override
     public void update(long now, Synapse s) {
         float postRate = s.getTarget().getRecentFiringRate(now);
         float error = postRate - config.TARGET_FIRING_RATE;
         float dw = config.LEARNING_RATE * error;
         currentWeight = Maths.clamp(currentWeight + dw, config.W_MIN, config.W_MAX);
     }
-
-	@Override
-	public void updateDelay(float r) {}
 
 	@Override
 	public boolean isEligible(long now, long window) {

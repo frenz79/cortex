@@ -13,6 +13,7 @@ public class LayerConnectionsConfig {
 	public Predicate<AbstractNeuron> NEURON_FILTER_PREDICATE = n -> true;
 	public Layer SOURCE_LAYER;
 	public Layer TARGET_LAYER;
+	public long BASE_SPEED;
 	
 	public static Builder newBuilder() {
         return new Builder();
@@ -27,6 +28,11 @@ public class LayerConnectionsConfig {
         
         public Builder from(Layer SOURCE_LAYER) {
             cfg.SOURCE_LAYER = SOURCE_LAYER;
+            return this;
+        }
+        
+        public Builder withBaseSped(long  BASE_SPEED) {
+            cfg.BASE_SPEED = BASE_SPEED;
             return this;
         }
         

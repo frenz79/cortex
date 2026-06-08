@@ -57,6 +57,7 @@ public abstract class MultiLayer<L extends Layer> {
 				e.MIN_CONNECTIONS, 
 				e.MAX_CONNECTIONS,
 				e.MAX_DISTANCE, 
+				e.BASE_SPEED,
 				e.NEURON_FILTER_PREDICATE,
 				e.SYNAPSE_PLASTICITY_CONFIG
 			);

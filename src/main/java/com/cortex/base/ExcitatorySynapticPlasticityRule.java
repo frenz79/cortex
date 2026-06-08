@@ -4,9 +4,8 @@ import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.commons.IPlasticityRule;
 import com.cortex.commons.Maths;
 
-public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
+public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 
-	private float initialDelay;
 	private float currentWeight;
 	private float currentEligibility = 0.0f;
 	private long lastEligibilityUpdateNanos = -1l;
@@ -16,10 +15,9 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 
 	private final ExcitatorySynapticPlasticityConfig config;
 
-	public ExcitatorySynapticPlasticity(ExcitatorySynapticPlasticityConfig config) {
+	public ExcitatorySynapticPlasticityRule(ExcitatorySynapticPlasticityConfig config) {
 		this.config = config;
 		this.currentWeight = config.INITIAL_WEIGHT;
-		this.initialDelay = config.INITIAL_DELAY;
 	}
 	
 	// IPlasticityRule
@@ -50,6 +48,14 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 		}
 		return false;
 	}
+	
+	// IPlasticityRule
+	@Override
+	public boolean hadSignificantPairing() {
+	    if (lastPreSpike < 0 || lastPostSpike < 0) return false;
+	    long dt = lastPostSpike - lastPreSpike;
+	    return computeStdpDelta(dt) != 0f;
+	}
 
 	// compute STDP delta given dt = postTime - preTime (nanos)
 	private float computeStdpDelta(long dtNanos) {
@@ -74,14 +80,6 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 		float consumption = 0.2f * Math.abs(reward);
 		currentEligibility *= (1.0f - consumption);
 		lastEligibilityUpdateNanos = now;
-	}
-	
-	// Called by Synapse in onPostSpike()
-	// TODO: currentEligibility can be 0
-	public void updateDelay(float reward) {
-		if (!config.PLASTIC_DELAY) return;
-		initialDelay += reward * currentEligibility * 0.1f;
-		initialDelay = Maths.clamp(initialDelay, config.PLASTIC_DELAY_MIN, config.PLASTIC_DELAY_MAX);
 	}
 
 	@Override
@@ -114,10 +112,6 @@ public final class ExcitatorySynapticPlasticity implements IPlasticityRule {
 		return currentWeight;
 	}
 
-	public float getDelay() {
-		return initialDelay;
-	}
-	
 	public void enable( boolean enabled ) {
 		this.enabled = enabled;
 	}

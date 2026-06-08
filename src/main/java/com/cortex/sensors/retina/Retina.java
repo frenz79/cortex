@@ -1,7 +1,6 @@
 package com.cortex.sensors.retina;
 
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -10,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
+import com.cortex.base.Synapse;
 import com.cortex.commons.Maths;
 import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.ISensor;
@@ -48,29 +48,34 @@ public class Retina implements ISensor {
 	}
 
 	@Override
-	public boolean process(long currTimeNanos) throws InterruptedException {
-		this.lastProcessTime = currTimeNanos;
+	public boolean process(long now) throws InterruptedException {
+		this.lastProcessTime = now;
 		if (!active || sourceLuminance==null) {
 			return true;
 		}
 
-		updateMicrosaccades( currTimeNanos );
+		updateMicrosaccades( now );
 
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
 				float lum = sampleLuminanceFromIntegral(x, y); //sampleLuminanceFromSource(x, y);
-				int c = retinaNeurons[x][y].process(currTimeNanos, lum);
+				RetinaNeuron n = retinaNeurons[x][y];
+				int c = n.process(now, lum);
 				if (c > 0) {
-					List<Spike> spikes = retinaNeurons[x][y].drainSpikes();
-					for (Spike s : spikes) {
-						retinaNeurons[x][y].fire(s);
+					List<Float> spikesAmplitude = retinaNeurons[x][y].drainSpikes();
+					for (Float amplitude : spikesAmplitude) {
+						for ( Synapse syn : n.getOutSynapses()  ) {
+							// No real delay, "ideal source"
+							syn.addSpike(
+								Spike.createWithJitter(amplitude, (amplitude>0), now)
+							);
+						}
 					}
 				}
 			}
 		}
 		return true;
 	}
-
 
 	private float sampleLuminanceFromIntegral(int rx, int ry) {
 

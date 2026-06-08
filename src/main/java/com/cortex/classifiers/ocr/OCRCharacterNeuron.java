@@ -33,30 +33,23 @@ public class OCRCharacterNeuron extends AbstractNeuron {
 		return character;
 	}
 
-	public float scoreSpikes(long wnd, long currTimeNanos) {
+	public float scoreSpikes(long wnd, long now) {
 		AtomicDouble score = new AtomicDouble(0.0);
 		for (Synapse synapse : getInSynapses()) {
 			Function<Spike, Spike> spikesConsumer = spike -> {
 				try {
-					long deltaTimeNanos = currTimeNanos - spike.getCreationTimeNanos();
-					// usa il metodo del record Spike che calcola il tempo di viaggio in nanos
-					long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
-					if (deltaTimeNanos >= travelTimeNanos) {
-						score.addAndGet(spike.getAmplitude() * spike.getSign()); // opzionale: considerare segno
-						return null; // rimuovi lo spike dopo averlo consumato
-					}
+					score.addAndGet(spike.signedAmplitude());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 				return spike; // tieni lo spike se non ancora arrivato
 			};
-			synapse.forEachSpike(spikesConsumer);
+			synapse.forEachSpike(now, spikesConsumer);
 		}
 		float ret = score.floatValue();
 
-        lastScoreTime = currTimeNanos;
-		recentScore += ret;
-		
+        lastScoreTime = now;
+		recentScore += ret;		
 		return ret;
 	}
 

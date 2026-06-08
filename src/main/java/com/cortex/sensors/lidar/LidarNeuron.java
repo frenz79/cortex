@@ -7,14 +7,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Spike;
 import com.cortex.commons.Maths;
 
 public class LidarNeuron extends AbstractNeuron {
 
     private float lastDistance = Float.NaN;
 
-    private final Queue<Spike> spikes = new ConcurrentLinkedQueue<>();
+    private final Queue<Float> spikesAmplitude = new ConcurrentLinkedQueue<>();
 
     private final LidarNeuronConfig config;
 
@@ -47,21 +46,17 @@ public class LidarNeuron extends AbstractNeuron {
         }
 
         float delta = lastDistance - distance;
-        // 🔥 ATTENZIONE: invertito rispetto alla retina
+        // ATTENZIONE: invertito rispetto alla retina
         // distanza ↓ → oggetto si avvicina → spike eccitatorio
 
         float amplitude = 0f;
-        boolean inhibitory = false;
 
         if (delta > config.THRESHOLD) {
-            // ✅ oggetto si avvicina
+            // oggetto si avvicina
             amplitude = delta * config.APPROACH_GAIN;
-            inhibitory = false;
-
         } else if (delta < -config.THRESHOLD) {
-            // ✅ oggetto si allontana
+            // oggetto si allontana
             amplitude = -delta * config.RECEDE_GAIN;
-            inhibitory = true;
         }
 
         int spikeCount = 0;
@@ -79,7 +74,7 @@ public class LidarNeuron extends AbstractNeuron {
             spikeCount = Maths.min(spikeCount, config.MAX_SPIKES_PER_SAMPLE);
 
             for (int i = 0; i < spikeCount; i++) {
-                spikes.add(new Spike(amplitude, currTimeNanos, inhibitory));
+            	spikesAmplitude.add(amplitude);
             }
         }
 
@@ -89,9 +84,9 @@ public class LidarNeuron extends AbstractNeuron {
         return spikeCount;
     }
 
-    public List<Spike> drainSpikes() {
-        List<Spike> out = new ArrayList<>(spikes);
-        spikes.clear();
+    public List<Float> drainSpikes() {
+        List<Float> out = new ArrayList<>(spikesAmplitude);
+        spikesAmplitude.clear();
         return out;
     }
 

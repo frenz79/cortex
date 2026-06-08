@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
+import com.cortex.base.Synapse;
 import com.cortex.commons.Maths;
 import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.ISensor;
@@ -30,28 +31,29 @@ public class Lidar implements ISensor {
     }
 
     @Override
-    public boolean process(long currTimeNanos) throws InterruptedException {
+    public boolean process(long now) throws InterruptedException {
 
-        this.lastProcessTime = currTimeNanos;
+        this.lastProcessTime = now;
 
         if (!active || distances == null) {
             return true;
         }
 
         for (int i = 0; i < config.RAYS; i++) {
-
             float d = normalize(distances[i]);
-
-            int c = neurons[i].process(currTimeNanos, d);
-
+            int c = neurons[i].process(now, d);
             if (c > 0) {
-                List<Spike> spikes = neurons[i].drainSpikes();
-                for (Spike s : spikes) {
-                    neurons[i].fire(s);
-                }
+                List<Float> spikesAmplitude = neurons[i].drainSpikes();
+                for (Float amplitude : spikesAmplitude) {
+					for ( Synapse syn : neurons[i].getOutSynapses()  ) {
+						// No real delay, "ideal source"
+						syn.addSpike(
+							Spike.createWithJitter(amplitude, (amplitude>0), now)
+						);
+					}
+				}
             }
         }
-
         return true;
     }
 

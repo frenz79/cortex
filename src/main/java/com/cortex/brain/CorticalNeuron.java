@@ -1,7 +1,5 @@
 package com.cortex.brain;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.cortex.base.AbstractNeuron;
@@ -55,25 +53,16 @@ public class CorticalNeuron extends AbstractNeuron {
 	 *  the incoming spike if it was not processed
 	 *  a new Spike if a fire will occurr
 	 */
-	private Spike integrateInputAndFire(long currTimeNanos, Spike spike, Synapse synapse) {
-	    long ageNanos = currTimeNanos - spike.getCreationTimeNanos();
-	    if (ageNanos < 0) {
-	        logger.warn("Spike nel futuro: age={}", ageNanos);
+	private boolean integrateInputAndFire(long now, Spike spike, Synapse synapse) {
+        synapse.onPreSpike(now);
+	    float spikeIntensity = synapse.getWeight() * spike.amplitude();
+	    potential += spike.getSign() * spikeIntensity;
+	    if ( potential > config.FIRING_THRESHOLD) {
+		    lastSpikeTime = now;
+		    potential = config.POTENTIAL_ZERO;
+		    return true;
 	    }
-
-	    long travelTimeNanos = spike.travelTimeNanos(synapse.getLength());
-	    if (ageNanos >= travelTimeNanos) {
-	        synapse.onPreSpike(currTimeNanos);
-	        float spikeIntensity = synapse.getWeight() * spike.getAmplitude();
-	        potential += spike.getSign() * spikeIntensity;
-	        if (currTimeNanos - lastSpikeTime > config.REFRACTORY_PERIOD_NANOS && potential > config.FIRING_THRESHOLD) {
-	            lastSpikeTime = currTimeNanos;
-	            potential = config.POTENTIAL_ZERO;
-	            return new Spike(spikeIntensity, currTimeNanos, isInhibitor());
-	        }
-	        return null;
-	    }
-	    return spike; // still in flight
+	    return false;
 	}
 	
 	/**
@@ -85,42 +74,36 @@ public class CorticalNeuron extends AbstractNeuron {
 	 * returns TRUE if there's at least one spike not yet arrived
 	 */
 	@Override
-	public boolean process(long currTimeNanos) throws InterruptedException{		
-		long deltaTimeNanos = currTimeNanos - lastProcessTime;
+	public boolean process(long now) throws InterruptedException{		
+		long deltaTimeNanos = now - lastProcessTime;
 		computeDecay(deltaTimeNanos);
 
-		AtomicBoolean stayActive = new AtomicBoolean(false);
-		final List<Spike> newSpikes = new ArrayList<>();
-	    boolean inRefractory = (currTimeNanos - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
+		AtomicBoolean sendSpike = new AtomicBoolean(false);
+		boolean stayActive = false;
+	    boolean inRefractory = (now - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
 	    
 		for ( Synapse synapse : getInSynapses() ) {
-			synapse.forEachSpike( spike -> {
+			synapse.forEachSpike( now, (spike -> {
 				try {
-					Spike s = integrateInputAndFire(currTimeNanos, spike, synapse);
-					if (s!=null ) {
-						if (s==spike) {
-							// We still have a spike not yet arrived...keep the synapse active
-							stayActive.set(true);
-						} else if (!inRefractory) {
-							newSpikes.add(s);
-						}
-						return s;
+					boolean fire = integrateInputAndFire(now, spike, synapse);
+					if (fire && !inRefractory) {
+						sendSpike.set(true);
 					}					
 				} catch (Exception e) {
 					logger.error("Exception handled in Neuron process()", e);
 				}
 				return null;
-			} );	
-			if (!newSpikes.isEmpty()) {
-				fire(newSpikes);
-				newSpikes.clear();
-				// Must be called once per synapse even if fired multiple times
-				// TODO: first param should be affected by travel time
-				// synapse.onPostSpike(currTimeNanos, currTimeNanos);
-
-				// All synapses should be impacted -> TODO: check only active ones
+			} ));	
+			
+			if (!synapse.isEmpty()) {
+				stayActive = true;
+			}
+			
+			if (sendSpike.get()) {
+			    fire(now, isInhibitor() );
+			    // All synapses should be impacted -> TODO: check only active ones
 				for (Synapse s : getInSynapses()) {
-				    s.onPostSpike(currTimeNanos, currTimeNanos);
+				    s.onPostSpike(now, now);
 				}
 			}
 
@@ -134,8 +117,8 @@ public class CorticalNeuron extends AbstractNeuron {
 		    config.POTENTIAL_MAX
 		);
 
-		this.lastProcessTime = currTimeNanos;
-		return stayActive.get();
+		this.lastProcessTime = now;
+		return stayActive;
 	}
 	
 	// continuous/exponential decay based on elapsed time 
