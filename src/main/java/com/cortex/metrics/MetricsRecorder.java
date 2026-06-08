@@ -72,7 +72,7 @@ public class MetricsRecorder {
     	LayerStats stats = getAndResetStats(layerId);
 
     	if (dumpStatsTimeNanos>0 && time - lastDumpTimeNanos > dumpStatsTimeNanos) {
-			System.out.println("== Now: "+time+" - Avg Time:" + String.format("%,.4f",(avgProcTime/1000.0f)) + "ms Runs:"+runs+" ===========");
+			System.out.println("== Now: "+time+" - Avg Time:" + String.format("%,.2f",(avgProcTime/1000.0f)) + "ms Runs:"+runs+" ===========");
     		dumpStats(time);
     		lastDumpTimeNanos = time;
     	}

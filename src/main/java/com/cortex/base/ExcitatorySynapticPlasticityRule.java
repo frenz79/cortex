@@ -6,16 +6,22 @@ import com.cortex.commons.Maths;
 
 public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 
+	private static final long MIN_ELIGIBILITY_UPDATE_STEP_NANOS = 50_000_000l;
+	private static final long MIN_HOMEOSTASIS_STEP_NANOS = 5_000_000l;
+	
 	private float currentWeight;
 	private float currentEligibility = 0.0f;
 	private long lastEligibilityUpdateNanos = -1l;
+	private long lastHomeostasisUpdateNanos = -1l;
 	private long lastPreSpike = -1l;
 	private long lastPostSpike = -1l;
 	private boolean enabled = true;	// To disble plasticity
-
+	private final float k;
+	
 	private final ExcitatorySynapticPlasticityConfig config;
 
 	public ExcitatorySynapticPlasticityRule(ExcitatorySynapticPlasticityConfig config) {
+		this.k = 1.0f / config.ELIGIBILITY_DECAY_NANOS;
 		this.config = config;
 		this.currentWeight = config.INITIAL_WEIGHT;
 	}
@@ -93,19 +99,33 @@ public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 		currentEligibility = Maths.clamp(currentEligibility, -1f, 1f);
 		lastEligibilityUpdateNanos = now;
 	}
-
+	
+	private float fastEligibilityDecay(long dt) {
+	    double v = Math.exp(-dt * k);
+	    if (v < 1e-6) return 0f;
+	    return (float) v;
+	}
+	
 	// update called periodically; compute time-based decay for eligibility and homeostasis
 	public void update(long now, Synapse s) {
-		if (lastEligibilityUpdateNanos > 0L) {
-			long dt = now - lastEligibilityUpdateNanos; // nanos
-			double decayFactor = Maths.pow(config.ELIGIBILITY_DECAY_NANOS, dt);
-			// if very small, zero it
-			currentEligibility = Maths.zeroIfSmall(currentEligibility*(float) decayFactor);
+		if (lastEligibilityUpdateNanos <= 0L) {
+		    lastEligibilityUpdateNanos = now;
+		    lastHomeostasisUpdateNanos = now;
+		    return;
 		}
+		
+		long dt = now - lastEligibilityUpdateNanos;
+		// Sampling
+	    if (dt > MIN_ELIGIBILITY_UPDATE_STEP_NANOS) {
+	        currentEligibility *= fastEligibilityDecay(dt);
 
-		// homeostatic drift towards baseline (time-independent small step)
-		currentWeight += config.HOMEOSTATIC_RATE * (config.W_BASELINE - currentWeight);
-		currentWeight = Maths.clamp(currentWeight, config.W_MIN, config.W_MAX);
+	        if (now - lastHomeostasisUpdateNanos > MIN_HOMEOSTASIS_STEP_NANOS) {
+	            currentWeight += config.HOMEOSTATIC_RATE * (config.W_BASELINE - currentWeight);
+	            currentWeight = Maths.clamp(currentWeight, config.W_MIN, config.W_MAX);
+	            lastHomeostasisUpdateNanos = now;
+	        }	        
+	        lastEligibilityUpdateNanos = now;
+	    }
 	}
 
 	public float getWeight() {

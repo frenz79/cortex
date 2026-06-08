@@ -61,19 +61,23 @@ public final class Synapse implements IPlasticSynapse {
 		writeIndex.incrementAndGet();
 		this.getTarget().setActive(true);
 	}
-
+	
 	public void forEachSpike(long now, Consumer<Spike> consumer) {
-		//logger.info("forEachSpike s:{} START", this);
-		int r = readIndex.get();
-		int w = writeIndex.get();
-		while (r != w) {
-			Spike s = buffer[r & (BUFFER_SIZE - 1)];
-			if (s.arrivalTime() > now)
-				break;
-			consumer.accept(s);
-			r++;
-			readIndex.incrementAndGet();
-		}
+	    int r = readIndex.get();     // atomic read UNA VOLTA
+	    int w = writeIndex.get();    // atomic read UNA VOLTA
+
+	    // loop su spike già presenti
+	    while (r != w) {
+	        Spike s = buffer[r & (BUFFER_SIZE - 1)];
+	        // se lo spike è nel futuro, stop
+	        if (s.arrivalTime() > now) {
+	            break;
+	        }
+	        consumer.accept(s);
+	        r++; // incremento locale, NON atomico
+	    }
+	    // aggiorno readIndex UNA SOLA VOLTA
+	    readIndex.set(r);
 	}
 
 	public boolean isEmpty() {
@@ -209,7 +213,7 @@ public final class Synapse implements IPlasticSynapse {
 		}
 	}
 
-	boolean wasFrequentlyActiveInLastWindow() {
+	public boolean wasFrequentlyActiveInLastWindow() {
 		return activityCounter > ACTIVITY_THRESHOLD;
 	}
 

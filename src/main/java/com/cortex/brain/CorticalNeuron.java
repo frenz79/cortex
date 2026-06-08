@@ -1,7 +1,5 @@
 package com.cortex.brain;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
@@ -72,52 +70,49 @@ public class CorticalNeuron extends AbstractNeuron {
 	 *     - Integrate all and grab outgoing spikes
 	 *     
 	 * returns TRUE if there's at least one spike not yet arrived
-	 */
+	 */	
 	@Override
-	public boolean process(long now) throws InterruptedException{		
-		long deltaTimeNanos = now - lastProcessTime;
-		computeDecay(deltaTimeNanos);
+	public boolean process(long now) throws InterruptedException {
+	    long deltaTimeNanos = now - lastProcessTime;
+	    computeDecay(deltaTimeNanos);
 
-		AtomicBoolean sendSpike = new AtomicBoolean(false);
-		boolean stayActive = false;
+	    boolean[] fired = new boolean[] {false};
+	    boolean stayActive = false;
 	    boolean inRefractory = (now - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
-	    
-		for ( Synapse synapse : getInSynapses() ) {
-			synapse.forEachSpike( now, (spike -> {
-				try {
-					boolean fire = integrateInputAndFire(now, spike, synapse);
-					if (fire && !inRefractory) {
-						sendSpike.set(true);
-					}					
-				} catch (Exception e) {
-					logger.error("Exception handled in Neuron process()", e);
-				}
-			} ));	
-			
-			if (!synapse.isEmpty()) {
-				stayActive = true;
-			}
-			
-			if (sendSpike.get()) {
-			    fire(now, isInhibitor() );
-			    // All synapses should be impacted -> TODO: check only active ones
-				for (Synapse s : getInSynapses()) {
-				    s.onPostSpike(now, now);
-				}
-			}
 
-	        // still call update even if no new spikes were fired to keep plasticity timing consistent
+	    // 1. Process ONLY synapses that have spikes
+	    for (Synapse synapse : getInSynapses()) {
+	        // Fast check: skip empty synapses
+	        if (synapse.isEmpty()) {
+	            continue;
+	        }
+	        stayActive = true;
+	        synapse.forEachSpike(now, spike -> {
+	            boolean fire = integrateInputAndFire(now, spike, synapse);
+	            if (fire && !inRefractory) {
+	                fired[0] = true;
+	            }
+	        });
+	        // Update ONLY synapses that had spikes or are active
 	        synapse.update(deltaTimeNanos);
-		}
+	    }
 
-		this.potential = Maths.clamp(
-		    potential,
-		    config.POTENTIAL_MIN,
-		    config.POTENTIAL_MAX
-		);
-
-		this.lastProcessTime = now;
-		return stayActive;
+	    // 2. If neuron fires, notify ONLY synapses that had pre/post pairing
+	    if (fired[0]) {
+	        fire(now, isInhibitor());
+	        for (Synapse synapse : getInSynapses()) {
+	            if (synapse.wasFrequentlyActiveInLastWindow()) {
+	                synapse.onPostSpike(now, now);
+	            }
+	        }
+	    }
+	    potential = Maths.clamp(
+	        potential,
+	        config.POTENTIAL_MIN,
+	        config.POTENTIAL_MAX
+	    );
+	    lastProcessTime = now;
+	    return stayActive;
 	}
 	
 	// continuous/exponential decay based on elapsed time 

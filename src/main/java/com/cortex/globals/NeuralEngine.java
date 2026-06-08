@@ -71,45 +71,57 @@ public class NeuralEngine {
 		this.metricsRecorder = metricsRecorder;
 		return this;
 	}
-	   
+
 	public synchronized void start() {
 		if (neuronThread != null ) return; // already started
-		
+
 		logger.info("Engine started!");
-		final int samplingInterval = 100;
-		LongAdder processCounter = new LongAdder();
-		LongAdder processTimeNanos = new LongAdder();
-		
+		final long samplingInterval = 100;
+		final LongAdder processCounterTotal = new LongAdder();
+		final LongAdder processTimeTotalNanos = new LongAdder();
+		final AtomicLong lastProcessCounter = new AtomicLong();
+		final AtomicLong lastProcessTimeNanos = new AtomicLong();
+
 		Thread neuronThread = new Thread(() -> {
 			logger.info("neuronThread started!");
 			long localCounter = 0l;
 			long localTime = 0l;
-		    while (!Thread.currentThread().isInterrupted()) {
-		        long now = System.nanoTime();
-		        tick(now);
+			while (!Thread.currentThread().isInterrupted()) {
+				long start = System.nanoTime();
+				tick(start);
 				localCounter++;
 
-		        brain.streamActiveNeuron(n -> {
+				brain.streamActiveNeuron(n -> {
 					try {
-						return n.process(now);
+						long begin = System.nanoTime();
+						boolean active = n.process(start);
+						long elapsed = System.nanoTime() - begin;
+/*
+						if (elapsed > 5_000_000) { // >1ms
+						    logger.warn("Neuron {} took {} ms", n.getIndex(), elapsed / 1_000_000.0);
+						    logger.info("Neuron {}: inSynapses={}, outSynapses={}",
+						    		n.getIndex(),
+						    	    n.getInSynapses().size(),
+						    	    n.getOutSynapses().size()
+						    	);
+						}
+*/
+						return active;
+						
 					} catch (Exception ex) {
 						Thread.currentThread().interrupt();
 						ex.printStackTrace();
 						return false;
 					}
 				});
-				localTime += System.nanoTime()-now;
+				long elapsed = System.nanoTime()-start;
 
-				if (localCounter%samplingInterval==0){
-					processCounter.add(samplingInterval);
-					processTimeNanos.add(localTime);
-					localTime = 0l;
-					localCounter = 0l;
-				}
-			
-		        // spin / sleep controllato
-		       LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
-		    }
+				processCounterTotal.increment();
+				processTimeTotalNanos.add(elapsed);
+
+				// spin / sleep controllato
+				LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
+			}
 		});
 		neuronThread.start();
 
@@ -135,14 +147,14 @@ public class NeuralEngine {
 							logger.info("Classifier result:{}", result);
 						}
 					} catch (Exception ex) {
-						ex.printStackTrace();
+						logger.error("Handled Exception:",ex);
 					}
 				}
 				for (ISupervisor<?> s : supervisors) {
 					try {
 						s.process(now);
 					} catch (Exception ex) {
-						ex.printStackTrace();
+						logger.error("Handled Exception:",ex);
 					}
 				}
 			} catch (Throwable t) {
@@ -160,31 +172,39 @@ public class NeuralEngine {
 
 		if (metricsRecorder!=null) {
 			metricsRecorderTask = scheduler.scheduleWithFixedDelay(
-				() -> {
-					long now = now();	
-					long processCount = processCounter.sum();
-					long avgTimeProcessing = (processCount==0)?0l:TimeUnit.NANOSECONDS.toMicros(processTimeNanos.sumThenReset() / samplingInterval);
-					
-					for (Layer layer : brain.getAllLayers()) {
-						int layerId = layer.getLayerId();
-						metricsRecorder.pollLayerStats(
-							now, 
-							avgTimeProcessing, 
-							processCount, 
-							layerId
-						);
-					}
-				},
-				1_000,
-				config.METRICS_PERIOD_NANOS, 
-				TimeUnit.NANOSECONDS
+					() -> {
+						long now = now();
+				        long totalRuns = processCounterTotal.sum();
+				        long totalTime = processTimeTotalNanos.sum();
+				        long prevRuns = lastProcessCounter.getAndSet(totalRuns);
+				        long prevTime = lastProcessTimeNanos.getAndSet(totalTime);
+				        long runsWindow = totalRuns - prevRuns;
+				        long timeWindow = totalTime - prevTime;
+
+				        long avgTimeMicros = (runsWindow == 0)
+				                ? 0
+				                : TimeUnit.NANOSECONDS.toMicros(timeWindow / runsWindow);
+						
+						for (Layer layer : brain.getAllLayers()) {
+							int layerId = layer.getLayerId();
+							metricsRecorder.pollLayerStats(
+								now, 
+								avgTimeMicros, 
+								runsWindow, 
+								layerId
+							);
+						}
+					},
+					1_000,
+					config.METRICS_PERIOD_NANOS, 
+					TimeUnit.NANOSECONDS
 				);
 		}
 	}
 
 	public synchronized void stop() {
 		logger.info("Engine stopped!");
-		
+
 		//if (neuronTask != null) neuronTask.cancel(true);
 		if (ioTask != null) ioTask.cancel(true);
 		if (metricsRecorderTask != null) metricsRecorderTask.cancel(true);
