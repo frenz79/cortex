@@ -29,7 +29,7 @@ public final class Synapse implements IPlasticSynapse {
 
 	private static final float ETA_MYELIN = 0.0001f;	// Myelinization learning rate
 	private static final float MAX_MYELIN = 1.0f;
-
+	
 	// Hot fields grouped together for better locality
 	final class SynapseState {
 		public static final int BUFFER_SIZE = 8;

@@ -18,38 +18,100 @@ public abstract class AbstractNeuron implements IProcessable {
 	// Hot fields grouped together for better locality
 	public final class NeuronState {
 		public float firingRate = 0.0f;
-	    public long lastRateUpdate = System.nanoTime();
-	    public boolean isActive = false;
+		public long lastRateUpdate = System.nanoTime();
+		public boolean isActive = false;
 	}
-	
+
 	private final int layerId;
 	private final int index;
 	private final Point3f position;	
 	private final boolean inhibitor;
 	private final int spikeSign;
-	private final ArrayList<Synapse> inSynapses;
-	private final ArrayList<Synapse> outSynapses;
-	
+
 	protected final NeuronState state = new NeuronState();
-	
+
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
 
-	public AbstractNeuron(int layerId, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position) {
-		this.inSynapses = (hasIncoming)
-				? new ArrayList<>():null;
-		this.outSynapses = (hasOutgoing)
-				? new ArrayList<>():null;
+
+	public final class SynapseBranch {
+		public final Synapse[] synapses;
+		public SynapseBranch(Synapse[] synapses) {
+			super();
+			this.synapses = synapses;
+		}
+
+		// Stato dinamico del branch
+		public float branchPotential;      // somma pesata degli input
+		public float branchActivity;       // attività recente (decadimento)
+		public float inhibition;           // livello di inibizione laterale
+		public float gain = 1.0f;          // modulazione del branch
+
+		// Metadati utili
+		// public final float centerX, centerY, centerZ; // centro geometrico del branch
+		// public final float radius;                    // raggio del RF
+	}
+
+	// 0 = in near
+	// 1 = in far
+	// 2 = out near
+	// 3 = out far
+	// 4..(4+maxLayers) = in from layer[x]
+	// (4+maxLayers)..(2*maxLayers) = out to layer[x]
+	private List<Synapse>[] synapsesBranchesTmp;
+	private final SynapseBranch[] synapsesBranches;
+
+	public AbstractNeuron(int layerId, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position, int maxLayers) {
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
 		this.position = position;
 		this.index = index;
 		this.layerId = layerId;
+		this.synapsesBranchesTmp =  (List<Synapse>[]) new List<?>[ 4 + 2*maxLayers ];
+		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+			synapsesBranchesTmp[i] = new ArrayList<>();
+		}
+		this.synapsesBranches = new SynapseBranch[ 4 + 2*maxLayers ];
 	}
 
 	public void compact() {
-		inSynapses.trimToSize();
-		outSynapses.trimToSize();
+		final var type = new Synapse[]{};
+		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+			this.synapsesBranches[i] = new SynapseBranch( 
+					synapsesBranchesTmp[i].toArray(type));
+		}
+		this.synapsesBranchesTmp = null;
+	}
+
+	// Used only at build time
+	public void addSynapse(Synapse s, boolean incoming, boolean near) {
+		try {
+			int index = 0;
+			if (incoming && !near) index = 1;
+			else if (!incoming && near) index = 2;
+			else if (!incoming && !near) index = 3;
+			
+			synchronized(synapsesBranchesTmp[index]) {
+				synapsesBranchesTmp[index].add(s);
+			}
+		} catch (Exception ex) {
+			logger.error("Failed to add incoming:{} synapse to:{}",incoming, this.toString());
+			throw ex;
+		}
+	}
+	// Used only at build time
+	public void addSynapse(Synapse s, boolean incoming, int layer) {
+		try {
+			int index = 4 + layer;
+			int maxLayers = (synapsesBranchesTmp.length-4)/2;
+			if (!incoming) index += maxLayers;
+			synchronized(synapsesBranchesTmp[index]) {
+				synapsesBranchesTmp[index].add(s);
+			}
+		} catch (Exception ex) {
+			logger.error("Failed to add incoming:{} synapse to:{}",incoming, this.toString());
+			throw ex;
+		}
 	}
 
 	public final void fire( long now, boolean inhibitor ) throws InterruptedException {
@@ -78,30 +140,6 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public Point3f getPosition() {
 		return position;
-	}
-
-	// Used only at build time
-	public void addIncomingSynapse(Synapse s) {
-		try {
-			synchronized(inSynapses) {
-				this.inSynapses.add(s);
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to add incoming synapse to:{}",this.toString());
-			throw ex;
-		}
-	}
-
-	// Used only at build time
-	public void addOutgoingSynapse(Synapse s) {
-		try {
-			synchronized(outSynapses) {
-				this.outSynapses.add(s);
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to add outgoing synapse to:{}",this.toString());
-			throw ex;
-		}
 	}
 
 	public final List<Synapse> getInSynapses() {
