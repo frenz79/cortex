@@ -83,7 +83,7 @@ public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 		currentWeight += deltaW;
 		currentWeight = Maths.clamp(currentWeight, config.W_MIN, config.W_MAX);
 		// Keep memory, don't set it to 0 immediately, consumption equivalent to reward
-		float consumption = 0.2f * Math.abs(reward);
+		float consumption = 0.2f * Maths.abs(reward);
 		currentEligibility *= (1.0f - consumption);
 		lastEligibilityUpdateNanos = now;
 	}
@@ -101,7 +101,7 @@ public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 	}
 	
 	private float fastEligibilityDecay(long dt) {
-	    double v = Math.exp(-dt * k);
+	    double v = Maths.exp(-dt * k);
 	    if (v < 1e-6) return 0f;
 	    return (float) v;
 	}

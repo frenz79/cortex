@@ -140,11 +140,15 @@ public final class Synapse implements IPlasticSynapse {
 	}
 
 	public long getTraversalTimeNanos(long now) {
-		if (now - lastDecayTime > DECAY_INTERVAL_NANOS) {
-			activityCounter = (int)(activityCounter * 0.5f);   // slow decay
-			lastDecayTime = now;
-		}
-		return (long)(length * baseSpeed / (1.0f + myelinFactor));
+	    if (now - lastDecayTime > DECAY_INTERVAL_NANOS) {
+	        activityCounter = (int)(activityCounter * 0.5f);
+	        lastDecayTime = now;
+	    }
+	    long delay = (long)(length * baseSpeed / (1.0f + myelinFactor));
+	    // micro-delay proportional to physical delay (5%)
+	    double sigma = delay * 0.05;
+	    long micro = (long)(Maths.nextGaussian() * sigma);
+	    return delay + micro;
 	}
 
 	/**
@@ -207,7 +211,7 @@ public final class Synapse implements IPlasticSynapse {
 	public void applyReward(float deltaW, long now, float reward) {
 		this.plasticityRule.applyReward(deltaW, now, reward);
 
-		if (reward > 0 && wasFrequentlyActiveInLastWindow() && plasticityRule.hadSignificantPairing()) {
+		if (reward > 0.0f && wasFrequentlyActiveInLastWindow() && plasticityRule.hadSignificantPairing()) {
 			this.myelinFactor += ETA_MYELIN * reward;
 			this.myelinFactor = Maths.clamp(this.myelinFactor, 0, MAX_MYELIN);
 		}

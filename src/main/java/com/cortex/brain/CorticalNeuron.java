@@ -83,18 +83,17 @@ public class CorticalNeuron extends AbstractNeuron {
 	    // 1. Process ONLY synapses that have spikes
 	    for (Synapse synapse : getInSynapses()) {
 	        // Fast check: skip empty synapses
-	        if (synapse.isEmpty()) {
-	            continue;
+	        if (!synapse.isEmpty()) {
+		        stayActive = true;
+		        synapse.forEachSpike(now, spike -> {
+		            boolean fire = integrateInputAndFire(now, spike, synapse);
+		            if (fire && !inRefractory) {
+		                fired[0] = true;
+		            }
+		        });
+		        // Update ONLY synapses that had spikes or are active
+		        synapse.update(deltaTimeNanos);
 	        }
-	        stayActive = true;
-	        synapse.forEachSpike(now, spike -> {
-	            boolean fire = integrateInputAndFire(now, spike, synapse);
-	            if (fire && !inRefractory) {
-	                fired[0] = true;
-	            }
-	        });
-	        // Update ONLY synapses that had spikes or are active
-	        synapse.update(deltaTimeNanos);
 	    }
 
 	    // 2. If neuron fires, notify ONLY synapses that had pre/post pairing

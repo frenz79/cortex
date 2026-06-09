@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
+import com.cortex.base.config.CorticalNeuronsConfig;
 import com.cortex.base.config.LayerConfig;
 import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
@@ -26,63 +27,70 @@ public class SphericalLayer extends Layer {
 	public SphericalLayer(LayerConfig config) {
 		super(config);
 	}
-	
+
 	public int link(
-	        Layer targetLayer,
-	        int minConn,
-	        int maxConn,
-	        float maxDistance,
-	        long baseSpeed,
-	        Predicate<AbstractNeuron> filter,
-	        SynapsePlasticityConfig plasticityCfg) {
+			Layer targetLayer,
+			int minConn,
+			int maxConn,
+			float maxDistance,
+			long baseSpeed,
+			Predicate<AbstractNeuron> filter,
+			SynapsePlasticityConfig plasticityCfg) {
 
-	    AbstractNeuron[] srcs = this.getNeurons();
-	    AbstractNeuron[] dsts = targetLayer.getNeurons();
+		AbstractNeuron[] srcs = this.getNeurons();
+		AbstractNeuron[] dsts = targetLayer.getNeurons();
+		
+		CorticalNeuronsConfig neuronsConfig = targetLayer.getConfig().CORTICAL_NEURONS_CONFIG;
 
-	    int N = srcs.length;
-	    int connectionsCount = 0;
+		int N = srcs.length;
+		int connectionsCount = 0;
 
-	    // Precalcolo vicini per ogni sorgente
-	    Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
-	    for (AbstractNeuron src : srcs) {
-	        neighbors.put(src, new ArrayList<>(
-	            findNearest(dsts, src, maxConn, filter)
-	        ));
-	    }
+		// Precalcolo vicini per ogni sorgente
+		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
+		for (AbstractNeuron src : srcs) {
+			neighbors.put(src, new ArrayList<>(
+				findNearest(dsts, src, maxConn, filter)
+			));
+		}
 
-	    // Round-robin
-	    for (int round = 0; round < maxConn; round++) {
-	        for (AbstractNeuron src : srcs) {
+		// Round-robin
+		for (int round = 0; round < maxConn; round++) {
+			for (AbstractNeuron src : srcs) {
 
-	            List<Neighbor> neigh = neighbors.get(src);
-	            if (neigh.isEmpty()) continue;
+				List<Neighbor> neigh = neighbors.get(src);
+				if (neigh.isEmpty()) continue;
 
-	            int attempts = neigh.size();
-	            for (int i = 0; i < attempts; i++) {
+				int attempts = neigh.size();
+				for (int i = 0; i < attempts; i++) {
 
-	                Neighbor target = neigh.remove(0);
-	                AbstractNeuron dst = target.neuron();
+					Neighbor target = neigh.remove(0);
+					AbstractNeuron dst = target.neuron();
 
-	                if (src == dst) continue;
-			        
-			        Point3f ps = src.getPosition();
-			        Point3f pd = dst.getPosition();
-			        // Don't mind Z pos for inter-layers connections
-			        float ds = ps.x()*ps.x() + ps.y()*ps.y();// + ps.z()*ps.z();
+					if (src == dst) continue;
+
+					Point3f ps = src.getPosition();
+					Point3f pd = dst.getPosition();
+					// Don't mind Z pos for inter-layers connections
+					float ds = ps.x()*ps.x() + ps.y()*ps.y();// + ps.z()*ps.z();
 					float dd = pd.x()*pd.x() + pd.y()*pd.y();// + pd.z()*pd.z();
-					
+
 					if (ds >= dd) continue;
+					if ( dst.getInSynapses().size()>=neuronsConfig.MAX_FAN_IN ) {
+						continue;
+					}
+					if ( src.getOutSynapses().size()>=neuronsConfig.MAX_FAN_OUT ) {
+						continue;
+					}
+					Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
+					connectionsCount++;
+					break;
+				}
+			}
+		}
 
-	                Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
-	                connectionsCount++;
-	                break;
-	            }
-	        }
-	    }
-
-	    return connectionsCount;
+		return connectionsCount;
 	}
-	
+
 	@Override
 	public int link(IClassifier<? extends AbstractNeuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
 		return link (classifier.getPluginSite(), classifier.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, true);
@@ -98,13 +106,13 @@ public class SphericalLayer extends Layer {
 		int h = matrix[0].length;
 		int connections = 0;
 		long baseSpeed = SYNAPSE_SPEED.FAST.getBaseSpeed();
-		
-	    float cellSize = maxDistance;
-	    
+
+		float cellSize = maxDistance;
+
 		// Sphere projection
 		float u = (pluginSite.x() + 0.5f) / w; // 0..1
 		float v = (pluginSite.y() + 0.5f) / h; // 0..1
-		
+
 		float theta = (float)(2 * Maths.PI * u);     // longitude
 		float phi   = (float)(Maths.PI * (v - 0.5)); // latitude
 		float cosPhi = (float)Maths.cos(phi);
@@ -112,63 +120,30 @@ public class SphericalLayer extends Layer {
 		float x = (float)(cosPhi * Maths.cos(theta) * config.DIMENSION);
 		float y = (float)(cosPhi * Maths.sin(theta) * config.DIMENSION);
 		float z = (float)(Maths.sin(phi) * config.DIMENSION);
-		
-	    Random rnd = ThreadLocalRandom.current();
+
+		Random rnd = ThreadLocalRandom.current();
 		IntList neighborsIdx = findKNearestApprox(
-			x,y,z, rnd.nextInt(minConn, maxConn), 1.5f/*cellSize*/, 2.6f/*maxDistance*/);
+				x,y,z, rnd.nextInt(minConn, maxConn), 1.5f/*cellSize*/, 2.6f/*maxDistance*/);
 
 		List<Neighbor> conns = toNeighbors(neighborsIdx, getNeurons(), x,y,z);
 		conns.removeIf(n -> !filter.test(n.neuron()));
 		//conns.removeIf(n -> n.getRealDistance() > maxDistance);
-		
-		//for ( Neighbor n : conns ) {
-			for (int rx = 0; rx < w; rx++) {
-				for (int ry = 0; ry < h; ry++) {
-					List<Integer> rndIdx = new ArrayList<>(60);
-					for (int j=0; j<60; j++ ) {
-						rndIdx.add( rnd.nextInt(0, conns.size()) );
-					}
-					
-					for ( int i : rndIdx ) {
+
+		for (int rx = 0; rx < w; rx++) {
+			for (int ry = 0; ry < h; ry++) {
+				List<Integer> rndIdx = new ArrayList<>(60);
+				for (int j=0; j<60; j++ ) {
+					rndIdx.add( rnd.nextInt(0, conns.size()) );
+				}
+
+				for ( int i : rndIdx ) {
 					if (!isIncoming)
 						connections += Synapse.create( matrix[rx][ry], conns.get(i), baseSpeed, synCfg );
 					else
 						connections += Synapse.create( conns.get(i), matrix[rx][ry], baseSpeed, synCfg );
-					}
-				}
-			}			
-		//}
-	    
-	    /*
-		Random rnd = ThreadLocalRandom.current();
-		for (int rx = 0; rx < w; rx++) {
-			for (int ry = 0; ry < h; ry++) {
-				float u = (rx + 0.5f) / w; // 0..1
-				float v = (ry + 0.5f) / h; // 0..1
-
-				// Sphere projection
-				float theta = (float)(2 * Maths.PI * u);     // longitude
-				float phi   = (float)(Maths.PI * (v - 0.5)); // latitude
-				float cosPhi = (float)Maths.cos(phi);
-
-				float x = (float)(cosPhi * Maths.cos(theta) * config.DIMENSION);
-				float y = (float)(cosPhi * Maths.sin(theta) * config.DIMENSION);
-				float z = (float)(Maths.sin(phi) * config.DIMENSION);
-
-				IntList neighborsIdx = findKNearestApprox(x, y, z, rnd.nextInt(minConn, maxConn), cellSize, maxDistance);
-				if (neighborsIdx.size() == 0) continue;
-				Collection<Neighbor> conns = toNeighbors(neighborsIdx, getNeurons(), x, y, z);
-				conns.removeIf(n -> !filter.test(n.neuron()));
-				conns.removeIf(n -> n.getRealDistance() > maxDistance);
-				if (!conns.isEmpty()) {
-					if (!isIncoming)
-						connections += Synapse.create( matrix[rx][ry], conns, synCfg );
-					else
-						connections += Synapse.create( conns, matrix[rx][ry], synCfg );
 				}
 			}
 		}
-		*/
 		return connections;
 	}
 
@@ -194,19 +169,19 @@ public class SphericalLayer extends Layer {
 			float z = (float) Maths.cos(a1) * radius;
 
 			this.neurons[i] = neuronFactory.buildNeuron(
-				config.getLayerId(),
-				isInhibitor(), new Point3f(x,y,z)
-			);
+					config.getLayerId(),
+					isInhibitor(), new Point3f(x,y,z)
+					);
 		}
 
 		buildSpatialHash(config.DIMENSION / 2.0f);
 
 		long endTime = System.nanoTime();
 		logger.info("L{} generated {} neurons in {} micros",
-			getLayerId(),
-			getNeuronsCount(),
-			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
-		);
+				getLayerId(),
+				getNeuronsCount(),
+				TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
+				);
 		return this;
 	}   
 }

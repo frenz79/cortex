@@ -47,10 +47,9 @@ public abstract class AbstractNeuron implements IProcessable {
 		outSynapses.trimToSize();
 	}
 
-	public void fire( long now, boolean inhibitor ) throws InterruptedException {
+	public final void fire( long now, boolean inhibitor ) throws InterruptedException {
 		for ( Synapse s : this.outSynapses  ) {
-			long delay = s.getTraversalTimeNanos(now);
-			long arrival = now + delay;
+			long arrival = now + s.getTraversalTimeNanos(now);
 			s.addSpike(	Spike.createWithJitter(isInhibitor(), arrival));
 		}
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
@@ -98,7 +97,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		}
 	}
 
-	public List<Synapse> getInSynapses() {
+	public final List<Synapse> getInSynapses() {
 		return inSynapses;
 	}
 
@@ -114,7 +113,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		this.isActive = isActive;
 	}
 
-	public List<Synapse> getOutSynapses() {
+	public final List<Synapse> getOutSynapses() {
 		return outSynapses;
 	}
 

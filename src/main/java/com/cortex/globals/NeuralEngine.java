@@ -93,9 +93,9 @@ public class NeuralEngine {
 
 				brain.streamActiveNeuron(n -> {
 					try {
-						long begin = System.nanoTime();
+					//	long begin = System.nanoTime();
 						boolean active = n.process(start);
-						long elapsed = System.nanoTime() - begin;
+					//	long elapsed = System.nanoTime() - begin;
 /*
 						if (elapsed > 5_000_000) { // >1ms
 						    logger.warn("Neuron {} took {} ms", n.getIndex(), elapsed / 1_000_000.0);
@@ -105,7 +105,7 @@ public class NeuralEngine {
 						    	    n.getOutSynapses().size()
 						    	);
 						}
-*/
+						*/
 						return active;
 						
 					} catch (Exception ex) {
@@ -120,7 +120,7 @@ public class NeuralEngine {
 				processTimeTotalNanos.add(elapsed);
 
 				// spin / sleep controllato
-				LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
+				//LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
 			}
 		});
 		neuronThread.start();

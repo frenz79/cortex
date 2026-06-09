@@ -4,6 +4,9 @@ import java.util.concurrent.TimeUnit;
 
 public class CorticalNeuronsConfig implements INeuronConfig{
 
+	public int MAX_FAN_IN = 250;
+	public int MAX_FAN_OUT = 250;
+		
 	public float POTENTIAL_MAX = 3.0f;
 	public float POTENTIAL_MIN = -2.0f;
 	public float FIRING_THRESHOLD = 0.12f;
@@ -24,6 +27,12 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 			this.cfg = new CorticalNeuronsConfig();
 		}
 
+		public Builder withMaxFanInFanOut(int MAX_FAN_IN, int MAX_FAN_OUT) {
+			cfg.MAX_FAN_IN = MAX_FAN_IN;
+			cfg.MAX_FAN_OUT = MAX_FAN_OUT;
+			return this;
+		}
+		
 		public Builder withPotential(float POTENTIAL_MIN, float POTENTIAL_MAX, float POTENTIAL_ZERO) {
 			cfg.POTENTIAL_MIN = POTENTIAL_MIN;
 			cfg.POTENTIAL_MAX = POTENTIAL_MAX;

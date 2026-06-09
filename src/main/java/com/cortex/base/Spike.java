@@ -12,6 +12,22 @@ public record Spike(
 	private static final float MAX_AMPLITUDE = 200.0f;
 	private static final float DEFAULT_AMPLITUDE = 100.0f;
 	
+	static final class JitterTable {
+	    private static final int SIZE = 1024;
+	    private static final long[] TABLE = new long[SIZE];
+
+	    static {
+	        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+	        for (int i = 0; i < SIZE; i++) {
+	            TABLE[i] = rnd.nextLong(-50, 50); // ±50 ns
+	        }
+	    }
+
+	    public static long next() {
+	        return TABLE[ThreadLocalRandom.current().nextInt(SIZE)];
+	    }
+	}
+	
 	public Spike(float amplitude, boolean inhibitor, long arrivalTime) {
 		this.amplitude = Maths.min(amplitude, MAX_AMPLITUDE);
 		this.inhibitor = inhibitor;
@@ -22,14 +38,12 @@ public record Spike(
 		this(DEFAULT_AMPLITUDE,inhibitor, arrivalTime);
 	}
 
-	public static Spike createWithJitter(float amplitude, boolean inhibitor, long arrivalTime) {
-	    long jitter = ThreadLocalRandom.current().nextLong(-50, 50); // ±50 ns
-	    return new Spike(amplitude, inhibitor, arrivalTime + jitter);
+	public static final Spike createWithJitter(float amplitude, boolean inhibitor, long arrivalTime) {
+	    return new Spike(amplitude, inhibitor, arrivalTime + JitterTable.next());
 	}
 	
-	public static Spike createWithJitter(boolean inhibitor, long arrivalTime) {
-	    long jitter = ThreadLocalRandom.current().nextLong(-50, 50); // ±50 ns
-	    return new Spike(DEFAULT_AMPLITUDE, inhibitor, arrivalTime + jitter);
+	public static final Spike createWithJitter(boolean inhibitor, long arrivalTime) {
+	    return createWithJitter(DEFAULT_AMPLITUDE, inhibitor, arrivalTime );
 	}
 	
 	public int getSign() {
