@@ -34,7 +34,7 @@ public record Spike(
 		this.arrivalTime = arrivalTime;
 	}
 		
-	public Spike(boolean inhibitor, long arrivalTime) {
+	Spike(boolean inhibitor, long arrivalTime) {
 		this(DEFAULT_AMPLITUDE,inhibitor, arrivalTime);
 	}
 

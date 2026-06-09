@@ -64,15 +64,14 @@ public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 	}
 
 	// compute STDP delta given dt = postTime - preTime (nanos)
+	// Maths.exp uses fastExp()
 	private float computeStdpDelta(long dtNanos) {
-		// convert to double to avoid integer division
-		double dt = (double) dtNanos;
-		if (dt > 0.0) {
-			return (float) (config.A_PLUS * Maths.exp(-dt / (double) config.TAU_PLUS));
-		} else {
-			// dt <= 0 : depression
-			return (float) (-config.A_MINUS * Maths.exp(dt / (double) config.TAU_MINUS));
-		}
+		// Branch-less version
+		float dt = dtNanos;
+		float sign = dt > 0 ? 1f : -1f;
+		float tau  = dt > 0 ? config.TAU_PLUS : config.TAU_MINUS;
+		float A    = dt > 0 ? config.A_PLUS : config.A_MINUS;
+		return sign * A * Maths.exp(-Maths.abs(dt) / tau);
 	}
 	
 	// Called by Synapse applyReward()

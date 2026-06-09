@@ -147,14 +147,6 @@ public class Brain extends MultiLayer<SphericalLayer>{
 		});
 	}
 
-	public void streamAllNeurons(Function<CorticalNeuron, Boolean> consumer) {
-		CorticalNeuron[] snapshot = neurons; // volatile read
-		if (snapshot == null) return;
-		for (int i = 0; i < snapshot.length; i++) {
-			consumer.apply(snapshot[i]);
-		}
-	}
-
 	public Layer getSensorsTargetLayer() {
 		return getLayer(SENSORS_TARGET_LAYER);
 	}

@@ -13,20 +13,25 @@ import com.cortex.globals.EventBus.EventType;
 
 public abstract class AbstractNeuron implements IProcessable {
 
-	protected final Logger logger = LogManager.getLogger(this.getClass());
+	static final Logger logger = LogManager.getLogger(AbstractNeuron.class);
 
-	private final ArrayList<Synapse> inSynapses;
-	private final ArrayList<Synapse> outSynapses;
+	// Hot fields grouped together for better locality
+	public final class NeuronState {
+		public float firingRate = 0.0f;
+	    public long lastRateUpdate = System.nanoTime();
+	    public boolean isActive = false;
+	}
+	
 	private final int layerId;
 	private final int index;
 	private final Point3f position;	
 	private final boolean inhibitor;
-	private volatile boolean isActive = false;
 	private final int spikeSign;
-
-	protected float firingRate = 0.0f;
-	protected long lastRateUpdate = System.nanoTime();
-
+	private final ArrayList<Synapse> inSynapses;
+	private final ArrayList<Synapse> outSynapses;
+	
+	protected final NeuronState state = new NeuronState();
+	
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
 
@@ -54,9 +59,9 @@ public abstract class AbstractNeuron implements IProcessable {
 		}
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
-		firingRate += 1.0f;
-		lastRateUpdate = now;
-		EventBus.fire(EventType.NEURON_FIRED, lastRateUpdate, this, null);
+		state.firingRate += 1.0f;
+		state.lastRateUpdate = now;
+		EventBus.fire(EventType.NEURON_FIRED, state.lastRateUpdate, this, null);
 	}
 
 	public int getIndex() {
@@ -75,6 +80,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		return position;
 	}
 
+	// Used only at build time
 	public void addIncomingSynapse(Synapse s) {
 		try {
 			synchronized(inSynapses) {
@@ -86,6 +92,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		}
 	}
 
+	// Used only at build time
 	public void addOutgoingSynapse(Synapse s) {
 		try {
 			synchronized(outSynapses) {
@@ -106,11 +113,11 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 
 	public boolean isActive() {
-		return isActive;
+		return state.isActive;
 	}
 
 	public void setActive(boolean isActive) {
-		this.isActive = isActive;
+		state.isActive = isActive;
 	}
 
 	public final List<Synapse> getOutSynapses() {

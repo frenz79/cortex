@@ -13,11 +13,11 @@ import com.cortex.commons.Point3f;
  * */
 public class CorticalNeuron extends AbstractNeuron {
 
-	private final CorticalNeuronsConfig config;
-	
 	private long lastProcessTime = System.nanoTime();
 	private long lastSpikeTime = 0l;
 	private float potential = 0;
+	
+	private final CorticalNeuronsConfig config;
 
 	public CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position) {
 		super(layerId, 
@@ -41,8 +41,6 @@ public class CorticalNeuron extends AbstractNeuron {
 	        potential += delta;
 	        if (potential > config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
 	    }
-	    // clamp to bounds
-	    potential = Maths.clamp(potential, config.POTENTIAL_MIN, config.POTENTIAL_MAX);
 	}
 	
 	/**
@@ -105,29 +103,31 @@ public class CorticalNeuron extends AbstractNeuron {
 	            }
 	        }
 	    }
+	    
 	    potential = Maths.clamp(
 	        potential,
 	        config.POTENTIAL_MIN,
 	        config.POTENTIAL_MAX
 	    );
+	    
 	    lastProcessTime = now;
 	    return stayActive;
 	}
 	
 	// continuous/exponential decay based on elapsed time 
 	public float getRecentFiringRate(long now) {
-	    long dt = now - lastRateUpdate;
-	    if (dt <= 0) return firingRate;
+	    long dt = now - state.lastRateUpdate;
+	    if (dt <= 0) return state.firingRate;
 	    
 	    // Temporal normalization
 	    double windows = (double) dt / config.RATE_WINDOW_NANOS;
-	    firingRate *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
+	    state.firingRate *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
 	    	    
 	    // Avoid negative or too small values
-	    if (firingRate < 0 || firingRate < 1e-6f) {
-	    	firingRate = 0;
+	    if (state.firingRate < 0 || state.firingRate < 1e-6f) {
+	    	state.firingRate = 0;
 	    }
-	    lastRateUpdate = now;
-	    return firingRate;
+	    state.lastRateUpdate = now;
+	    return state.firingRate;
 	}
 }

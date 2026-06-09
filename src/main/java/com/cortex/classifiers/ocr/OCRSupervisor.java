@@ -74,7 +74,7 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 
 	    // timing factor: decresce esponenzialmente con delta time
 	    long delta = Maths.max(0L, now - eventTime);
-	    float timing = (float) Maths.exp(- (double) delta / (double) TIMING_TAU_NANOS);
+	    float timing = (float) Maths.exp(- (float) delta / (float) TIMING_TAU_NANOS);
 
 	    // combinazione pesata
 	    float raw = WC * correctness + WE * (2f * conf - 1f) + WT * timing; 

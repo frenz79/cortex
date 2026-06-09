@@ -54,11 +54,18 @@ public class Maths {
 	public static final double pow(long v, long e) {
 		return FastMath.powQuick(v, e);
 	}
-
+/*
 	public static final double exp(double d) {
 		return FastMath.expQuick(d);
 	}
-
+*/
+	public static float exp(float x) {
+	    x = 1.0f + x / 256.0f;
+	    x *= x; x *= x; x *= x; x *= x;
+	    x *= x; x *= x; x *= x; x *= x;
+	    return x;
+	}
+	
 	public static final double pow(float v, double e) {
 		return FastMath.powQuick(v, e);
 	}

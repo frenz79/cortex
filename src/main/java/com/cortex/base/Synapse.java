@@ -27,48 +27,52 @@ public final class Synapse implements IPlasticSynapse {
 	public static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
 	public static final Predicate<AbstractNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = AbstractNeuron::isInhibitor;
 
+	private static final float ETA_MYELIN = 0.0001f;	// Myelinization learning rate
+	private static final float MAX_MYELIN = 1.0f;
+
+	// Hot fields grouped together for better locality
+	final class SynapseState {
+		public static final int BUFFER_SIZE = 8;
+		long lastDecayTime = System.nanoTime();
+		float myelinFactor = 0.0f;
+	    int activityCounter;
+	    final Spike[] buffer = new Spike[BUFFER_SIZE];
+	    final AtomicInteger writeIndex = new AtomicInteger();
+	    final AtomicInteger readIndex  = new AtomicInteger();
+	}
+	
+	private final long baseSpeed;
+	private final float length;	
 	private final AbstractNeuron pre;
 	private final AbstractNeuron post;
 	private final IPlasticityRule plasticityRule;
-
-	private static final float ETA_MYELIN = 0.0001f;	// Myelinization learning rate
-	private static final float MAX_MYELIN = 1.0f;
-	private final float length;
-	private final long baseSpeed;						// Nanos per distance unit 
-	private float myelinFactor = 0.0f;
+	private final SynapseState state = new SynapseState();
 
 	// Monitor synapse activity
 	private static final long DECAY_INTERVAL_NANOS = 50_000_000l;
 	private static final int ACTIVITY_THRESHOLD = 5;
-	private int activityCounter;
-	private long lastDecayTime = System.nanoTime();
-	private static final int BUFFER_SIZE = 8; // potenza di 2 per modulo veloce
-
-	private final Spike[] buffer = new Spike[BUFFER_SIZE];
-	private final AtomicInteger writeIndex = new AtomicInteger(0);
-	private final AtomicInteger readIndex  = new AtomicInteger(0);
 
 	public void addSpike(Spike spike) {
-		int w = writeIndex.get();
-		int r = readIndex.get();
+		int w = state.writeIndex.get();
+		int r = state.readIndex.get();
 
 		// buffer pieno → drop dello spike più vecchio
-		if (((w + 1) & (BUFFER_SIZE - 1)) == (r & (BUFFER_SIZE - 1))) {
-			readIndex.incrementAndGet();
+		if (((w + 1) & (SynapseState.BUFFER_SIZE - 1)) == (r & (SynapseState.BUFFER_SIZE - 1))) {
+			state.readIndex.incrementAndGet();
 		}
 
-		buffer[w & (BUFFER_SIZE - 1)] = spike;
-		writeIndex.incrementAndGet();
+		state.buffer[w & (SynapseState.BUFFER_SIZE - 1)] = spike;
+		state.writeIndex.incrementAndGet();
 		this.getTarget().setActive(true);
 	}
 	
 	public void forEachSpike(long now, Consumer<Spike> consumer) {
-	    int r = readIndex.get();     // atomic read UNA VOLTA
-	    int w = writeIndex.get();    // atomic read UNA VOLTA
+	    int r = state.readIndex.get();     // atomic read UNA VOLTA
+	    int w = state.writeIndex.get();    // atomic read UNA VOLTA
 
 	    // loop su spike già presenti
 	    while (r != w) {
-	        Spike s = buffer[r & (BUFFER_SIZE - 1)];
+	        Spike s = state.buffer[r & (SynapseState.BUFFER_SIZE - 1)];
 	        // se lo spike è nel futuro, stop
 	        if (s.arrivalTime() > now) {
 	            break;
@@ -77,11 +81,11 @@ public final class Synapse implements IPlasticSynapse {
 	        r++; // incremento locale, NON atomico
 	    }
 	    // aggiorno readIndex UNA SOLA VOLTA
-	    readIndex.set(r);
+	    state.readIndex.set(r);
 	}
 
 	public boolean isEmpty() {
-		return writeIndex.get() == readIndex.get();
+		return state.writeIndex.get() == state.readIndex.get();
 	}
 
 	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
@@ -135,16 +139,16 @@ public final class Synapse implements IPlasticSynapse {
 		srcNeuron.addOutgoingSynapse( s ); 
 	}
 
-	public float getLength() {
+	public final float getLength() {
 		return length;
 	}
 
-	public long getTraversalTimeNanos(long now) {
-	    if (now - lastDecayTime > DECAY_INTERVAL_NANOS) {
-	        activityCounter = (int)(activityCounter * 0.5f);
-	        lastDecayTime = now;
+	public final long getTraversalTimeNanos(long now) {
+	    if (now - state.lastDecayTime > DECAY_INTERVAL_NANOS) {
+	    	state.activityCounter = (int)(state.activityCounter * 0.5f);
+	    	state.lastDecayTime = now;
 	    }
-	    long delay = (long)(length * baseSpeed / (1.0f + myelinFactor));
+	    long delay = (long)(length * baseSpeed / (1.0f + state.myelinFactor));
 	    // micro-delay proportional to physical delay (5%)
 	    double sigma = delay * 0.05;
 	    long micro = (long)(Maths.nextGaussian() * sigma);
@@ -185,23 +189,23 @@ public final class Synapse implements IPlasticSynapse {
 	*/
 	// IPlasticSynapse
 	@Override
-	public void onPreSpike(long now) {
-		this.activityCounter++;
+	public final void onPreSpike(long now) {
+		state.activityCounter++;
 		if (this.plasticityRule.onPreSpike(now)) {
 			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.preSpikeData());
 		}
 	}
 
 	@Override
-	public void onPostSpike(long postSpikeTime, long now) {
-		this.activityCounter++;
+	public final void onPostSpike(long postSpikeTime, long now) {
+		state.activityCounter++;
 		if ( this.plasticityRule.onPostSpike(this, postSpikeTime, now) ) {
 			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.postSpikeData());
 		}
 	}
 
 	@Override
-	public void update(long t) {
+	public final void update(long t) {
 		float oldValue = this.plasticityRule.getWeight();
 		this.plasticityRule.update(t, this);
 		EventBus.fire(EventType.SYNAPSE_UPDATED, t, this, new SynapseUpdatedData(oldValue, this.plasticityRule.getWeight()));
@@ -212,21 +216,21 @@ public final class Synapse implements IPlasticSynapse {
 		this.plasticityRule.applyReward(deltaW, now, reward);
 
 		if (reward > 0.0f && wasFrequentlyActiveInLastWindow() && plasticityRule.hadSignificantPairing()) {
-			this.myelinFactor += ETA_MYELIN * reward;
-			this.myelinFactor = Maths.clamp(this.myelinFactor, 0, MAX_MYELIN);
+			state.myelinFactor += ETA_MYELIN * reward;
+			state.myelinFactor = Maths.clamp(state.myelinFactor, 0, MAX_MYELIN);
 		}
 	}
 
-	public boolean wasFrequentlyActiveInLastWindow() {
-		return activityCounter > ACTIVITY_THRESHOLD;
+	public final boolean wasFrequentlyActiveInLastWindow() {
+		return state.activityCounter > ACTIVITY_THRESHOLD;
 	}
 
 	@Override
-	public float getWeight() {
+	public final float getWeight() {
 		return this.plasticityRule.getWeight();
 	}
 
-	public boolean isEligible(long now, long window) {
+	public final boolean isEligible(long now, long window) {
 		return this.plasticityRule.isEligible(now,window);
 	}
 
@@ -240,7 +244,7 @@ public final class Synapse implements IPlasticSynapse {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(activityCounter, length, post, pre);
+		return Objects.hash(state.activityCounter, length, post, pre);
 	}
 
 	@Override
@@ -252,7 +256,7 @@ public final class Synapse implements IPlasticSynapse {
 		if (getClass() != obj.getClass())
 			return false;
 		Synapse other = (Synapse) obj;
-		return activityCounter == other.activityCounter
+		return state.activityCounter == other.state.activityCounter
 				&& Float.floatToIntBits(length) == Float.floatToIntBits(other.length)
 				&& Objects.equals(post, other.post) && Objects.equals(pre, other.pre);
 	}
