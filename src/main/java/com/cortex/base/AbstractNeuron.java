@@ -1,6 +1,7 @@
 package com.cortex.base;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -80,16 +81,14 @@ public abstract class AbstractNeuron implements IProcessable {
 			this.synapsesBranches[i] = new SynapseBranch( 
 					synapsesBranchesTmp[i].toArray(type));
 		}
+		Arrays.fill(synapsesBranchesTmp, null);
 		this.synapsesBranchesTmp = null;
 	}
 
 	// Used only at build time
 	public void addSynapse(Synapse s, boolean incoming, boolean near) {
 		try {
-			int index = 0;
-			if (incoming && !near) index = 1;
-			else if (!incoming && near) index = 2;
-			else if (!incoming && !near) index = 3;
+			int index = (incoming ? 0 : 2) + (near ? 0 : 1);
 			
 			synchronized(synapsesBranchesTmp[index]) {
 				synapsesBranchesTmp[index].add(s);
