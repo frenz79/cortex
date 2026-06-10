@@ -19,13 +19,14 @@ public class CorticalNeuron extends AbstractNeuron {
 	
 	private final CorticalNeuronsConfig config;
 
-	public CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position) {
+	public CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position, int maxLayers) {
 		super(layerId, 
 			  index, 
 			  hasIncoming, 
 			  hasOutgoing, 
 			  inhibitor, 
-			  position
+			  position,
+			  maxLayers
 		);
 		this.config = neuronsConfig;
 	}
@@ -79,28 +80,36 @@ public class CorticalNeuron extends AbstractNeuron {
 	    boolean inRefractory = (now - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
 
 	    // 1. Process ONLY synapses that have spikes
-	    for (Synapse synapse : getInSynapses()) {
-	        // Fast check: skip empty synapses
-	        if (!synapse.isEmpty()) {
-		        stayActive = true;
-		        synapse.forEachSpike(now, spike -> {
-		            boolean fire = integrateInputAndFire(now, spike, synapse);
-		            if (fire && !inRefractory) {
-		                fired[0] = true;
-		            }
-		        });
-		        // Update ONLY synapses that had spikes or are active
-		        synapse.update(deltaTimeNanos);
-	        }
+	    for (SynapseBranch synapseBranch : getSynapseBranches()) {
+	    	if (synapseBranch.incoming) {
+	    		for ( Synapse synapse : synapseBranch.synapses ) {
+	    			// Fast check: skip empty synapses
+	    	        if (!synapse.isEmpty()) {
+	    		        stayActive = true;
+	    		        synapse.forEachSpike(now, spike -> {
+	    		            boolean fire = integrateInputAndFire(now, spike, synapse);
+	    		            if (fire && !inRefractory) {
+	    		                fired[0] = true;
+	    		            }
+	    		        });
+	    		        // Update ONLY synapses that had spikes or are active
+	    		        synapse.update(deltaTimeNanos);
+	    	        }
+	    		}
+	    	}	       
 	    }
 
 	    // 2. If neuron fires, notify ONLY synapses that had pre/post pairing
 	    if (fired[0]) {
 	        fire(now, isInhibitor());
-	        for (Synapse synapse : getInSynapses()) {
-	            if (synapse.wasFrequentlyActiveInLastWindow()) {
-	                synapse.onPostSpike(now, now);
-	            }
+	        for (SynapseBranch synapseBranch : getSynapseBranches()) {
+		    	if (synapseBranch.incoming) {
+		    		for ( Synapse synapse : synapseBranch.synapses ) {
+			            if (synapse.wasFrequentlyActiveInLastWindow()) {
+			                synapse.onPostSpike(now, now);
+			            }
+		    		}
+		    	}
 	        }
 	    }
 	    

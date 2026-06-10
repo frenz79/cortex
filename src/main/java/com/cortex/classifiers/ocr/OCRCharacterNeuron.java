@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
+import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.google.common.util.concurrent.AtomicDouble;
 
 public class OCRCharacterNeuron extends AbstractNeuron {
@@ -19,8 +20,8 @@ public class OCRCharacterNeuron extends AbstractNeuron {
 				true, 
 				false, 
 				false, 
-				null
-				);
+				null,
+				-1);
 		this.character = character;
 	}
 
@@ -35,16 +36,21 @@ public class OCRCharacterNeuron extends AbstractNeuron {
 
 	public float scoreSpikes(long wnd, long now) {
 		AtomicDouble score = new AtomicDouble(0.0);
-		for (Synapse synapse : getInSynapses()) {
-			Consumer<Spike> spikesConsumer = spike -> {
-				try {
-					score.addAndGet(spike.signedAmplitude());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			};
-			synapse.forEachSpike(now, spikesConsumer);
-		}
+		 for (SynapseBranch synapseBranch : getSynapseBranches()) {
+		    	if (synapseBranch.incoming) {
+		    		for ( Synapse synapse : synapseBranch.synapses ) {
+						Consumer<Spike> spikesConsumer = spike -> {
+							try {
+								score.addAndGet(spike.signedAmplitude());
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						};
+						synapse.forEachSpike(now, spikesConsumer);
+					}
+		    	}
+		 }
+
 		float ret = score.floatValue();
 
         lastScoreTime = now;

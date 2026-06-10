@@ -88,7 +88,7 @@ public final class Synapse implements IPlasticSynapse {
 		return state.writeIndex.get() == state.readIndex.get();
 	}
 
-	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
+	private Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
 		super();
 		this.pre = pre;
 		this.post = post;
@@ -96,47 +96,52 @@ public final class Synapse implements IPlasticSynapse {
 		this.baseSpeed = baseSpeed;
 		this.plasticityRule = plasticityRule;
 	}
-	public static int create( AbstractNeuron srcNeuron, Neighbor toNeuron, long baseSpeed, SynapsePlasticityConfig plasticityCfg ) {
-		link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, plasticityCfg );
+	public static int create( AbstractNeuron srcNeuron, Neighbor toNeuron, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
+		link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
 		return 1;
 	}
 
-	public static int create( AbstractNeuron srcNeuron, Collection<Neighbor> toNeurons, long baseSpeed, SynapsePlasticityConfig plasticityCfg ) {
+	public static int create( AbstractNeuron srcNeuron, Collection<Neighbor> toNeurons, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
 		for (Neighbor toNeuron : toNeurons) {
-			link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, plasticityCfg );
+			link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
 		}
 		return toNeurons.size();
 	}
 
-	public static int create( Neighbor srcNeuron, AbstractNeuron toNeuron, long baseSpeed, SynapsePlasticityConfig plasticityCfg ) {
-		link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, plasticityCfg );
+	public static int create( Neighbor srcNeuron, AbstractNeuron toNeuron, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg ) {
+		link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
 		return 1;
 	}
 
-	public static int create( Collection<Neighbor> srcNeurons, AbstractNeuron toNeuron, long baseSpeed, SynapsePlasticityConfig plasticityCfg ) {
+	public static int create( Collection<Neighbor> srcNeurons, AbstractNeuron toNeuron, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
 		for (Neighbor srcNeuron : srcNeurons) {
-			link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, plasticityCfg );
+			link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
 		}
 		return srcNeurons.size();
 	}
 
-	public static int create( AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, SynapsePlasticityConfig plasticityCfg ) {
-		link( srcNeuron, toNeuron, distance, baseSpeed, plasticityCfg );
+	public static int create( AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
+		link( srcNeuron, toNeuron, distance, baseSpeed, near, plasticityCfg );
 		return 1;
 	}
 
-	private static void link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, SynapsePlasticityConfig plasticityCfg) {
+	private static void link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg) {
 		Synapse s = new Synapse( 
-				srcNeuron, 
-				toNeuron, 
-				distance, 
-				baseSpeed,
-				srcNeuron.isInhibitor() 
+			srcNeuron, 
+			toNeuron, 
+			distance, 
+			baseSpeed,
+			srcNeuron.isInhibitor() 
 				?new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory())
-						:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory())
-				);
-		toNeuron.addIncomingSynapse( s );
-		srcNeuron.addOutgoingSynapse( s ); 
+				:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory())
+		);
+		if (srcNeuron.getLayerId()==toNeuron.getLayerId()) {
+			toNeuron.addSynapse( s, true, near);
+			srcNeuron.addSynapse( s, false, near); 
+		} else {
+			toNeuron.addSynapse( s, true, srcNeuron.getLayerId());
+			srcNeuron.addSynapse( s, false, toNeuron.getLayerId()); 
+		}
 	}
 
 	public final float getLength() {

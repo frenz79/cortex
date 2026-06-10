@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
+import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.cortex.commons.Maths;
 import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.ISensor;
@@ -64,13 +65,18 @@ public class Retina implements ISensor {
 				if (c > 0) {
 					List<Float> spikesAmplitude = retinaNeurons[x][y].drainSpikes();
 					for (Float amplitude : spikesAmplitude) {
-						for ( Synapse syn : n.getOutSynapses()  ) {
-							logger.debug("Retina firing to:{}", syn);
-							// No real delay, "ideal source"
-							syn.addSpike(
-								Spike.createWithJitter(amplitude, (amplitude<0), now)
-							);
-						}
+						 for (SynapseBranch synapseBranch : retinaNeurons[x][y].getSynapseBranches()) {
+						    	if (!synapseBranch.incoming) {
+						    		for ( Synapse synapse : synapseBranch.synapses ) {
+						    			logger.debug("Retina firing to:{}", synapse);
+										// No real delay, "ideal source"
+						    			synapse.addSpike(
+											Spike.createWithJitter(amplitude, (amplitude<0), now)
+										);
+						    			
+						    		}
+						    	}
+						 }
 					}
 				}
 			}
@@ -228,7 +234,7 @@ public class Retina implements ISensor {
 		int ret = 0;
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
-				ret += retinaNeurons[x][y].getOutSynapses().size();
+				ret += retinaNeurons[x][y].getOutSynapsesCount();
 			}
 		}
 		return ret;

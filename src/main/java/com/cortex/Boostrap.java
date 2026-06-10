@@ -184,6 +184,9 @@ public class Boostrap {
 		engine.attachSupervisor( ocrSupervisor );
 		engine.withMetricsRecorder( metricsRecorder );
 
+		
+		brain.compact();
+		
 		CountDownLatch keepAlive = new CountDownLatch(1);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			logger.info("Shutting down...");

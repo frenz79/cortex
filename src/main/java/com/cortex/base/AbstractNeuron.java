@@ -34,12 +34,13 @@ public abstract class AbstractNeuron implements IProcessable {
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
 
-
-	public final class SynapseBranch {
+	public static final class SynapseBranch {
 		public final Synapse[] synapses;
-		public SynapseBranch(Synapse[] synapses) {
+		public final boolean incoming;
+		public SynapseBranch(Synapse[] synapses, boolean incoming) {
 			super();
 			this.synapses = synapses;
+			this.incoming = incoming;
 		}
 
 		// Stato dinamico del branch
@@ -47,10 +48,6 @@ public abstract class AbstractNeuron implements IProcessable {
 		public float branchActivity;       // attività recente (decadimento)
 		public float inhibition;           // livello di inibizione laterale
 		public float gain = 1.0f;          // modulazione del branch
-
-		// Metadati utili
-		// public final float centerX, centerY, centerZ; // centro geometrico del branch
-		// public final float radius;                    // raggio del RF
 	}
 
 	// 0 = in near
@@ -59,6 +56,11 @@ public abstract class AbstractNeuron implements IProcessable {
 	// 3 = out far
 	// 4..(4+maxLayers) = in from layer[x]
 	// (4+maxLayers)..(2*maxLayers) = out to layer[x]
+	private boolean isIncomingBranch(int i) {
+		int maxLayers = (synapsesBranchesTmp.length-4)/2;
+		return i<2 || (i>=4 && i<(4+maxLayers));
+	}
+		
 	private List<Synapse>[] synapsesBranchesTmp;
 	private final SynapseBranch[] synapsesBranches;
 
@@ -68,18 +70,22 @@ public abstract class AbstractNeuron implements IProcessable {
 		this.position = position;
 		this.index = index;
 		this.layerId = layerId;
-		this.synapsesBranchesTmp =  (List<Synapse>[]) new List<?>[ 4 + 2*maxLayers ];
+		int branchesCount = (maxLayers<0)?1:(4 + 2*maxLayers);
+
+		this.synapsesBranchesTmp =  (List<Synapse>[]) new List<?>[ branchesCount ];
 		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-			synapsesBranchesTmp[i] = new ArrayList<>();
+			this.synapsesBranchesTmp[i] = new ArrayList<>();
 		}
-		this.synapsesBranches = new SynapseBranch[ 4 + 2*maxLayers ];
+		this.synapsesBranches = new SynapseBranch[ branchesCount ];
 	}
 
 	public void compact() {
 		final var type = new Synapse[]{};
 		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
 			this.synapsesBranches[i] = new SynapseBranch( 
-					synapsesBranchesTmp[i].toArray(type));
+				synapsesBranchesTmp[i].toArray(type),
+				isIncomingBranch(i)
+			);
 		}
 		Arrays.fill(synapsesBranchesTmp, null);
 		this.synapsesBranchesTmp = null;
@@ -89,7 +95,10 @@ public abstract class AbstractNeuron implements IProcessable {
 	public void addSynapse(Synapse s, boolean incoming, boolean near) {
 		try {
 			int index = (incoming ? 0 : 2) + (near ? 0 : 1);
-			
+			if (synapsesBranchesTmp.length==1) {
+				// Special case for sensors
+				index = 0;
+			}
 			synchronized(synapsesBranchesTmp[index]) {
 				synapsesBranchesTmp[index].add(s);
 			}
@@ -102,8 +111,13 @@ public abstract class AbstractNeuron implements IProcessable {
 	public void addSynapse(Synapse s, boolean incoming, int layer) {
 		try {
 			int index = 4 + layer;
-			int maxLayers = (synapsesBranchesTmp.length-4)/2;
-			if (!incoming) index += maxLayers;
+			if (synapsesBranchesTmp.length==1) {
+				// Special case for sensors
+				index = 0;
+			} else {
+				int maxLayers = (synapsesBranchesTmp.length-4)/2;
+				if (!incoming) index += maxLayers;
+			}
 			synchronized(synapsesBranchesTmp[index]) {
 				synapsesBranchesTmp[index].add(s);
 			}
@@ -114,9 +128,11 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 
 	public final void fire( long now, boolean inhibitor ) throws InterruptedException {
-		for ( Synapse s : this.outSynapses  ) {
-			long arrival = now + s.getTraversalTimeNanos(now);
-			s.addSpike(	Spike.createWithJitter(isInhibitor(), arrival));
+		for ( SynapseBranch sb : this.synapsesBranches  ) {
+			for ( Synapse s : sb.synapses ) {
+				long arrival = now + s.getTraversalTimeNanos(now);
+				s.addSpike(	Spike.createWithJitter(isInhibitor(), arrival));
+			}
 		}
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
@@ -141,10 +157,6 @@ public abstract class AbstractNeuron implements IProcessable {
 		return position;
 	}
 
-	public final List<Synapse> getInSynapses() {
-		return inSynapses;
-	}
-
 	public int getLayerId() {
 		return layerId;
 	}
@@ -157,12 +169,79 @@ public abstract class AbstractNeuron implements IProcessable {
 		state.isActive = isActive;
 	}
 
-	public final List<Synapse> getOutSynapses() {
-		return outSynapses;
+	public final SynapseBranch[] getSynapseBranches() {
+		return synapsesBranches;
 	}
 
 	@Override
 	public String toString() {
 		return "AbstractNeuron [layerId=" + layerId + ", index=" + index + ", position=" + position + "]";
+	}
+
+	// Called only at build time
+	public boolean hasOutSynapses() {
+		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+			if (!isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
+				return true;
+			}
+		}
+		/*
+		for (SynapseBranch sb : synapsesBranches) {
+			if (!sb.incoming && sb.synapses.length>0) {
+				return true;
+			}
+		}
+		*/
+		return false;
+	}
+	// Called only at build time
+	public boolean hasInSynapses() {
+		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+			if (isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
+				return true;
+			}
+		}
+		/*
+		for (SynapseBranch sb : synapsesBranches) {
+			if (sb.incoming && sb.synapses.length>0) {
+				return true;
+			}
+		}
+		*/
+		return false;
+	}
+	// Called only at build time
+	public int getInSynapsesCount() {
+		int count = 0;
+		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+			if (isIncomingBranch(i)){
+				count += synapsesBranchesTmp[i].size();
+			}
+		}
+		/*
+		for (SynapseBranch sb : synapsesBranches) {
+			if (sb.incoming) {
+				count += sb.synapses.length;
+			}
+		}
+		*/
+		return count;
+	}
+	// Called only at build time
+	public int getOutSynapsesCount() {
+		int count = 0;
+		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+			if (!isIncomingBranch(i)){
+				count += synapsesBranchesTmp[i].size();
+			}
+		}
+		/*
+		for (SynapseBranch sb : synapsesBranches) {
+			if (!sb.incoming) {
+				count += sb.synapses.length;
+			}
+		}
+		*/
+		return count;
 	}
 }

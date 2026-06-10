@@ -27,7 +27,8 @@ public class LidarNeuron extends AbstractNeuron {
                 false,  // non hidden
                 true,   // input neuron
                 false,
-                null
+                null,
+                -1
         );
         this.config = config;
     }

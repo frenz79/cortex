@@ -5,9 +5,12 @@ import java.util.List;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
+import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.cortex.commons.Maths;
 import com.cortex.commons.Point3f;
 import com.cortex.commons.modules.ISensor;
+
+import javafx.scene.shape.Sphere;
 
 public class Lidar implements ISensor {
 
@@ -45,18 +48,25 @@ public class Lidar implements ISensor {
             if (c > 0) {
                 List<Float> spikesAmplitude = neurons[i].drainSpikes();
                 for (Float amplitude : spikesAmplitude) {
-					for ( Synapse syn : neurons[i].getOutSynapses()  ) {
-						// No real delay, "ideal source"
-						syn.addSpike(
-							Spike.createWithJitter(amplitude, (amplitude<0), now)
-						);
-					}
+                	for (SynapseBranch sb : neurons[i].getSynapseBranches()) {
+                		if (!sb.incoming) {
+                			for ( Synapse s : sb.synapses ) {
+                				// No real delay, "ideal source"
+        						s.addSpike(
+        							Spike.createWithJitter(amplitude, (amplitude<0), now)
+        						);
+                			}
+                		}
+                	}                	
 				}
             }
         }
         return true;
     }
 
+    
+    	
+    
     private float normalize(float distance) {
         // distanza → [0..1], invertita (vicino = 1)
         float v = 1f - (distance / config.MAX_DISTANCE);
@@ -117,7 +127,7 @@ public class Lidar implements ISensor {
     public int getSynapsesCount() {
         int ret = 0;
         for (int i = 0; i < config.RAYS; i++) {
-            ret += neurons[i].getOutSynapses().size();
+            ret += neurons[i].getOutSynapsesCount();
         }
         return ret;
     }

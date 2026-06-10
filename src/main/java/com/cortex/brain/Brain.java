@@ -49,7 +49,8 @@ public class Brain extends MultiLayer<SphericalLayer>{
 					configs.get(layerId).HAS_OUTGOING, 
 					configs.get(layerId).CORTICAL_NEURONS_CONFIG,
 					inhibitor, 
-					position
+					position,
+					configs.size()
 					);
 			neurons[counter++] = n;
 			return n;
@@ -106,11 +107,10 @@ public class Brain extends MultiLayer<SphericalLayer>{
 		var layers = generateLayers(layersConfigs);
 		this.layersConnConfig = this.brainLayersConnConfig.getLayersConnectionsConfig(layers.getAllLayers());
 		generateConnections(this.layersConnConfig);
-		compact();
 		return this;
 	}
 
-	private void compact() {
+	public void compact() {
 		logger.info("Compacting cortical neurons");
 		for( CorticalNeuron n : this.neurons ) {
 			n.compact();

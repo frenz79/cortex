@@ -53,7 +53,7 @@ public abstract class Layer {
 		return randomBoolean( config.INHIBITOR_FREQ );
 	}
 
-	public static record Neighbor(AbstractNeuron neuron, float distance) { 
+	public static record Neighbor(AbstractNeuron neuron, float distance, boolean near) { 
 
 		public float getRealDistance() {
 			return (float)Maths.sqrt(distance);
@@ -151,14 +151,14 @@ public abstract class Layer {
 
 				if (ds >= dd) continue;
 
-				Synapse.create(src, dst, target.getRealDistance(), baseSpeed, config.SYNAPSE_PLASTICITY_CONFIG);
+				Synapse.create(src, dst, target.getRealDistance(), baseSpeed, target.near(), config.SYNAPSE_PLASTICITY_CONFIG);
 				connectionsCount++;
 			}
 		}
 
 		// Check all neurons have at least one input / output
 		for (AbstractNeuron src : ns) {
-			if ( src.getOutSynapses().isEmpty() || src.getInSynapses().isEmpty() ) {
+			if ( !src.hasOutSynapses() || !src.hasInSynapses() ) {
 				List<Neighbor> far = pickRandomFarNeurons(ns, src, farCount);
 				while(!far.isEmpty()) {
 
@@ -174,10 +174,10 @@ public abstract class Layer {
 					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
 
 					if (ds >= dd) continue;
-					if (src.getOutSynapses().isEmpty()) {
-						Synapse.create(src, dst, target.getRealDistance(), baseSpeed, config.SYNAPSE_PLASTICITY_CONFIG);
+					if (!src.hasOutSynapses()) {
+						Synapse.create(src, dst, target.getRealDistance(), baseSpeed, target.near(), config.SYNAPSE_PLASTICITY_CONFIG);
 					} else {
-						Synapse.create(dst, src, target.getRealDistance(), baseSpeed, config.SYNAPSE_PLASTICITY_CONFIG);
+						Synapse.create(dst, src, target.getRealDistance(), baseSpeed, target.near(), config.SYNAPSE_PLASTICITY_CONFIG);
 					}
 					connectionsCount++;
 					break;
@@ -211,7 +211,7 @@ public abstract class Layer {
 			float dz = candidate.getPosition().z() - src.getPosition().z();
 			float dist = dx*dx + dy*dy + dz*dz;
 
-			far.add(new Neighbor(candidate, dist));
+			far.add(new Neighbor(candidate, dist, false));
 		}
 
 		return far;
@@ -231,10 +231,10 @@ public abstract class Layer {
 				float dist = dx*dx + dy*dy + dz*dz;
 
 				if (pq.size() < N) {
-					pq.add(new Neighbor(n, dist));
+					pq.add(new Neighbor(n, dist, true));
 				} else if (dist < pq.peek().distance()) {
 					pq.poll();
-					pq.add(new Neighbor(n, dist));
+					pq.add(new Neighbor(n, dist, true));
 				}
 			}
 		}		
@@ -348,7 +348,7 @@ public abstract class Layer {
 			float vy = neurons[ni].getPosition().y() - py;
 			float vz = neurons[ni].getPosition().z() - pz;
 			float d = (float)Maths.sqrt(vx*vx + vy*vy + vz*vz);
-			out.add(new Neighbor(neurons[ni], d));
+			out.add(new Neighbor(neurons[ni], d, false));
 		}
 		return out;
 	}

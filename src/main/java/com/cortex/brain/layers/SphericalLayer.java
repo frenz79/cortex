@@ -75,13 +75,13 @@ public class SphericalLayer extends Layer {
 					float dd = pd.x()*pd.x() + pd.y()*pd.y();// + pd.z()*pd.z();
 
 					if (ds >= dd) continue;
-					if ( dst.getInSynapses().size()>=neuronsConfig.MAX_FAN_IN ) {
+					if ( dst.getInSynapsesCount()>=neuronsConfig.MAX_FAN_IN ) {
 						continue;
 					}
-					if ( src.getOutSynapses().size()>=neuronsConfig.MAX_FAN_OUT ) {
+					if ( src.getOutSynapsesCount()>=neuronsConfig.MAX_FAN_OUT ) {
 						continue;
 					}
-					Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
+					Synapse.create(src, dst, target.getRealDistance(), baseSpeed, false, plasticityCfg);
 					connectionsCount++;
 					break;
 				}
@@ -138,9 +138,9 @@ public class SphericalLayer extends Layer {
 
 				for ( int i : rndIdx ) {
 					if (!isIncoming)
-						connections += Synapse.create( matrix[rx][ry], conns.get(i), baseSpeed, synCfg );
+						connections += Synapse.create( matrix[rx][ry], conns.get(i), baseSpeed, false, synCfg );
 					else
-						connections += Synapse.create( conns.get(i), matrix[rx][ry], baseSpeed, synCfg );
+						connections += Synapse.create( conns.get(i), matrix[rx][ry], baseSpeed, false, synCfg );
 				}
 			}
 		}

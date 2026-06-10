@@ -101,7 +101,7 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 	public int getSynapsesCount() {
 		int ret = 0;
     	for (int x = 0; x < neurons[0].length; x++) {
-    	    ret += neurons[0][x].getInSynapses().size();
+    	    ret += neurons[0][x].getInSynapsesCount();
     	}
 		return ret;
 	}

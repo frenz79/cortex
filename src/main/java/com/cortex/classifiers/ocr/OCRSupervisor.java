@@ -1,5 +1,6 @@
 package com.cortex.classifiers.ocr;
 
+import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.cortex.base.Synapse;
 import com.cortex.commons.Maths;
 import com.cortex.commons.modules.ISupervisor;
@@ -36,13 +37,13 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 	    	now
 	    );
 	    
-	    for (Synapse s : expected.getInSynapses()) {
-	        s.applyReward(+1.0f, now, neuromod);
-	    }
-	    if (!correct) {
-		    for (Synapse s : winner.getInSynapses()) {
-		        s.applyReward(-1.0f, now, neuromod);
-		    }
+	    float reward = (correct)?1.0f:-1.0f;
+	    for (SynapseBranch sb : expected.getSynapseBranches()) {
+	    	if (sb.incoming) {
+		    	for ( Synapse s : sb.synapses ) {
+		    		s.applyReward(reward, now, neuromod);
+		    	}
+	    	}
 	    }
 	    /*
 	    // reward globale (consuma eligibility)

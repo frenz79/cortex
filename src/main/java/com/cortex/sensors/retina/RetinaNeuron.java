@@ -26,7 +26,8 @@ public class RetinaNeuron extends AbstractNeuron {
 				false, 
 				true, 
 				false, 
-				null
+				null,
+				-1
 				);
 		this.retinaNeuronConfig = retinaNeuronConfig;
 	}
