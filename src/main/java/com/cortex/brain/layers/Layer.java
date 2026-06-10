@@ -84,7 +84,7 @@ public abstract class Layer {
 	public abstract Layer populate( CorticalNeuronFactory neuronFactory );
 
 	public abstract int link( 
-			Layer layer,
+			Layer dstLayer,
 			int minConn, 
 			int maxConn, 
 			float maxDistance, 

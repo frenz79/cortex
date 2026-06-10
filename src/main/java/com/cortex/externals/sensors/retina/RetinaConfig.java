@@ -1,4 +1,4 @@
-package com.cortex.sensors.retina;
+package com.cortex.externals.sensors.retina;
 
 public class RetinaConfig {
 

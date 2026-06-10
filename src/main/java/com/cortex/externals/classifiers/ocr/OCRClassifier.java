@@ -1,4 +1,4 @@
-package com.cortex.classifiers.ocr;
+package com.cortex.externals.classifiers.ocr;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.Point3f;

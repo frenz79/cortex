@@ -1,6 +1,6 @@
 package com.cortex.brain;
 
-import static com.cortex.base.Synapse.ALWAYS_CONNECT_PREDICATE;
+import static com.cortex.base.Commons.ALWAYS_CONNECT_PREDICATE;
 
 import com.cortex.base.config.CorticalNeuronsConfig;
 import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;

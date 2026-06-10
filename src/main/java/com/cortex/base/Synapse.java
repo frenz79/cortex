@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,10 +22,6 @@ public final class Synapse implements IPlasticSynapse {
 
 	static final Logger logger = LogManager.getLogger(Synapse.class);
 
-	public static final Predicate<AbstractNeuron> ALWAYS_CONNECT_PREDICATE = n -> true;
-	public static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
-	public static final Predicate<AbstractNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = AbstractNeuron::isInhibitor;
-
 	private static final float ETA_MYELIN = 0.0001f;	// Myelinization learning rate
 	private static final float MAX_MYELIN = 1.0f;
 	
@@ -37,8 +32,8 @@ public final class Synapse implements IPlasticSynapse {
 		float myelinFactor = 0.0f;
 	    int activityCounter;
 	    final Spike[] buffer = new Spike[BUFFER_SIZE];
-	    final AtomicInteger writeIndex = new AtomicInteger();
-	    final AtomicInteger readIndex  = new AtomicInteger();
+	    int writeIndex = 0;
+	    int readIndex  = 0;
 	}
 	
 	private final long baseSpeed;
@@ -53,39 +48,31 @@ public final class Synapse implements IPlasticSynapse {
 	private static final int ACTIVITY_THRESHOLD = 5;
 
 	public void addSpike(Spike spike) {
-		int w = state.writeIndex.get();
-		int r = state.readIndex.get();
-
 		// buffer pieno → drop dello spike più vecchio
-		if (((w + 1) & (SynapseState.BUFFER_SIZE - 1)) == (r & (SynapseState.BUFFER_SIZE - 1))) {
-			state.readIndex.incrementAndGet();
+		if (((state.writeIndex + 1) & (SynapseState.BUFFER_SIZE - 1)) == (state.readIndex & (SynapseState.BUFFER_SIZE - 1))) {
+			state.readIndex++;
 		}
 
-		state.buffer[w & (SynapseState.BUFFER_SIZE - 1)] = spike;
-		state.writeIndex.incrementAndGet();
+		state.buffer[state.writeIndex & (SynapseState.BUFFER_SIZE - 1)] = spike;
+		state.writeIndex++;
 		this.getTarget().setActive(true);
 	}
 	
-	public void forEachSpike(long now, Consumer<Spike> consumer) {
-	    int r = state.readIndex.get();     // atomic read UNA VOLTA
-	    int w = state.writeIndex.get();    // atomic read UNA VOLTA
-
+	public void forEachSpike(long now, Consumer<Spike> consumer) {	   
 	    // loop su spike già presenti
-	    while (r != w) {
-	        Spike s = state.buffer[r & (SynapseState.BUFFER_SIZE - 1)];
+	    while (state.readIndex != state.writeIndex) {
+	        Spike s = state.buffer[state.readIndex & (SynapseState.BUFFER_SIZE - 1)];
 	        // se lo spike è nel futuro, stop
 	        if (s.arrivalTime() > now) {
 	            break;
 	        }
 	        consumer.accept(s);
-	        r++; // incremento locale, NON atomico
+	        state.readIndex++; // incremento locale, NON atomico
 	    }
-	    // aggiorno readIndex UNA SOLA VOLTA
-	    state.readIndex.set(r);
 	}
 
 	public boolean isEmpty() {
-		return state.writeIndex.get() == state.readIndex.get();
+		return state.writeIndex == state.readIndex;
 	}
 
 	private Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
@@ -96,21 +83,24 @@ public final class Synapse implements IPlasticSynapse {
 		this.baseSpeed = baseSpeed;
 		this.plasticityRule = plasticityRule;
 	}
+
 	public static int create( AbstractNeuron srcNeuron, Neighbor toNeuron, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
-		link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
-		return 1;
+		return link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
+	}
+	
+	public static int create( AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
+		return link( srcNeuron, toNeuron, distance, baseSpeed, near, plasticityCfg );
 	}
 
+	public static int create( Neighbor srcNeuron, AbstractNeuron toNeuron, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg ) {
+		return link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
+	}
+	
 	public static int create( AbstractNeuron srcNeuron, Collection<Neighbor> toNeurons, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
 		for (Neighbor toNeuron : toNeurons) {
 			link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
 		}
 		return toNeurons.size();
-	}
-
-	public static int create( Neighbor srcNeuron, AbstractNeuron toNeuron, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg ) {
-		link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
-		return 1;
 	}
 
 	public static int create( Collection<Neighbor> srcNeurons, AbstractNeuron toNeuron, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
@@ -120,12 +110,7 @@ public final class Synapse implements IPlasticSynapse {
 		return srcNeurons.size();
 	}
 
-	public static int create( AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
-		link( srcNeuron, toNeuron, distance, baseSpeed, near, plasticityCfg );
-		return 1;
-	}
-
-	private static void link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg) {
+	private static final int link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg) {
 		Synapse s = new Synapse( 
 			srcNeuron, 
 			toNeuron, 
@@ -136,12 +121,13 @@ public final class Synapse implements IPlasticSynapse {
 				:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory())
 		);
 		if (srcNeuron.getLayerId()==toNeuron.getLayerId()) {
-			toNeuron.addSynapse( s, false, near);
-			srcNeuron.addSynapse( s, true, near); 
+			srcNeuron.addSynapse( s, false, near); 
+			toNeuron.addSynapse( s, true, near);
 		} else {
-			toNeuron.addSynapse( s, false, srcNeuron.getLayerId());
-			srcNeuron.addSynapse( s, true, toNeuron.getLayerId()); 
+			srcNeuron.addSynapse( s, false, srcNeuron.getLayerId()); 
+			toNeuron.addSynapse( s, true, toNeuron.getLayerId());
 		}
+		return 1;
 	}
 
 	public final float getLength() {
@@ -160,38 +146,6 @@ public final class Synapse implements IPlasticSynapse {
 	    return delay + micro;
 	}
 
-	/**
-	 * Iterate spikes in FIFO order.
-	 *
-	 * Consumer contract:
-	 *  - return the same Spike instance to keep it (not yet arrived)
-	 *  - return any other value (including null) to remove the head spike
-	 *
-	 * The consumer must be fast and non-blocking; heavy work should be deferred.
-	 */
-/*
-	private final PriorityBlockingQueue<Spike> spikes =
-				new PriorityBlockingQueue<>(8,Comparator.comparingLong(Spike::arrivalTime));
-
-	public void forEachSpike(long now, Consumer<Spike> consumer) {
-		while (true) {
-			Spike head = spikes.peek();
-			if (head == null) break;
-			if (head.arrivalTime() > now) break;
-			consumer.accept(head)
-			spikes.poll();
-		}
-	}
-
-	public void addSpike(Spike spike) throws InterruptedException {
-		this.spikes.add(spike);
-		this.getTarget().setActive(true);
-	}
-
-	public boolean isEmpty() {
-		return spikes.isEmpty();
-	}
-	*/
 	// IPlasticSynapse
 	@Override
 	public final void onPreSpike(long now) {

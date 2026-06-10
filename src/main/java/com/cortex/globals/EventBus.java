@@ -36,6 +36,7 @@ public class EventBus {
 	
 	public static enum EventType {
 		NEURON_FIRED,
+		NEURON_READY_TO_FIRE,
 		SYNAPSE_UPDATED,
 		LAYER_STATS,
 		SYNAPSE_SPIKED

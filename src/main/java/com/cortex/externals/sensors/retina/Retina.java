@@ -1,4 +1,4 @@
-package com.cortex.sensors.retina;
+package com.cortex.externals.sensors.retina;
 
 import java.awt.image.BufferedImage;
 import java.util.List;

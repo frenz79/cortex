@@ -1,4 +1,4 @@
-package com.cortex.actuators.retina;
+package com.cortex.externals.actuators.retina;
 
 public class RetinaActuator {
 	 double dx, dy;

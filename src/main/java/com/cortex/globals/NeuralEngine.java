@@ -74,35 +74,10 @@ public class NeuralEngine {
 				long start = System.nanoTime();
 				tick(start);
 				localCounter++;
-
-				brain.streamActiveNeuron(n -> {
-					try {
-					//	long begin = System.nanoTime();
-						boolean active = n.process(start);
-					//	long elapsed = System.nanoTime() - begin;
-/*
-						if (elapsed > 5_000_000) { // >1ms
-						    logger.warn("Neuron {} took {} ms", n.getIndex(), elapsed / 1_000_000.0);
-						    logger.info("Neuron {}: inSynapses={}, outSynapses={}",
-						    		n.getIndex(),
-						    	    n.getInSynapses().size(),
-						    	    n.getOutSynapses().size()
-						    	);
-						}
-						*/
-						return active;
-						
-					} catch (Exception ex) {
-						Thread.currentThread().interrupt();
-						ex.printStackTrace();
-						return false;
-					}
-				});
+				brain.processAllActiveNeurons(start);
 				long elapsed = System.nanoTime()-start;
-
 				processCounterTotal.increment();
 				processTimeTotalNanos.add(elapsed);
-
 				// spin / sleep controllato
 				//LockSupport.parkNanos(config.NEURON_PERIOD_NANOS);
 			}

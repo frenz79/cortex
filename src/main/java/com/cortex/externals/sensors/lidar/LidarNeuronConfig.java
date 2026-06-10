@@ -1,4 +1,4 @@
-package com.cortex.sensors.lidar;
+package com.cortex.externals.sensors.lidar;
 public class LidarNeuronConfig {
 
     // decadimento firing rate

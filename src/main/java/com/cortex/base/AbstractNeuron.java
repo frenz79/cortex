@@ -3,10 +3,14 @@ package com.cortex.base;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.cortex.base.AbstractNeuron.SynapseBranch;
+import com.cortex.brain.CorticalNeuron;
 import com.cortex.commons.IProcessable;
 import com.cortex.commons.Point3f;
 import com.cortex.globals.EventBus;
@@ -20,7 +24,8 @@ public abstract class AbstractNeuron implements IProcessable {
 	public final class NeuronState {
 		public float firingRate = 0.0f;
 		public long lastRateUpdate = System.nanoTime();
-		public boolean isActive = false;
+		public boolean isActive = false; // Phase 1
+		public boolean pendingFire = false; // Phase 2
 	}
 
 	private final int layerId;
@@ -57,15 +62,18 @@ public abstract class AbstractNeuron implements IProcessable {
 	// 4..(4+maxLayers) = in from layer[x]
 	// (4+maxLayers)..(2*maxLayers) = out to layer[x]
 	private boolean isIncomingBranch(int i) {
+		if (synapsesBranchesTmp.length==1) {
+			return false;
+		}
 		int maxLayers = (synapsesBranchesTmp.length-4)/2;
 		return i<2 || (i>=4 && i<(4+maxLayers));
 	}
-		
+
 	private List<Synapse>[] synapsesBranchesTmp;
 	private SynapseBranch[] synapsesBranches;
 	private SynapseBranch[] incomingBranches;
 	private SynapseBranch[] outgoingBranches;
-	
+
 	public AbstractNeuron(int layerId, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position, int maxLayers) {
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
@@ -86,13 +94,13 @@ public abstract class AbstractNeuron implements IProcessable {
 		List<SynapseBranch> out = new ArrayList<>();
 
 		for (int i = 0; i < synapsesBranchesTmp.length; i++) {
-		    Synapse[] arr = synapsesBranchesTmp[i].toArray(new Synapse[0]);
-		    SynapseBranch b = new SynapseBranch(arr, isIncomingBranch(i));
+			Synapse[] arr = synapsesBranchesTmp[i].toArray(new Synapse[0]);
+			SynapseBranch b = new SynapseBranch(arr, isIncomingBranch(i));
 
-		    if (b.incoming) in.add(b);
-		    else out.add(b);
+			if (b.incoming) in.add(b);
+			else out.add(b);
 
-		    synapsesBranches[i] = b;
+			synapsesBranches[i] = b;
 		}
 
 		incomingBranches = in.toArray(new SynapseBranch[0]);
@@ -137,18 +145,32 @@ public abstract class AbstractNeuron implements IProcessable {
 		}
 	}
 
-	public final void fire( long now, boolean inhibitor ) throws InterruptedException {
-		for ( SynapseBranch sb : this.synapsesBranches  ) {
-			for ( Synapse s : sb.synapses ) {
-				long arrival = now + s.getTraversalTimeNanos(now);
-				s.addSpike(	Spike.createWithJitter(isInhibitor(), arrival));
+	public final void fire( long now ) throws InterruptedException {
+		state.pendingFire = true;
+	}
+
+	public final void delayedFire( long now ) {		
+		for (SynapseBranch sb : synapsesBranches) {
+			if (sb.incoming) {
+				for (Synapse s : sb.synapses) {
+					if (s.wasFrequentlyActiveInLastWindow()) {
+						s.onPostSpike(now, now);
+					}
+				}
+			} else {
+				for (Synapse s : sb.synapses) {
+					long arrival = now + s.getTraversalTimeNanos(now);
+					s.addSpike(Spike.createWithJitter(isInhibitor(), arrival));
+				}
 			}
 		}
+		
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
-		state.firingRate += 1.0f;
-		state.lastRateUpdate = now;
-		EventBus.fire(EventType.NEURON_FIRED, state.lastRateUpdate, this, null);
+	    state.pendingFire = false;
+	    state.firingRate += 1.0f;
+	    state.lastRateUpdate = now;
+		EventBus.fire(EventType.NEURON_FIRED, now, this, null);
 	}
 
 	public int getIndex() {
@@ -175,6 +197,10 @@ public abstract class AbstractNeuron implements IProcessable {
 		return state.isActive;
 	}
 
+	public boolean isPendingFire() {
+		return state.pendingFire;
+	}
+
 	public void setActive(boolean isActive) {
 		state.isActive = isActive;
 	}
@@ -182,11 +208,11 @@ public abstract class AbstractNeuron implements IProcessable {
 	public final SynapseBranch[] getAllSynapseBranches() {
 		return synapsesBranches;
 	}
-	
+
 	public final SynapseBranch[] getInSynapseBranches() {
 		return incomingBranches;
 	}
-	
+
 	public final SynapseBranch[] getOutSynapseBranches() {
 		return outgoingBranches;
 	}
@@ -198,34 +224,36 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	// Called only at build time
 	public boolean hasOutSynapses() {
-		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-			if (!isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
-				return true;
+		if (synapsesBranchesTmp!=null) {
+			for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+				if (!isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
+					return true;
+				}
+			}
+		} else {
+			for (SynapseBranch sb : synapsesBranches) {
+				if (!sb.incoming && sb.synapses.length>0) {
+					return true;
+				}
 			}
 		}
-		/*
-		for (SynapseBranch sb : synapsesBranches) {
-			if (!sb.incoming && sb.synapses.length>0) {
-				return true;
-			}
-		}
-		*/
 		return false;
 	}
 	// Called only at build time
 	public boolean hasInSynapses() {
-		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-			if (isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
-				return true;
+		if (synapsesBranchesTmp!=null) {
+			for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+				if (isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
+					return true;
+				}
+			}
+		} else {
+			for (SynapseBranch sb : synapsesBranches) {
+				if (sb.incoming && sb.synapses.length>0) {
+					return true;
+				}
 			}
 		}
-		/*
-		for (SynapseBranch sb : synapsesBranches) {
-			if (sb.incoming && sb.synapses.length>0) {
-				return true;
-			}
-		}
-		*/
 		return false;
 	}
 	// Called only at build time

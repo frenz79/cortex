@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,12 +36,37 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	private BrainLayersConnConfig brainLayersConnConfig;
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnectionsConfig> layersConnConfigs = new ArrayList<>();
-
+	
 	private final List<ISensor> sensors;
 	private final List<IActuator> actuators;
 	private final List<IClassifier<?>> classifiers;
 	private final List<ISupervisor<?>> supervisors;
 	
+	public void processAllActiveNeurons(long now) {
+		if (neurons == null) return;
+		CorticalNeuron[] snapshot = neurons;
+	    
+	    // PHASE 1 — Propagazione spike
+	    Arrays.stream(snapshot).parallel().forEach(n -> {
+	        if (n.isPendingFire()) {
+	            n.delayedFire(now);
+	        }
+	    });
+
+	    // PHASE 2 — Integrazione
+	    Arrays.stream(snapshot).parallel().forEach(n -> {
+	        if (n.isActive()) {
+	            boolean stay = false;
+				try {
+					stay = n.process(now);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+	            n.setActive(stay);
+	        }
+	    });
+	}
+
 	public class CorticalNeuronFactory {
 
 		private final List<LayerConfig> configs;
@@ -162,28 +186,7 @@ public class Brain extends MultiLayer<SphericalLayer>{
 				.connectInternal();
 		return l;
 	}
-
-	/**
-	 * Iterate active neurons and call consumer. Consumer returns true to keep active flag true,
-	 * false to clear it. This method is safe to call concurrently.
-	 */
-	public void streamActiveNeuron(Function<CorticalNeuron, Boolean> consumer) {
-		CorticalNeuron[] snapshot = neurons; // volatile read
-		if (snapshot == null) return;
-		Arrays.stream(snapshot).parallel().forEach( n -> {
-			if (n != null && n.isActive()) {
-				boolean stay = true;
-				try {
-					stay = consumer.apply(n);
-				} catch (RuntimeException ex) {
-					logger.error("Handled Exception:", ex);
-					stay = true;
-				}
-				n.setActive( stay );
-			} 
-		});
-	}
-
+	
 	public Layer getSensorsTargetLayer() {
 		return getLayer(SENSORS_TARGET_LAYER);
 	}

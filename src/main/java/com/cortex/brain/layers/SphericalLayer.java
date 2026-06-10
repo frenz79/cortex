@@ -169,19 +169,19 @@ public class SphericalLayer extends Layer {
 			float z = (float) Maths.cos(a1) * radius;
 
 			this.neurons[i] = neuronFactory.buildNeuron(
-					config.getLayerId(),
-					isInhibitor(), new Point3f(x,y,z)
-					);
+				config.getLayerId(),
+				isInhibitor(), new Point3f(x,y,z)
+			);
 		}
 
 		buildSpatialHash(config.DIMENSION / 2.0f);
 
 		long endTime = System.nanoTime();
 		logger.info("L{} generated {} neurons in {} micros",
-				getLayerId(),
-				getNeuronsCount(),
-				TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
-				);
+			getLayerId(),
+			getNeuronsCount(),
+			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
+		);
 		return this;
 	}   
 }

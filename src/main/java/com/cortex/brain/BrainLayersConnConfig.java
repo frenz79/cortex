@@ -1,7 +1,7 @@
 package com.cortex.brain;
 
-import static com.cortex.base.Synapse.ALWAYS_CONNECT_PREDICATE;
-import static com.cortex.base.Synapse.ONLY_INHIBITOR_CONNECT_PREDICATE;
+import static com.cortex.base.Commons.ALWAYS_CONNECT_PREDICATE;
+import static com.cortex.base.Commons.ONLY_INHIBITOR_CONNECT_PREDICATE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,7 +135,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(ffPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
-
+/*
 		// L1 -> L0 (feedback)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L1).to(L0).withBaseSped(SYNAPSE_SPEED.MID.getBaseSpeed())
@@ -143,7 +143,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(fbPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
-
+*/
 		// L2 -> L3
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L2).to(L3).withBaseSped(SYNAPSE_SPEED.FAST.getBaseSpeed())
@@ -151,7 +151,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(ffPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
-
+/*
 		// L2 -> L1 (feedback, solo inibitori)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L2).to(L1).withBaseSped(SYNAPSE_SPEED.SLOW.getBaseSpeed())
@@ -159,7 +159,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(fbPlasticity())
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
-
+*/
 		// L2 -> L4
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L2).to(L4).withBaseSped(SYNAPSE_SPEED.FAST.getBaseSpeed())
@@ -175,7 +175,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(ctrlPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
-
+/*
 		// L3 -> L2 (feedback)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L3).to(L2).withBaseSped(SYNAPSE_SPEED.MID.getBaseSpeed())
@@ -191,7 +191,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(fbPlasticity())
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
-
+*/
 		// L3 -> L5 (controllo)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L3).to(L5).withBaseSped(SYNAPSE_SPEED.SLOW.getBaseSpeed())
@@ -199,7 +199,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(ctrlPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
-
+/*
 		// L4 -> L2 (feedback)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L4).to(L2).withBaseSped(SYNAPSE_SPEED.MID.getBaseSpeed())
@@ -239,7 +239,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(fbPlasticity())
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
-
+*/
 		// L4 -> L5
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L4).to(L5).withBaseSped(SYNAPSE_SPEED.FAST.getBaseSpeed())
@@ -255,7 +255,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(ffPlasticity())
 				.withNeuronFilter(ALWAYS_CONNECT_PREDICATE)
 				.build());
-
+/*
 		// L4 -> L1 (feedback modulante)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L4).to(L1).withBaseSped(SYNAPSE_SPEED.MID.getBaseSpeed())
@@ -279,7 +279,7 @@ public class BrainLayersConnConfig {
 				.withSynapsePlasticityConfig(fbPlasticity())
 				.withNeuronFilter(ONLY_INHIBITOR_CONNECT_PREDICATE)
 				.build());
-
+*/
 		// L2 -> L5 (feedforward verso controllo)
 		cfg.add(LayerConnectionsConfig.newBuilder()
 				.from(L2).to(L5).withBaseSped(SYNAPSE_SPEED.SLOW.getBaseSpeed())

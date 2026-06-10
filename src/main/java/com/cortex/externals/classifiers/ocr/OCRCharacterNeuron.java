@@ -1,33 +1,22 @@
-package com.cortex.classifiers.ocr;
+package com.cortex.externals.classifiers.ocr;
 
 import java.util.function.Consumer;
 
-import com.cortex.base.AbstractNeuron;
+import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
-import com.cortex.base.AbstractNeuron.SynapseBranch;
+import com.cortex.externals.AbstractExternalNeuron;
 import com.google.common.util.concurrent.AtomicDouble;
 
-public class OCRCharacterNeuron extends AbstractNeuron {
+public class OCRCharacterNeuron extends AbstractExternalNeuron {
 
 	private final char character;
 	private float recentScore = 0f;
 	private long lastScoreTime = 0;
 
 	public OCRCharacterNeuron(int index, char character) {
-		super(-1, 
-				index, 
-				true, 
-				false, 
-				false, 
-				null,
-				-1);
+		super( index, true, false );
 		this.character = character;
-	}
-
-	@Override
-	public boolean process(long currTimeNanos) {
-		return true;
 	}
 
 	public char getCharacter() {

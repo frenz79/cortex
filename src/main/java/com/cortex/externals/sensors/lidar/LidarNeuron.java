@@ -1,4 +1,4 @@
-package com.cortex.sensors.lidar;
+package com.cortex.externals.sensors.lidar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,10 +6,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.Maths;
+import com.cortex.externals.AbstractExternalNeuron;
 
-public class LidarNeuron extends AbstractNeuron {
+public class LidarNeuron extends AbstractExternalNeuron {
 
     private float lastDistance = Float.NaN;
 
@@ -21,21 +21,8 @@ public class LidarNeuron extends AbstractNeuron {
     private long lastUpdate;
 
     public LidarNeuron(int index, LidarNeuronConfig config) {
-        super(
-                -1,
-                index,
-                false,  // non hidden
-                true,   // input neuron
-                false,
-                null,
-                -1
-        );
+        super( index, false, true );
         this.config = config;
-    }
-
-    @Override
-    public boolean process(long currTimeNanos) {
-        return true;
     }
 
     public int process(long currTimeNanos, float distance) {

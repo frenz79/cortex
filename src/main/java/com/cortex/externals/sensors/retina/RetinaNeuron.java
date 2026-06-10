@@ -1,4 +1,4 @@
-package com.cortex.sensors.retina;
+package com.cortex.externals.sensors.retina;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,10 +6,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.commons.Maths;
+import com.cortex.externals.AbstractExternalNeuron;
 
-public class RetinaNeuron extends AbstractNeuron {
+public class RetinaNeuron extends AbstractExternalNeuron {
 
 	private float lastLuminance = Float.NaN;
 
@@ -21,22 +21,10 @@ public class RetinaNeuron extends AbstractNeuron {
 	private long lastUpdate;
 	
 	public RetinaNeuron(int index, RetinaNeuronConfig retinaNeuronConfig) {
-		super(-1, 
-				index, 
-				false, 
-				true, 
-				false, 
-				null,
-				-1
-				);
+		super( index, false, true);
 		this.retinaNeuronConfig = retinaNeuronConfig;
 	}
-
-	@Override
-	public final boolean process(long currTimeNanos) {
-		return true;
-	}
-
+	
 	public int process(long currTimeNanos, float luminance) {
 		// Avoids massive ON/OFF on first frame
 		if (Float.isNaN(lastLuminance)) {

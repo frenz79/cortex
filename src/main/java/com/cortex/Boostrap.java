@@ -10,6 +10,7 @@ import javax.imageio.ImageIO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.cortex.base.Commons;
 import com.cortex.base.Synapse;
 import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.config.InhibitorySynapticPlasticityConfig;
@@ -17,20 +18,20 @@ import com.cortex.base.config.SynapsePlasticityConfig;
 import com.cortex.brain.Brain;
 import com.cortex.brain.BrainLayersConfig;
 import com.cortex.brain.BrainLayersConnConfig;
-import com.cortex.classifiers.ocr.OCRCharacterNeuron;
-import com.cortex.classifiers.ocr.OCRClassifier;
-import com.cortex.classifiers.ocr.OCRSupervisor;
 import com.cortex.commons.modules.ISensor;
 import com.cortex.commons.modules.ISupervisor;
+import com.cortex.externals.classifiers.ocr.OCRCharacterNeuron;
+import com.cortex.externals.classifiers.ocr.OCRClassifier;
+import com.cortex.externals.classifiers.ocr.OCRSupervisor;
+import com.cortex.externals.sensors.retina.Retina;
+import com.cortex.externals.sensors.retina.RetinaConfig;
+import com.cortex.externals.sensors.retina.RetinaNeuronConfig;
 import com.cortex.globals.DiscreteAdaptiveStabilizer;
 import com.cortex.globals.DiscreteAdaptiveStabilizerConfig;
 import com.cortex.globals.DiscreteAdaptiveStabilizerConfig.LayerAdaptiveParams;
 import com.cortex.globals.NeuralEngine;
 import com.cortex.globals.NeuralEngineConfig;
 import com.cortex.metrics.MetricsRecorder;
-import com.cortex.sensors.retina.Retina;
-import com.cortex.sensors.retina.RetinaConfig;
-import com.cortex.sensors.retina.RetinaNeuronConfig;
 import com.cortex.viewer.PointMeshViewerFX;
 
 /**
@@ -78,7 +79,7 @@ public class Boostrap {
 
 		// Connect retina to L0
 		brain.getSensorsTargetLayer().link(retina, 4500, 5000, 0.5f, 
-				Synapse.SKIP_INHIBITOR_CONNECT_PREDICATE, 
+				Commons.SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
 					ExcitatorySynapticPlasticityConfig.newBuilder()
 						.withSTDP(0.0015f, 0.0025f, 40_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
@@ -100,7 +101,7 @@ public class Boostrap {
 	public static ISupervisor<OCRCharacterNeuron> buildAndConnectOCR( Brain brain ) {
 		OCRClassifier ocrClassifier = new OCRClassifier();		
 		brain.getClassifiersSourceLayer().link( ocrClassifier, 10, 40, 2.5f, 
-				Synapse.SKIP_INHIBITOR_CONNECT_PREDICATE, 
+				Commons.SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
 					ExcitatorySynapticPlasticityConfig.newBuilder()
 						.withSTDP(0.002f, 0.002f, 80_000_000L, 150_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS

@@ -1,0 +1,19 @@
+package com.cortex.externals;
+
+import com.cortex.base.AbstractNeuron;
+
+public abstract class AbstractExternalNeuron extends AbstractNeuron {
+
+	public AbstractExternalNeuron(
+			int index, 
+			boolean hasIncoming, 
+			boolean hasOutgoing) {
+		super(-1, index, hasIncoming, hasOutgoing, false, null, -1);
+	}
+	
+    @Override
+    public boolean process(long currTimeNanos) {
+        return true;
+    }
+	
+}

@@ -99,22 +99,10 @@ public class CorticalNeuron extends AbstractNeuron {
 
 		// 2. If neuron fires, notify ONLY synapses that had pre/post pairing
 		if (fired[0]) {
-			fire(now, isInhibitor());
-			for (SynapseBranch synapseBranch : getInSynapseBranches()) {
-				for ( Synapse synapse : synapseBranch.synapses ) {
-					if (synapse.wasFrequentlyActiveInLastWindow()) {
-						synapse.onPostSpike(now, now);
-					}
-				}
-			}
+			fire(now); // just pendingFire = true
 		}
 
-		potential = Maths.clamp(
-				potential,
-				config.POTENTIAL_MIN,
-				config.POTENTIAL_MAX
-				);
-
+		potential = Maths.clamp(potential,	config.POTENTIAL_MIN,config.POTENTIAL_MAX);
 		lastProcessTime = now;
 		return stayActive;
 	}

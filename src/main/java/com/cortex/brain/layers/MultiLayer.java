@@ -52,8 +52,8 @@ public abstract class MultiLayer<L extends Layer> {
 			Layer dstLayer = e.TARGET_LAYER;
 			int connections = 0;
 			
-			connections += dstLayer.link(
-				srcLayer, 
+			connections += srcLayer.link(
+				dstLayer, 
 				e.MIN_CONNECTIONS, 
 				e.MAX_CONNECTIONS,
 				e.MAX_DISTANCE, 

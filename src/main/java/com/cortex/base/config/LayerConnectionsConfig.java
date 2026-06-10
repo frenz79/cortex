@@ -3,6 +3,7 @@ package com.cortex.base.config;
 import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Commons;
 import com.cortex.brain.layers.Layer;
 
 public class LayerConnectionsConfig {
@@ -10,7 +11,7 @@ public class LayerConnectionsConfig {
 	public int MAX_CONNECTIONS;
 	public float MAX_DISTANCE;
 	public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG;
-	public Predicate<AbstractNeuron> NEURON_FILTER_PREDICATE = n -> true;
+	public Predicate<AbstractNeuron> NEURON_FILTER_PREDICATE = Commons.ALWAYS_CONNECT_PREDICATE;
 	public Layer SOURCE_LAYER;
 	public Layer TARGET_LAYER;
 	public long BASE_SPEED;
