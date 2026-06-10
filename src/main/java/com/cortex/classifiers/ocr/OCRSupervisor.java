@@ -38,12 +38,10 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 	    );
 	    
 	    float reward = (correct)?1.0f:-1.0f;
-	    for (SynapseBranch sb : expected.getSynapseBranches()) {
-	    	if (sb.incoming) {
-		    	for ( Synapse s : sb.synapses ) {
-		    		s.applyReward(reward, now, neuromod);
-		    	}
-	    	}
+	    for (SynapseBranch sb : expected.getInSynapseBranches()) {
+		   	for ( Synapse s : sb.synapses ) {
+		   		s.applyReward(reward, now, neuromod);
+		   	}
 	    }
 	    /*
 	    // reward globale (consuma eligibility)

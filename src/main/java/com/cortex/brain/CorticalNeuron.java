@@ -16,34 +16,34 @@ public class CorticalNeuron extends AbstractNeuron {
 	private long lastProcessTime = System.nanoTime();
 	private long lastSpikeTime = 0l;
 	private float potential = 0;
-	
+
 	private final CorticalNeuronsConfig config;
 
 	public CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position, int maxLayers) {
 		super(layerId, 
-			  index, 
-			  hasIncoming, 
-			  hasOutgoing, 
-			  inhibitor, 
-			  position,
-			  maxLayers
-		);
+				index, 
+				hasIncoming, 
+				hasOutgoing, 
+				inhibitor, 
+				position,
+				maxLayers
+				);
 		this.config = neuronsConfig;
 	}
 
 	// Decadimento lineare verso il potenziale di riposo
 	private void computeDecay( double deltaTimeNanos ) {
 		if (potential == config.POTENTIAL_ZERO) return;
-	    double delta = config.REPOLARIZATION_PER_NANOS * deltaTimeNanos;
-	    if (potential > config.POTENTIAL_ZERO) {
-	        potential -= delta;
-	        if (potential < config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
-	    } else {
-	        potential += delta;
-	        if (potential > config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
-	    }
+		double delta = config.REPOLARIZATION_PER_NANOS * deltaTimeNanos;
+		if (potential > config.POTENTIAL_ZERO) {
+			potential -= delta;
+			if (potential < config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
+		} else {
+			potential += delta;
+			if (potential > config.POTENTIAL_ZERO) potential = config.POTENTIAL_ZERO;
+		}
 	}
-	
+
 	/**
 	 * returns:
 	 * 	null if no spike has been produced
@@ -51,17 +51,17 @@ public class CorticalNeuron extends AbstractNeuron {
 	 *  a new Spike if a fire will occurr
 	 */
 	private boolean integrateInputAndFire(long now, Spike spike, Synapse synapse) {
-        synapse.onPreSpike(now);
-	    float spikeIntensity = synapse.getWeight() * spike.amplitude();
-	    potential += spike.getSign() * spikeIntensity;
-	    if ( potential > config.FIRING_THRESHOLD) {
-		    lastSpikeTime = now;
-		    potential = config.POTENTIAL_ZERO;
-		    return true;
-	    }
-	    return false;
+		synapse.onPreSpike(now);
+		float spikeIntensity = synapse.getWeight() * spike.amplitude();
+		potential += spike.getSign() * spikeIntensity;
+		if ( potential > config.FIRING_THRESHOLD) {
+			lastSpikeTime = now;
+			potential = config.POTENTIAL_ZERO;
+			return true;
+		}
+		return false;
 	}
-	
+
 	/**
 	 * Called by Thinker Neurons thread loop:
 	 * - For each incoming synapse
@@ -72,71 +72,67 @@ public class CorticalNeuron extends AbstractNeuron {
 	 */	
 	@Override
 	public boolean process(long now) throws InterruptedException {
-	    long deltaTimeNanos = now - lastProcessTime;
-	    computeDecay(deltaTimeNanos);
+		long deltaTimeNanos = now - lastProcessTime;
+		computeDecay(deltaTimeNanos);
 
-	    boolean[] fired = new boolean[] {false};
-	    boolean stayActive = false;
-	    boolean inRefractory = (now - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
+		boolean[] fired = new boolean[] {false};
+		boolean stayActive = false;
+		boolean inRefractory = (now - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
 
-	    // 1. Process ONLY synapses that have spikes
-	    for (SynapseBranch synapseBranch : getSynapseBranches()) {
-	    	if (synapseBranch.incoming) {
-	    		for ( Synapse synapse : synapseBranch.synapses ) {
-	    			// Fast check: skip empty synapses
-	    	        if (!synapse.isEmpty()) {
-	    		        stayActive = true;
-	    		        synapse.forEachSpike(now, spike -> {
-	    		            boolean fire = integrateInputAndFire(now, spike, synapse);
-	    		            if (fire && !inRefractory) {
-	    		                fired[0] = true;
-	    		            }
-	    		        });
-	    		        // Update ONLY synapses that had spikes or are active
-	    		        synapse.update(deltaTimeNanos);
-	    	        }
-	    		}
-	    	}	       
-	    }
+		// 1. Process ONLY synapses that have spikes
+		for (SynapseBranch synapseBranch : getInSynapseBranches()) {
+			for ( Synapse synapse : synapseBranch.synapses ) {
+				// Fast check: skip empty synapses
+				if (synapse.isEmpty()) continue;
 
-	    // 2. If neuron fires, notify ONLY synapses that had pre/post pairing
-	    if (fired[0]) {
-	        fire(now, isInhibitor());
-	        for (SynapseBranch synapseBranch : getSynapseBranches()) {
-		    	if (synapseBranch.incoming) {
-		    		for ( Synapse synapse : synapseBranch.synapses ) {
-			            if (synapse.wasFrequentlyActiveInLastWindow()) {
-			                synapse.onPostSpike(now, now);
-			            }
-		    		}
-		    	}
-	        }
-	    }
-	    
-	    potential = Maths.clamp(
-	        potential,
-	        config.POTENTIAL_MIN,
-	        config.POTENTIAL_MAX
-	    );
-	    
-	    lastProcessTime = now;
-	    return stayActive;
+				stayActive = true;
+				synapse.forEachSpike(now, spike -> {
+					boolean fire = integrateInputAndFire(now, spike, synapse);
+					if (fire && !inRefractory) {
+						fired[0] = true;
+					}
+				});
+				// Update ONLY synapses that had spikes or are active
+				synapse.update(deltaTimeNanos);
+			}	       
+		}
+
+		// 2. If neuron fires, notify ONLY synapses that had pre/post pairing
+		if (fired[0]) {
+			fire(now, isInhibitor());
+			for (SynapseBranch synapseBranch : getInSynapseBranches()) {
+				for ( Synapse synapse : synapseBranch.synapses ) {
+					if (synapse.wasFrequentlyActiveInLastWindow()) {
+						synapse.onPostSpike(now, now);
+					}
+				}
+			}
+		}
+
+		potential = Maths.clamp(
+				potential,
+				config.POTENTIAL_MIN,
+				config.POTENTIAL_MAX
+				);
+
+		lastProcessTime = now;
+		return stayActive;
 	}
-	
+
 	// continuous/exponential decay based on elapsed time 
 	public float getRecentFiringRate(long now) {
-	    long dt = now - state.lastRateUpdate;
-	    if (dt <= 0) return state.firingRate;
-	    
-	    // Temporal normalization
-	    double windows = (double) dt / config.RATE_WINDOW_NANOS;
-	    state.firingRate *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
-	    	    
-	    // Avoid negative or too small values
-	    if (state.firingRate < 0 || state.firingRate < 1e-6f) {
-	    	state.firingRate = 0;
-	    }
-	    state.lastRateUpdate = now;
-	    return state.firingRate;
+		long dt = now - state.lastRateUpdate;
+		if (dt <= 0) return state.firingRate;
+
+		// Temporal normalization
+		double windows = (double) dt / config.RATE_WINDOW_NANOS;
+		state.firingRate *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
+
+		// Avoid negative or too small values
+		if (state.firingRate < 0 || state.firingRate < 1e-6f) {
+			state.firingRate = 0;
+		}
+		state.lastRateUpdate = now;
+		return state.firingRate;
 	}
 }

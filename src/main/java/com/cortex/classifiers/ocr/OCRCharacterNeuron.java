@@ -36,24 +36,22 @@ public class OCRCharacterNeuron extends AbstractNeuron {
 
 	public float scoreSpikes(long wnd, long now) {
 		AtomicDouble score = new AtomicDouble(0.0);
-		 for (SynapseBranch synapseBranch : getSynapseBranches()) {
-		    	if (synapseBranch.incoming) {
-		    		for ( Synapse synapse : synapseBranch.synapses ) {
-						Consumer<Spike> spikesConsumer = spike -> {
-							try {
-								score.addAndGet(spike.signedAmplitude());
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						};
-						synapse.forEachSpike(now, spikesConsumer);
+		for (SynapseBranch synapseBranch : getInSynapseBranches()) {
+			for ( Synapse synapse : synapseBranch.synapses ) {
+				Consumer<Spike> spikesConsumer = spike -> {
+					try {
+						score.addAndGet(spike.signedAmplitude());
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-		    	}
-		 }
+				};
+				synapse.forEachSpike(now, spikesConsumer);
+			}
+		}
 
 		float ret = score.floatValue();
 
-        lastScoreTime = now;
+		lastScoreTime = now;
 		recentScore += ret;		
 		return ret;
 	}

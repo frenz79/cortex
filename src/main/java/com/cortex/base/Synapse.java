@@ -136,11 +136,11 @@ public final class Synapse implements IPlasticSynapse {
 				:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory())
 		);
 		if (srcNeuron.getLayerId()==toNeuron.getLayerId()) {
-			toNeuron.addSynapse( s, true, near);
-			srcNeuron.addSynapse( s, false, near); 
+			toNeuron.addSynapse( s, false, near);
+			srcNeuron.addSynapse( s, true, near); 
 		} else {
-			toNeuron.addSynapse( s, true, srcNeuron.getLayerId());
-			srcNeuron.addSynapse( s, false, toNeuron.getLayerId()); 
+			toNeuron.addSynapse( s, false, srcNeuron.getLayerId());
+			srcNeuron.addSynapse( s, true, toNeuron.getLayerId()); 
 		}
 	}
 

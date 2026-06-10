@@ -62,8 +62,10 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 		
 	private List<Synapse>[] synapsesBranchesTmp;
-	private final SynapseBranch[] synapsesBranches;
-
+	private SynapseBranch[] synapsesBranches;
+	private SynapseBranch[] incomingBranches;
+	private SynapseBranch[] outgoingBranches;
+	
 	public AbstractNeuron(int layerId, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position, int maxLayers) {
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
@@ -80,13 +82,21 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 
 	public void compact() {
-		final var type = new Synapse[]{};
-		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-			this.synapsesBranches[i] = new SynapseBranch( 
-				synapsesBranchesTmp[i].toArray(type),
-				isIncomingBranch(i)
-			);
+		List<SynapseBranch> in = new ArrayList<>();
+		List<SynapseBranch> out = new ArrayList<>();
+
+		for (int i = 0; i < synapsesBranchesTmp.length; i++) {
+		    Synapse[] arr = synapsesBranchesTmp[i].toArray(new Synapse[0]);
+		    SynapseBranch b = new SynapseBranch(arr, isIncomingBranch(i));
+
+		    if (b.incoming) in.add(b);
+		    else out.add(b);
+
+		    synapsesBranches[i] = b;
 		}
+
+		incomingBranches = in.toArray(new SynapseBranch[0]);
+		outgoingBranches = out.toArray(new SynapseBranch[0]);
 		Arrays.fill(synapsesBranchesTmp, null);
 		this.synapsesBranchesTmp = null;
 	}
@@ -169,8 +179,16 @@ public abstract class AbstractNeuron implements IProcessable {
 		state.isActive = isActive;
 	}
 
-	public final SynapseBranch[] getSynapseBranches() {
+	public final SynapseBranch[] getAllSynapseBranches() {
 		return synapsesBranches;
+	}
+	
+	public final SynapseBranch[] getInSynapseBranches() {
+		return incomingBranches;
+	}
+	
+	public final SynapseBranch[] getOutSynapseBranches() {
+		return outgoingBranches;
 	}
 
 	@Override
@@ -213,35 +231,37 @@ public abstract class AbstractNeuron implements IProcessable {
 	// Called only at build time
 	public int getInSynapsesCount() {
 		int count = 0;
-		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-			if (isIncomingBranch(i)){
-				count += synapsesBranchesTmp[i].size();
+		if (synapsesBranchesTmp!=null) {
+			for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+				if (isIncomingBranch(i)){
+					count += synapsesBranchesTmp[i].size();
+				}
+			}
+		} else {
+			for (SynapseBranch sb : synapsesBranches) {
+				if (sb.incoming) {
+					count += sb.synapses.length;
+				}
 			}
 		}
-		/*
-		for (SynapseBranch sb : synapsesBranches) {
-			if (sb.incoming) {
-				count += sb.synapses.length;
-			}
-		}
-		*/
 		return count;
 	}
 	// Called only at build time
 	public int getOutSynapsesCount() {
 		int count = 0;
-		for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-			if (!isIncomingBranch(i)){
-				count += synapsesBranchesTmp[i].size();
+		if (synapsesBranchesTmp!=null) {
+			for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
+				if (!isIncomingBranch(i)){
+					count += synapsesBranchesTmp[i].size();
+				}
+			}
+		} else {
+			for (SynapseBranch sb : synapsesBranches) {
+				if (!sb.incoming) {
+					count += sb.synapses.length;
+				}
 			}
 		}
-		/*
-		for (SynapseBranch sb : synapsesBranches) {
-			if (!sb.incoming) {
-				count += sb.synapses.length;
-			}
-		}
-		*/
 		return count;
 	}
 }

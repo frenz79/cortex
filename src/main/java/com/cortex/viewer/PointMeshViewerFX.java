@@ -128,7 +128,7 @@ public class PointMeshViewerFX extends Application {
 			showNeuronSpatialCell = v;
 			// repaint();
 		});
-		
+
 		BorderPane pane = new BorderPane(subScene);
 		pane.setLeft(panel);
 
@@ -275,52 +275,50 @@ public class PointMeshViewerFX extends Application {
 		synapseLines.getChildren().clear();
 		Point3D b = neuronToLocal(n);
 		if (showInputSynapses) {
-			for (SynapseBranch sb : n.getSynapseBranches()) {
-				if (sb.incoming) {
-					for ( Synapse s : sb.synapses ) {
-						if (s.getSource()!=null && s.getSource().getPosition()!=null) {
-							Point3D a = neuronToLocal(s.getSource());
-							Node line = makeConnection(a, b, Color.YELLOW);
-							synapseLines.getChildren().add(line);
-						}
+			for (SynapseBranch sb : n.getInSynapseBranches()) {
+				for ( Synapse s : sb.synapses ) {
+					if (s.getSource()!=null && s.getSource().getPosition()!=null) {
+						Point3D a = neuronToLocal(s.getSource());
+						Node line = makeConnection(a, b, Color.YELLOW);
+						synapseLines.getChildren().add(line);
 					}
 				}
+
 			}
 		}
 		if (showOutputSynapses) {
-			for (SynapseBranch sb : n.getSynapseBranches()) {
-				if (!sb.incoming) {
-					for ( Synapse s : sb.synapses ) {
-						if (s.getTarget()!=null && s.getTarget().getPosition()!=null) {
-							Point3D a = neuronToLocal(s.getTarget());
-							Node line = makeConnection(a, b, Color.BLUE);
-							synapseLines.getChildren().add(line);
-						}
+			for (SynapseBranch sb : n.getOutSynapseBranches()) {
+				for ( Synapse s : sb.synapses ) {
+					if (s.getTarget()!=null && s.getTarget().getPosition()!=null) {
+						Point3D a = neuronToLocal(s.getTarget());
+						Node line = makeConnection(a, b, Color.BLUE);
+						synapseLines.getChildren().add(line);
 					}
 				}
+
 			}
 		}
 	}
-	
+
 	private void highlightSpatialCell(AbstractNeuron hit) {
 		if (!showNeuronSpatialCell) return;
-		
+
 		Layer layer = brain.getLayer(hit.getLayerId());
 		IntList cell = layer.getSpatialHashCell(hit);
-		
+
 		PhongMaterial mat = new PhongMaterial(Color.YELLOWGREEN);
-		
+
 		for (int i : cell.getData()) {
 			AbstractNeuron n = layer.getNeurons()[i];
-			
+
 			Point3f p = n.getPosition();
-	
+
 			Sphere sphere = new Sphere(0.01);
 			sphere.setMaterial(mat);
 			sphere.setTranslateX(-p.x());
 			sphere.setTranslateY(p.y());
 			sphere.setTranslateZ(p.z());
-			
+
 			neuronSpheres.add(sphere);
 			root3d.getChildren().add(sphere);	
 		}		
@@ -407,23 +405,21 @@ public class PointMeshViewerFX extends Application {
 	private void buildSensorNeuronSpheres() {
 		for (AbstractNeuron[] nn : retina.getNeurons()) {
 			for (AbstractNeuron n : nn) {
-				for (SynapseBranch sb : n.getSynapseBranches()) {
-					if (!sb.incoming) {
-						for ( Synapse s : sb.synapses ) {
-							Point3f p = s.getTarget().getPosition();
-			
-							Sphere sphere = new Sphere(0.01);
-							sphere.setTranslateX(-p.x());
-							sphere.setTranslateY(p.y());
-							sphere.setTranslateZ(p.z());
-					
-							neuronSpheres.add(sphere);
-							root3d.getChildren().add(sphere);
-						}
+				for (SynapseBranch sb : n.getOutSynapseBranches()) {
+					for ( Synapse s : sb.synapses ) {
+						Point3f p = s.getTarget().getPosition();
+
+						Sphere sphere = new Sphere(0.01);
+						sphere.setTranslateX(-p.x());
+						sphere.setTranslateY(p.y());
+						sphere.setTranslateZ(p.z());
+
+						neuronSpheres.add(sphere);
+						root3d.getChildren().add(sphere);
 					}
 				}	
 			}			
 		}
 	}	
-	
+
 }

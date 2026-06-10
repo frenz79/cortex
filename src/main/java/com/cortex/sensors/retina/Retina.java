@@ -18,7 +18,7 @@ import com.cortex.commons.modules.ISensor;
 public class Retina implements ISensor {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
-	
+
 	private static final String SENSOR_ID = "RETINA";
 
 	private final RetinaConfig retinaConfig;
@@ -65,18 +65,15 @@ public class Retina implements ISensor {
 				if (c > 0) {
 					List<Float> spikesAmplitude = retinaNeurons[x][y].drainSpikes();
 					for (Float amplitude : spikesAmplitude) {
-						 for (SynapseBranch synapseBranch : retinaNeurons[x][y].getSynapseBranches()) {
-						    	if (!synapseBranch.incoming) {
-						    		for ( Synapse synapse : synapseBranch.synapses ) {
-						    			logger.debug("Retina firing to:{}", synapse);
-										// No real delay, "ideal source"
-						    			synapse.addSpike(
-											Spike.createWithJitter(amplitude, (amplitude<0), now)
-										);
-						    			
-						    		}
-						    	}
-						 }
+						for (SynapseBranch synapseBranch : retinaNeurons[x][y].getOutSynapseBranches()) {
+							for ( Synapse synapse : synapseBranch.synapses ) {
+								logger.debug("Retina firing to:{}", synapse);
+								// No real delay, "ideal source"
+								synapse.addSpike(
+									Spike.createWithJitter(amplitude, (amplitude<0), now)
+								);
+							}
+						}
 					}
 				}
 			}

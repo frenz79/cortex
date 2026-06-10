@@ -3,6 +3,8 @@ package com.cortex.brain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +17,10 @@ import com.cortex.brain.layers.Layer;
 import com.cortex.brain.layers.MultiLayer;
 import com.cortex.brain.layers.SphericalLayer;
 import com.cortex.commons.Point3f;
+import com.cortex.commons.modules.IActuator;
+import com.cortex.commons.modules.IClassifier;
+import com.cortex.commons.modules.ISensor;
+import com.cortex.commons.modules.ISupervisor;
 
 public class Brain extends MultiLayer<SphericalLayer>{
 
@@ -32,6 +38,11 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnectionsConfig> layersConnConfigs = new ArrayList<>();
 
+	private final List<ISensor> sensors;
+	private final List<IActuator> actuators;
+	private final List<IClassifier<?>> classifiers;
+	private final List<ISupervisor<?>> supervisors;
+	
 	public class CorticalNeuronFactory {
 
 		private final List<LayerConfig> configs;
@@ -99,6 +110,11 @@ public class Brain extends MultiLayer<SphericalLayer>{
 	}
 
 	Brain() {
+		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
+		this.sensors = new CopyOnWriteArrayList<>();
+		this.actuators = new CopyOnWriteArrayList<>();
+		this.classifiers = new CopyOnWriteArrayList<>();
+		this.supervisors = new CopyOnWriteArrayList<>();
 	}
 
 	Brain build() {
@@ -112,8 +128,29 @@ public class Brain extends MultiLayer<SphericalLayer>{
 
 	public void compact() {
 		logger.info("Compacting cortical neurons");
-		for( CorticalNeuron n : this.neurons ) {
+		for( AbstractNeuron n : this.neurons ) {
 			n.compact();
+		}
+		for (ISensor s : sensors ) {
+			for( AbstractNeuron[] n1 : s.getNeurons() ) {
+				for( AbstractNeuron n : n1 ) {
+					n.compact();
+				}
+			}
+		}
+		for (IClassifier<?> s : classifiers ) {
+			for( AbstractNeuron[] n1 : s.getNeurons() ) {
+				for( AbstractNeuron n : n1 ) {
+					n.compact();
+				}
+			}
+		}
+		for (IActuator s : actuators ) {
+			for( AbstractNeuron[] n1 : s.getNeurons() ) {
+				for( AbstractNeuron n : n1 ) {
+					n.compact();
+				}
+			}
 		}
 	}
 
@@ -157,5 +194,41 @@ public class Brain extends MultiLayer<SphericalLayer>{
 
 	public AbstractNeuron[] getAllNeurons() {
 		return neurons;
+	}
+	
+	public void attachSensor(ISensor s) {
+		logger.info("Sensor attached:{}",s );
+		this.sensors.add(Objects.requireNonNull(s));
+	}
+
+	public void attachActuator(IActuator a) {
+		logger.info("Actuator attached:{}",a );
+		this.actuators.add(Objects.requireNonNull(a));
+	}
+
+	public void attachClassifier(IClassifier<?> c) {
+		logger.info("Classifier attached:{}",c );
+		this.classifiers.add(Objects.requireNonNull(c));
+	}
+
+	public void attachSupervisor(ISupervisor<?> s) {
+		logger.info("Supervisor attached:{}", s );
+		this.supervisors.add(Objects.requireNonNull(s));
+	}
+
+	public List<ISensor> getSensors() {
+		return sensors;
+	}
+
+	public List<IActuator> getActuators() {
+		return actuators;
+	}
+
+	public List<IClassifier<?>> getClassifiers() {
+		return classifiers;
+	}
+
+	public List<ISupervisor<?>> getSupervisors() {
+		return supervisors;
 	}
 }

@@ -48,14 +48,12 @@ public class Lidar implements ISensor {
             if (c > 0) {
                 List<Float> spikesAmplitude = neurons[i].drainSpikes();
                 for (Float amplitude : spikesAmplitude) {
-                	for (SynapseBranch sb : neurons[i].getSynapseBranches()) {
-                		if (!sb.incoming) {
-                			for ( Synapse s : sb.synapses ) {
-                				// No real delay, "ideal source"
-        						s.addSpike(
-        							Spike.createWithJitter(amplitude, (amplitude<0), now)
-        						);
-                			}
+                	for (SynapseBranch sb : neurons[i].getOutSynapseBranches()) {
+                		for ( Synapse s : sb.synapses ) {
+                			// No real delay, "ideal source"
+        					s.addSpike(
+        						Spike.createWithJitter(amplitude, (amplitude<0), now)
+        					);
                 		}
                 	}                	
 				}

@@ -179,12 +179,11 @@ public class Boostrap {
 		// =======================================================================================
 		// This is the main processing loop
 		NeuralEngine engine = new NeuralEngine( brain, new NeuralEngineConfig() );
-		engine.attachSensor( retina );
-		engine.attachClassifier( ocrSupervisor.getClassifier() );
-		engine.attachSupervisor( ocrSupervisor );
 		engine.withMetricsRecorder( metricsRecorder );
 
-		
+		brain.attachSensor( retina );
+		brain.attachClassifier( ocrSupervisor.getClassifier() );
+		brain.attachSupervisor( ocrSupervisor );
 		brain.compact();
 		
 		CountDownLatch keepAlive = new CountDownLatch(1);

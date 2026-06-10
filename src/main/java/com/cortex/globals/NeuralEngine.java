@@ -1,15 +1,12 @@
 package com.cortex.globals;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.locks.LockSupport;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,12 +35,6 @@ public class NeuralEngine {
 	}
 
 	private final NeuralEngineConfig config;
-
-	private final List<ISensor> sensors;
-	private final List<IActuator> actuators;
-	private final List<IClassifier<?>> classifiers;
-	private final List<ISupervisor<?>> supervisors;
-
 	private final ScheduledExecutorService scheduler;
 
 	private Thread neuronThread;
@@ -56,13 +47,6 @@ public class NeuralEngine {
 	public NeuralEngine(Brain brain, NeuralEngineConfig config ) {
 		this.brain = Objects.requireNonNull(brain);
 		this.config = Objects.requireNonNull(config);
-
-		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
-		this.sensors = new CopyOnWriteArrayList<>();
-		this.actuators = new CopyOnWriteArrayList<>();
-		this.classifiers = new CopyOnWriteArrayList<>();
-		this.supervisors = new CopyOnWriteArrayList<>();
-
 		// single-thread scheduler is fine; increase pool size if tasks are heavy
 		this.scheduler = Executors.newSingleThreadScheduledExecutor();
 	}
@@ -130,17 +114,17 @@ public class NeuralEngine {
 		Runnable ioRunnable = () -> {
 			long now = now();
 			try {
-				for (ISensor s : sensors) {
+				for (ISensor s : brain.getSensors()) {
 					if (s.isActive() && (now - s.getLastProcessTime()) > s.getWaitTimeNanos()) {
 						s.process(now);
 					}
 				}
-				for (IActuator a : actuators) {
+				for (IActuator a : brain.getActuators()) {
 					if (a.isActive() && (now - a.getLastProcessTime()) > a.getWaitTime()) {
 						a.process(now);
 					}
 				}
-				for (IClassifier<?> c : classifiers) {
+				for (IClassifier<?> c : brain.getClassifiers()) {
 					try {
 						AbstractNeuron result = c.classify(now);
 						if (result != null) {
@@ -150,7 +134,7 @@ public class NeuralEngine {
 						logger.error("Handled Exception:",ex);
 					}
 				}
-				for (ISupervisor<?> s : supervisors) {
+				for (ISupervisor<?> s : brain.getSupervisors()) {
 					try {
 						s.process(now);
 					} catch (Exception ex) {
@@ -217,25 +201,5 @@ public class NeuralEngine {
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 		}
-	}
-
-	public void attachSensor(ISensor s) {
-		logger.info("Sensor attached:{}",s );
-		this.sensors.add(Objects.requireNonNull(s));
-	}
-
-	public void attachActuator(IActuator a) {
-		logger.info("Actuator attached:{}",a );
-		this.actuators.add(Objects.requireNonNull(a));
-	}
-
-	public void attachClassifier(IClassifier<?> c) {
-		logger.info("Classifier attached:{}",c );
-		this.classifiers.add(Objects.requireNonNull(c));
-	}
-
-	public void attachSupervisor(ISupervisor<?> s) {
-		logger.info("Supervisor attached:{}", s );
-		this.supervisors.add(Objects.requireNonNull(s));
 	}
 }
