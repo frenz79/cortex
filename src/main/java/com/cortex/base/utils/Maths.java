@@ -1,4 +1,4 @@
-package com.cortex.commons;
+package com.cortex.base.utils;
 
 import java.util.concurrent.ThreadLocalRandom;
 

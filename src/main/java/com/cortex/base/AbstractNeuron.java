@@ -2,17 +2,18 @@ package com.cortex.base;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.AbstractNeuron.SynapseBranch;
-import com.cortex.brain.CorticalNeuron;
-import com.cortex.commons.IProcessable;
-import com.cortex.commons.Point3f;
+import com.cortex.base.lateralinhibition.ContinuousInhibition;
+import com.cortex.base.lateralinhibition.ILateralInhibitionStrategy;
+import com.cortex.base.lateralinhibition.NormalizedBranchInhibition;
+import com.cortex.base.lateralinhibition.WinnerTakeMostInhibition;
+import com.cortex.base.utils.Point3f;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 
@@ -33,28 +34,53 @@ public abstract class AbstractNeuron implements IProcessable {
 	private final Point3f position;	
 	private final boolean inhibitor;
 	private final int spikeSign;
-
+	protected final Map<BranchType,ILateralInhibitionStrategy> inhibitionStrategies = new EnumMap<>(BranchType.class);
 	protected final NeuronState state = new NeuronState();
 
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
-
+	
+	public enum BranchType {
+	    NEAR,
+	    FAR,
+	    LAYER_FEEDFORWARD,
+	    LAYER_FEEDBACK
+	}
+	
 	public static final class SynapseBranch {
 		public final Synapse[] synapses;
 		public final boolean incoming;
-		public SynapseBranch(Synapse[] synapses, boolean incoming) {
+		public final BranchType type;
+		
+		public SynapseBranch(Synapse[] synapses, boolean incoming, BranchType type) {
 			super();
 			this.synapses = synapses;
 			this.incoming = incoming;
+			this.type = type;
 		}
 
-		// Stato dinamico del branch
-		public float branchPotential;      // somma pesata degli input
-		public float branchActivity;       // attività recente (decadimento)
-		public float inhibition;           // livello di inibizione laterale
-		public float gain = 1.0f;          // modulazione del branch
+		// Branch dynamic state
+		public float branchPotential;      // Weighted input sum
+		public float branchActivity;       // Recent activity (for decay)
+		public float inhibition;           // Lateral inhibition level
+		public float gain = 1.0f;          // Branch modulator
 	}
 
+	protected Map<BranchType, List<SynapseBranch>> groupBranchesByType() {
+
+	    Map<BranchType, List<SynapseBranch>> map = new EnumMap<>(BranchType.class);
+
+	    for (SynapseBranch b : incomingBranches) {
+	        map.computeIfAbsent(b.type, k -> new ArrayList<>()).add(b);
+	    }
+
+	    for (SynapseBranch b : outgoingBranches) {
+	        map.computeIfAbsent(b.type, k -> new ArrayList<>()).add(b);
+	    }
+
+	    return map;
+	}
+	
 	// 0 = in near
 	// 1 = in far
 	// 2 = out near
@@ -87,26 +113,72 @@ public abstract class AbstractNeuron implements IProcessable {
 			this.synapsesBranchesTmp[i] = new ArrayList<>();
 		}
 		this.synapsesBranches = new SynapseBranch[ branchesCount ];
+		
+		inhibitionStrategies.put(
+			    BranchType.NEAR,
+			    new WinnerTakeMostInhibition(cfg.wtaNear)
+			);
+
+			inhibitionStrategies.put(
+			    BranchType.FAR,
+			    new ContinuousInhibition(cfg.continuousFar)
+			);
+
+			inhibitionStrategies.put(
+			    BranchType.LAYER_FEEDFORWARD,
+			    new NormalizedBranchInhibition(cfg.normalizedFF)
+			);
+
+			inhibitionStrategies.put(
+			    BranchType.LAYER_FEEDBACK,
+			    new ContinuousInhibition(cfg.continuousFB)
+			);
 	}
 
 	public void compact() {
-		List<SynapseBranch> in = new ArrayList<>();
-		List<SynapseBranch> out = new ArrayList<>();
 
-		for (int i = 0; i < synapsesBranchesTmp.length; i++) {
-			Synapse[] arr = synapsesBranchesTmp[i].toArray(new Synapse[0]);
-			SynapseBranch b = new SynapseBranch(arr, isIncomingBranch(i));
+	    List<SynapseBranch> in = new ArrayList<>();
+	    List<SynapseBranch> out = new ArrayList<>();
 
-			if (b.incoming) in.add(b);
-			else out.add(b);
+	    for (int i = 0; i < synapsesBranchesTmp.length; i++) {
 
-			synapsesBranches[i] = b;
-		}
+	        List<Synapse> list = synapsesBranchesTmp[i];
+	        Synapse[] arr = list.toArray(new Synapse[0]);
 
-		incomingBranches = in.toArray(new SynapseBranch[0]);
-		outgoingBranches = out.toArray(new SynapseBranch[0]);
-		Arrays.fill(synapsesBranchesTmp, null);
-		this.synapsesBranchesTmp = null;
+	        boolean incoming = isIncomingBranch(i);
+
+	        if (arr.length > 32) { // TODO: from config
+
+	            // numero di sub-branches
+	            int numSplits = (int) Math.ceil(arr.length / 32.0);
+
+	            for (int s = 0; s < numSplits; s++) {
+
+	                int start = s * 32;
+	                int end = Math.min(start + 32, arr.length);
+
+	                Synapse[] split = Arrays.copyOfRange(arr, start, end);
+
+	                SynapseBranch b = new SynapseBranch(split, incoming);
+
+	                if (incoming) in.add(b);
+	                else out.add(b);
+	            }
+
+	        } else {
+
+	            SynapseBranch b = new SynapseBranch(arr, incoming);
+
+	            if (incoming) in.add(b);
+	            else out.add(b);
+	        }
+	    }
+
+	    incomingBranches = in.toArray(new SynapseBranch[0]);
+	    outgoingBranches = out.toArray(new SynapseBranch[0]);
+
+	    Arrays.fill(synapsesBranchesTmp, null);
+	    synapsesBranchesTmp = null;
 	}
 
 	// Used only at build time

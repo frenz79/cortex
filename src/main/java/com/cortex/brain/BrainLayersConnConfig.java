@@ -6,10 +6,9 @@ import static com.cortex.base.Commons.ONLY_INHIBITOR_CONNECT_PREDICATE;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
-import com.cortex.base.config.InhibitorySynapticPlasticityConfig;
-import com.cortex.base.config.LayerConnectionsConfig;
-import com.cortex.base.config.SynapsePlasticityConfig;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.brain.layers.Layer;
 
 public class BrainLayersConnConfig {

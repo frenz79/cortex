@@ -1,9 +1,9 @@
-package com.cortex.commons.modules;
+package com.cortex.base.modules;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.commons.IProcessable;
-import com.cortex.commons.Maths;
-import com.cortex.commons.Point3f;
+import com.cortex.base.IProcessable;
+import com.cortex.base.utils.Maths;
+import com.cortex.base.utils.Point3f;
 
 public interface ISensor extends IProcessable {
 

@@ -12,12 +12,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.modules.IActuator;
+import com.cortex.base.modules.IClassifier;
+import com.cortex.base.modules.ISensor;
+import com.cortex.base.modules.ISupervisor;
 import com.cortex.brain.Brain;
 import com.cortex.brain.layers.Layer;
-import com.cortex.commons.modules.IActuator;
-import com.cortex.commons.modules.IClassifier;
-import com.cortex.commons.modules.ISensor;
-import com.cortex.commons.modules.ISupervisor;
 import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {

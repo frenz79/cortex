@@ -1,11 +1,14 @@
 package com.cortex.brain;
 
+import java.util.List;
+import java.util.Map;
+
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
-import com.cortex.base.config.CorticalNeuronsConfig;
-import com.cortex.commons.Maths;
-import com.cortex.commons.Point3f;
+import com.cortex.base.lateralinhibition.ILateralInhibitionStrategy;
+import com.cortex.base.utils.Maths;
+import com.cortex.base.utils.Point3f;
 
 /**
  *  Event-driven, analog-spike, delayed, plastic Neuron
@@ -45,10 +48,6 @@ public class CorticalNeuron extends AbstractNeuron {
 	}
 
 	/**
-	 * returns:
-	 * 	null if no spike has been produced
-	 *  the incoming spike if it was not processed
-	 *  a new Spike if a fire will occurr
 	 */
 	private boolean integrateInputAndFire(long now, Spike spike, Synapse synapse) {
 		synapse.onPreSpike(now);
@@ -63,12 +62,6 @@ public class CorticalNeuron extends AbstractNeuron {
 	}
 
 	/**
-	 * Called by Thinker Neurons thread loop:
-	 * - For each incoming synapse
-	 *   - For each spike on the synapse
-	 *     - Integrate all and grab outgoing spikes
-	 *     
-	 * returns TRUE if there's at least one spike not yet arrived
 	 */	
 	@Override
 	public boolean process(long now) throws InterruptedException {
@@ -78,27 +71,68 @@ public class CorticalNeuron extends AbstractNeuron {
 		boolean[] fired = new boolean[] {false};
 		boolean stayActive = false;
 		boolean inRefractory = (now - lastSpikeTime) < config.REFRACTORY_PERIOD_NANOS;
-
+		float somaPotential = 0f;
+		
 		// 1. Process ONLY synapses that have spikes
 		for (SynapseBranch synapseBranch : getInSynapseBranches()) {
+	        // Branch potential reset
+			synapseBranch.branchPotential = 0f;
+	        
 			for ( Synapse synapse : synapseBranch.synapses ) {
 				// Fast check: skip empty synapses
 				if (synapse.isEmpty()) continue;
 
 				stayActive = true;
 				synapse.forEachSpike(now, spike -> {
+					synapseBranch.branchPotential += spike.signedAmplitude();
+					
 					boolean fire = integrateInputAndFire(now, spike, synapse);
 					if (fire && !inRefractory) {
-						fired[0] = true;
+						fired[0] = true;						
 					}
 				});
 				// Update ONLY synapses that had spikes or are active
 				synapse.update(deltaTimeNanos);
-			}	       
-		}
+			}
+			
+	        // Update branch activity with decay
+			synapseBranch.branchActivity = synapseBranch.branchActivity * 0.95f + synapseBranch.branchPotential;
+			// dt / tau
+			float alpha = Maths.clamp((float)deltaTimeNanos / (float)config.BRANCH_GAIN_TAU_NANOS, 0.0f, 1.0f);
+            float error = synapseBranch.branchActivity - config.BRANCH_TARGET_ACTIVITY;
+	        // update gain
+	        synapseBranch.gain += alpha * error;
+	        // clamp
+	        synapseBranch.gain = Maths.clamp(synapseBranch.gain, config.BRANCH_GAIN_MIN, config.BRANCH_GAIN_MAX);
+	        
+	        Map<BranchType, List<SynapseBranch>> groups = groupBranchesByType();
 
+	        for (var entry : groups.entrySet()) {
+
+	            List<SynapseBranch> group = entry.getValue();
+
+	            // no competition if only 1 branch
+	            if (group.size() < 2) continue;
+
+	            ILateralInhibitionStrategy strategy = inhibitionStrategies.get(entry.getKey());
+	            if (strategy != null) {
+	                strategy.updateInhibition(
+	                    group.toArray(new SynapseBranch[0]),
+	                    deltaTimeNanos
+	                );
+	            }
+	        }
+	        	        
+			// Apply lateral inhibition
+	        float inhibited = synapseBranch.branchPotential - synapseBranch.inhibition;
+	        // Apply branch gain
+	        float modulated = inhibited * synapseBranch.gain;
+	        // Accumulate into soma potential
+	        somaPotential += modulated;
+		}
+	    
 		// 2. If neuron fires, notify ONLY synapses that had pre/post pairing
-		if (fired[0]) {
+		if (fired[0] || somaPotential > config.FIRING_THRESHOLD) {
 			fire(now); // just pendingFire = true
 		}
 

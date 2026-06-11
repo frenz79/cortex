@@ -1,6 +1,6 @@
 package com.cortex.viewer;
 
-import com.cortex.commons.Point3f;
+import com.cortex.base.utils.Point3f;
 
 import javafx.geometry.Point3D;
 import javafx.scene.Group;

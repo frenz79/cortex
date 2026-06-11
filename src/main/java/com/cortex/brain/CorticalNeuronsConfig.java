@@ -1,8 +1,8 @@
-package com.cortex.base.config;
+package com.cortex.brain;
 
 import java.util.concurrent.TimeUnit;
 
-public class CorticalNeuronsConfig implements INeuronConfig{
+public class CorticalNeuronsConfig {
 
 	public int MAX_FAN_IN = 250;
 	public int MAX_FAN_OUT = 250;
@@ -16,6 +16,13 @@ public class CorticalNeuronsConfig implements INeuronConfig{
 	public long  RATE_WINDOW_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
 	public float RATE_DECAY_PER_WINDOW = 0.95f; // per RATE_WINDOW
 
+	public float BRANCH_TARGET_ACTIVITY = 0.2f;
+	public float BRANCH_GAIN_MIN = 0.1f;
+	public float BRANCH_GAIN_MAX = 3.0f;
+	public long  BRANCH_GAIN_TAU_NANOS = 50_000_000L; // 50 ms
+	
+	public int MAX_SYNAPSES_PER_BRANCH = 32;
+	
 	public static Builder newBuilder() {
 		return new Builder();
 	}	

@@ -3,12 +3,12 @@ package com.cortex.globals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.config.CorticalNeuronsConfig;
-import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
-import com.cortex.base.config.LayerConfig;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.utils.Maths;
 import com.cortex.brain.Brain;
+import com.cortex.brain.CorticalNeuronsConfig;
 import com.cortex.brain.layers.Layer;
-import com.cortex.commons.Maths;
+import com.cortex.brain.layers.LayerConfig;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.metrics.LayerStats;

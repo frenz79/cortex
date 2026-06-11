@@ -1,9 +1,10 @@
-package com.cortex.base.config;
+package com.cortex.brain;
 
 import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Commons;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.brain.layers.Layer;
 
 public class LayerConnectionsConfig {

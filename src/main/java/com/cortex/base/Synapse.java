@@ -2,17 +2,18 @@ package com.cortex.base;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.config.SynapsePlasticityConfig;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityRule;
+import com.cortex.base.plasticity.IPlasticSynapse;
+import com.cortex.base.plasticity.IPlasticityRule;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityRule;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
+import com.cortex.base.utils.Maths;
 import com.cortex.brain.layers.Layer.Neighbor;
-import com.cortex.commons.IPlasticSynapse;
-import com.cortex.commons.IPlasticityRule;
-import com.cortex.commons.Maths;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.globals.EventBus.SynapseSpikedData;

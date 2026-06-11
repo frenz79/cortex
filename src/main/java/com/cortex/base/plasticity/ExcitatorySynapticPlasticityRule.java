@@ -1,8 +1,7 @@
-package com.cortex.base;
+package com.cortex.base.plasticity;
 
-import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
-import com.cortex.commons.IPlasticityRule;
-import com.cortex.commons.Maths;
+import com.cortex.base.Synapse;
+import com.cortex.base.utils.Maths;
 
 public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 

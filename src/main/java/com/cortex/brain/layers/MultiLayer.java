@@ -8,8 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.config.LayerConfig;
-import com.cortex.base.config.LayerConnectionsConfig;
+import com.cortex.brain.LayerConnectionsConfig;
 
 public abstract class MultiLayer<L extends Layer> {
 

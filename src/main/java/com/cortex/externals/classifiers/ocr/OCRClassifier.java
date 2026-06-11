@@ -1,8 +1,8 @@
 package com.cortex.externals.classifiers.ocr;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.commons.Point3f;
-import com.cortex.commons.modules.IClassifier;
+import com.cortex.base.modules.IClassifier;
+import com.cortex.base.utils.Point3f;
 
 public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 	

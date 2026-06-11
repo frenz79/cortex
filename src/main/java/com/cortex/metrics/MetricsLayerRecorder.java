@@ -10,9 +10,9 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
-import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.utils.Maths;
 import com.cortex.brain.layers.Layer;
-import com.cortex.commons.Maths;
 import com.cortex.globals.EventBus.SynapseUpdatedData;
 
 public class MetricsLayerRecorder {

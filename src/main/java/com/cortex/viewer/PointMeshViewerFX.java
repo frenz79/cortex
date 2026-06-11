@@ -9,12 +9,12 @@ import java.util.Set;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.AbstractNeuron.SynapseBranch;
+import com.cortex.base.modules.ISensor;
+import com.cortex.base.utils.IntList;
+import com.cortex.base.utils.Point3f;
 import com.cortex.base.Synapse;
 import com.cortex.brain.Brain;
 import com.cortex.brain.layers.Layer;
-import com.cortex.commons.IntList;
-import com.cortex.commons.Point3f;
-import com.cortex.commons.modules.ISensor;
 
 import javafx.application.Application;
 import javafx.geometry.Point3D;

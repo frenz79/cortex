@@ -16,15 +16,14 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
-import com.cortex.base.config.LayerConfig;
-import com.cortex.base.config.SynapsePlasticityConfig;
+import com.cortex.base.modules.IClassifier;
+import com.cortex.base.modules.ISensor;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
+import com.cortex.base.utils.IntList;
+import com.cortex.base.utils.Maths;
+import com.cortex.base.utils.Point3f;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.brain.BrainLayersConnConfig.SYNAPSE_SPEED;
-import com.cortex.commons.IntList;
-import com.cortex.commons.Maths;
-import com.cortex.commons.Point3f;
-import com.cortex.commons.modules.IClassifier;
-import com.cortex.commons.modules.ISensor;
 
 public abstract class Layer {
 

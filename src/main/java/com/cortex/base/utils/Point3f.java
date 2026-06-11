@@ -1,4 +1,4 @@
-package com.cortex.commons;
+package com.cortex.base.utils;
 
 public record Point3f (float x, float y, float z) {
 

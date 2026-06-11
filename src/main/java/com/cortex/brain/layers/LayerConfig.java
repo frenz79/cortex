@@ -1,4 +1,4 @@
-package com.cortex.base.config;
+package com.cortex.brain.layers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
+import com.cortex.brain.CorticalNeuronsConfig;
 
 public class LayerConfig {
         

@@ -2,11 +2,10 @@ package com.cortex.brain;
 
 import static com.cortex.base.Commons.ALWAYS_CONNECT_PREDICATE;
 
-import com.cortex.base.config.CorticalNeuronsConfig;
-import com.cortex.base.config.ExcitatorySynapticPlasticityConfig;
-import com.cortex.base.config.InhibitorySynapticPlasticityConfig;
-import com.cortex.base.config.LayerConfig;
-import com.cortex.base.config.SynapsePlasticityConfig;;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
+import com.cortex.brain.layers.LayerConfig;;
 
 public class BrainLayersConfig {
 

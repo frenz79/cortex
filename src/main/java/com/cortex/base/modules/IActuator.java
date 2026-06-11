@@ -1,7 +1,7 @@
-package com.cortex.commons.modules;
+package com.cortex.base.modules;
 
+import com.cortex.base.IProcessable;
 import com.cortex.brain.CorticalNeuron;
-import com.cortex.commons.IProcessable;
 
 public interface IActuator extends IProcessable {
 

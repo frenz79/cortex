@@ -2,7 +2,7 @@ package com.cortex.base;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.cortex.commons.Maths;
+import com.cortex.base.utils.Maths;
 
 public record Spike(
 		float amplitude,

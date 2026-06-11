@@ -1,4 +1,4 @@
-package com.cortex.commons;
+package com.cortex.base.plasticity;
 
 import com.cortex.base.Synapse;
 

@@ -11,9 +11,9 @@ import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
 import com.cortex.base.AbstractNeuron.SynapseBranch;
-import com.cortex.commons.Maths;
-import com.cortex.commons.Point3f;
-import com.cortex.commons.modules.ISensor;
+import com.cortex.base.modules.ISensor;
+import com.cortex.base.utils.Maths;
+import com.cortex.base.utils.Point3f;
 
 public class Retina implements ISensor {
 

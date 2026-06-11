@@ -1,4 +1,4 @@
-package com.cortex.base.config;
+package com.cortex.base.plasticity;
 
 import java.util.concurrent.TimeUnit;
 
