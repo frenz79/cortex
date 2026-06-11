@@ -22,7 +22,7 @@ public class CorticalNeuron extends AbstractNeuron {
 
 	private final CorticalNeuronsConfig config;
 
-	public CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position, int maxLayers) {
+	CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position, int maxLayers) {
 		super(layerId, 
 				index, 
 				hasIncoming, 

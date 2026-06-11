@@ -10,15 +10,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.layers.AbstractLayer;
+import com.cortex.base.layers.LayerConfig;
+import com.cortex.base.layers.MultiLayer;
+import com.cortex.base.layers.SphericalLayer;
 import com.cortex.base.modules.IActuator;
 import com.cortex.base.modules.IClassifier;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.modules.ISupervisor;
 import com.cortex.base.utils.Point3f;
-import com.cortex.brain.layers.Layer;
-import com.cortex.brain.layers.LayerConfig;
-import com.cortex.brain.layers.MultiLayer;
-import com.cortex.brain.layers.SphericalLayer;
 
 public class Brain extends MultiLayer<SphericalLayer>{
 
@@ -186,11 +186,11 @@ public class Brain extends MultiLayer<SphericalLayer>{
 		return l;
 	}
 	
-	public Layer getSensorsTargetLayer() {
+	public AbstractLayer getSensorsTargetLayer() {
 		return getLayer(SENSORS_TARGET_LAYER);
 	}
 
-	public Layer getClassifiersSourceLayer() {
+	public AbstractLayer getClassifiersSourceLayer() {
 		return getLayer(CLASSIFIERS_TARGET_LAYER);
 	}
 

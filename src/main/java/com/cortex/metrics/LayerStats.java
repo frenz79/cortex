@@ -1,9 +1,9 @@
 package com.cortex.metrics;
 
-import com.cortex.brain.layers.Layer;
+import com.cortex.base.layers.AbstractLayer;
 
 public record LayerStats( 
-		Layer layer,
+		AbstractLayer layer,
 		
 		double averageSynapticWeight,
 

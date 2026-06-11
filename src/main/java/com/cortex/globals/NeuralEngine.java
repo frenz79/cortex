@@ -12,12 +12,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.layers.AbstractLayer;
 import com.cortex.base.modules.IActuator;
 import com.cortex.base.modules.IClassifier;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.modules.ISupervisor;
 import com.cortex.brain.Brain;
-import com.cortex.brain.layers.Layer;
 import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {
@@ -144,7 +144,7 @@ public class NeuralEngine {
 				                ? 0
 				                : TimeUnit.NANOSECONDS.toMicros(timeWindow / runsWindow);
 						
-						for (Layer layer : brain.getAllLayers()) {
+						for (AbstractLayer layer : brain.getAllLayers()) {
 							int layerId = layer.getLayerId();
 							metricsRecorder.pollLayerStats(
 								now, 

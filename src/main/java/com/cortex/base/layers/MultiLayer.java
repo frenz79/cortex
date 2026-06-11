@@ -1,4 +1,4 @@
-package com.cortex.brain.layers;
+package com.cortex.base.layers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.brain.LayerConnectionsConfig;
 
-public abstract class MultiLayer<L extends Layer> {
+public abstract class MultiLayer<L extends AbstractLayer> {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 	
@@ -47,8 +47,8 @@ public abstract class MultiLayer<L extends Layer> {
 		configs.parallelStream().forEach(
 			e -> {
 			
-			Layer srcLayer = e.SOURCE_LAYER;
-			Layer dstLayer = e.TARGET_LAYER;
+			AbstractLayer srcLayer = e.SOURCE_LAYER;
+			AbstractLayer dstLayer = e.TARGET_LAYER;
 			int connections = 0;
 			
 			connections += srcLayer.link(

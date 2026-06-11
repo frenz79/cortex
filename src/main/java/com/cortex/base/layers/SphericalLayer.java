@@ -1,4 +1,4 @@
-package com.cortex.brain.layers;
+package com.cortex.base.layers;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,24 +11,69 @@ import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
-import com.cortex.base.modules.IClassifier;
-import com.cortex.base.modules.ISensor;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
-import com.cortex.brain.CorticalNeuronsConfig;
 import com.cortex.brain.Brain.CorticalNeuronFactory;
 import com.cortex.brain.BrainLayersConnConfig.SYNAPSE_SPEED;
+import com.cortex.brain.CorticalNeuronsConfig;
 
-public class SphericalLayer extends Layer {
+public final class SphericalLayer extends AbstractLayer {
 
+	private Map<Long, IntList> spatialHash;
+	private final float cellSize;
+	
 	public SphericalLayer(LayerConfig config) {
 		super(config);
+		this.cellSize = config.DIMENSION / 2.0f;
 	}
 
+	public IntList getSpatialHashCell( AbstractNeuron n ) {
+		return this.spatialHash.get(Functions.getCellKey(n, cellSize));
+	}
+
+	@Override
+	public SphericalLayer populate( CorticalNeuronFactory neuronFactory ) {
+		long startTime = System.nanoTime();
+		this.neurons = new AbstractNeuron[getNeuronsCount()];
+
+		//  golden spiral / Fibonacci sphere variation
+		float gr = (float) (3-Maths.sqrt(5));
+		float lambda = (float) (Maths.PI * gr);
+		final int counter = getNeuronsCount();
+		final float radius = config.DIMENSION;
+
+		for(int i=0; i<counter; i++){
+			float t = (float)i/counter;
+			float a1 = (float) Maths.acos(1-2*t);
+			float a2 = lambda * i;
+			float sina1 = (float)Maths.sin(a1)* radius;
+
+			float x = sina1 * (float)Maths.cos(a2);
+			float y = sina1 * (float)Maths.sin(a2);
+			float z = (float) Maths.cos(a1) * radius;
+
+			this.neurons[i] = neuronFactory.buildNeuron(
+				config.getLayerId(),
+				isInhibitor(), new Point3f(x,y,z)
+			);
+		}
+
+		this.spatialHash = Functions.buildSpatialHash(getNeurons(), cellSize );
+
+		long endTime = System.nanoTime();
+		logger.info("L{} generated {} neurons in {} micros",
+			getLayerId(),
+			getNeuronsCount(),
+			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
+		);
+		return this;
+	} 
+
+	@Override
 	public int link(
-			Layer targetLayer,
+			AbstractLayer targetLayer,
 			int minConn,
 			int maxConn,
 			float maxDistance,
@@ -48,7 +93,7 @@ public class SphericalLayer extends Layer {
 		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
 		for (AbstractNeuron src : srcs) {
 			neighbors.put(src, new ArrayList<>(
-				findNearest(dsts, src, maxConn, filter)
+				Functions.findNearestNeurons(dsts, src, maxConn, filter)
 			));
 		}
 
@@ -91,22 +136,11 @@ public class SphericalLayer extends Layer {
 	}
 
 	@Override
-	public int link(IClassifier<? extends AbstractNeuron> classifier, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg) {
-		return link (classifier.getPluginSite(), classifier.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, true);
-	}
-
-	@Override
-	public int link( ISensor sensor, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg ) {
-		return link (sensor.getPluginSite(), sensor.getNeurons(), minConn, maxConn, maxDistance, filter, synCfg, false);
-	}
-
-	private final int link(Point3f pluginSite, AbstractNeuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
+	public int link(Point3f pluginSite, AbstractNeuron[][] matrix, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
 		int w = matrix.length;
 		int h = matrix[0].length;
 		int connections = 0;
 		long baseSpeed = SYNAPSE_SPEED.FAST.getBaseSpeed();
-
-		float cellSize = maxDistance;
 
 		// Sphere projection
 		float u = (pluginSite.x() + 0.5f) / w; // 0..1
@@ -121,8 +155,9 @@ public class SphericalLayer extends Layer {
 		float z = (float)(Maths.sin(phi) * config.DIMENSION);
 
 		Random rnd = ThreadLocalRandom.current();
-		IntList neighborsIdx = findKNearestApprox(
-				x,y,z, rnd.nextInt(minConn, maxConn), 1.5f/*cellSize*/, 2.6f/*maxDistance*/);
+		IntList neighborsIdx = Functions.findKNearestApprox(
+				x,y,z, rnd.nextInt(minConn, maxConn), 1.5f/*cellSize*/, 2.6f/*maxDistance*/,
+				getNeurons(), spatialHash);
 
 		List<Neighbor> conns = toNeighbors(neighborsIdx, getNeurons(), x,y,z);
 		conns.removeIf(n -> !filter.test(n.neuron()));
@@ -144,43 +179,5 @@ public class SphericalLayer extends Layer {
 			}
 		}
 		return connections;
-	}
-
-	@Override
-	public SphericalLayer populate( CorticalNeuronFactory neuronFactory ) {
-		long startTime = System.nanoTime();
-		this.neurons = new AbstractNeuron[getNeuronsCount()];
-
-		//  golden spiral / Fibonacci sphere variation
-		float gr = (float) (3-Maths.sqrt(5));
-		float lambda = (float) (Maths.PI * gr);
-		final int counter = getNeuronsCount();
-		final float radius = config.DIMENSION;
-
-		for(int i=0; i<counter; i++){
-			float t = (float)i/counter;
-			float a1 = (float) Maths.acos(1-2*t);
-			float a2 = lambda * i;
-			float sina1 = (float)Maths.sin(a1)* radius;
-
-			float x = sina1 * (float)Maths.cos(a2);
-			float y = sina1 * (float)Maths.sin(a2);
-			float z = (float) Maths.cos(a1) * radius;
-
-			this.neurons[i] = neuronFactory.buildNeuron(
-				config.getLayerId(),
-				isInhibitor(), new Point3f(x,y,z)
-			);
-		}
-
-		buildSpatialHash(config.DIMENSION / 2.0f);
-
-		long endTime = System.nanoTime();
-		logger.info("L{} generated {} neurons in {} micros",
-			getLayerId(),
-			getNeuronsCount(),
-			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
-		);
-		return this;
-	}   
+	}  
 }

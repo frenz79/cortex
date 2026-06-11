@@ -8,8 +8,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
+import com.cortex.base.layers.AbstractLayer;
 import com.cortex.brain.Brain;
-import com.cortex.brain.layers.Layer;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
@@ -97,7 +97,7 @@ public class MetricsRecorder {
 					+ " | ENERGY" 
 					);
 			
-			for (Layer l : brain.getAllLayers()) {
+			for (AbstractLayer l : brain.getAllLayers()) {
 				LayerStats stats = getAndResetStats(l.getLayerId());
 				if (stats != null) {
 					System.out.println(

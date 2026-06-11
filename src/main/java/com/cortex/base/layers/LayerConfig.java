@@ -1,4 +1,4 @@
-package com.cortex.brain.layers;
+package com.cortex.base.layers;
 
 import java.util.ArrayList;
 import java.util.List;

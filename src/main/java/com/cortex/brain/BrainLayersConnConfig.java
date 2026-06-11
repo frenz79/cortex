@@ -6,10 +6,10 @@ import static com.cortex.base.Commons.ONLY_INHIBITOR_CONNECT_PREDICATE;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cortex.base.layers.AbstractLayer;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
-import com.cortex.brain.layers.Layer;
 
 public class BrainLayersConnConfig {
 	private final int connScale;
@@ -86,14 +86,14 @@ public class BrainLayersConnConfig {
 				);
 	}
 
-	public List<LayerConnectionsConfig> getLayersConnectionsConfig(List<? extends Layer> layers) {
+	public List<LayerConnectionsConfig> getLayersConnectionsConfig(List<? extends AbstractLayer> layers) {
 		List<LayerConnectionsConfig> cfg = new ArrayList<>();
-		Layer L0 = layers.get(0);
-		Layer L1 = layers.get(1);
-		Layer L2 = layers.get(2);
-		Layer L3 = layers.get(3);
-		Layer L4 = layers.get(4);
-		Layer L5 = layers.get(5);
+		AbstractLayer L0 = layers.get(0);
+		AbstractLayer L1 = layers.get(1);
+		AbstractLayer L2 = layers.get(2);
+		AbstractLayer L3 = layers.get(3);
+		AbstractLayer L4 = layers.get(4);
+		AbstractLayer L5 = layers.get(5);
 
 		// L0 -> L1
 		cfg.add(LayerConnectionsConfig.newBuilder()

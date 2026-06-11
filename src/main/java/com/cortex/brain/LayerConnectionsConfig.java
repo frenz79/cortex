@@ -4,8 +4,8 @@ import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Commons;
+import com.cortex.base.layers.AbstractLayer;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
-import com.cortex.brain.layers.Layer;
 
 public class LayerConnectionsConfig {
 	public int MIN_CONNECTIONS;
@@ -13,8 +13,8 @@ public class LayerConnectionsConfig {
 	public float MAX_DISTANCE;
 	public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG;
 	public Predicate<AbstractNeuron> NEURON_FILTER_PREDICATE = Commons.ALWAYS_CONNECT_PREDICATE;
-	public Layer SOURCE_LAYER;
-	public Layer TARGET_LAYER;
+	public AbstractLayer SOURCE_LAYER;
+	public AbstractLayer TARGET_LAYER;
 	public long BASE_SPEED;
 	
 	public static Builder newBuilder() {
@@ -28,7 +28,7 @@ public class LayerConnectionsConfig {
             this.cfg = new LayerConnectionsConfig();
         }
         
-        public Builder from(Layer SOURCE_LAYER) {
+        public Builder from(AbstractLayer SOURCE_LAYER) {
             cfg.SOURCE_LAYER = SOURCE_LAYER;
             return this;
         }
@@ -38,7 +38,7 @@ public class LayerConnectionsConfig {
             return this;
         }
         
-        public Builder to(Layer TARGET_LAYER) {
+        public Builder to(AbstractLayer TARGET_LAYER) {
             cfg.TARGET_LAYER = TARGET_LAYER;
             return this;
         }
