@@ -6,6 +6,8 @@ import java.util.Map;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
+import com.cortex.base.SynapseBranch;
+import com.cortex.base.SynapseBranch.BranchType;
 import com.cortex.base.lateralinhibition.ILateralInhibitionStrategy;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
@@ -22,14 +24,13 @@ public class CorticalNeuron extends AbstractNeuron {
 
 	private final CorticalNeuronsConfig config;
 
-	CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position, int maxLayers) {
+	public CorticalNeuron(int index, int layerId, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position) {
 		super(layerId, 
 				index, 
 				hasIncoming, 
 				hasOutgoing, 
 				inhibitor, 
-				position,
-				maxLayers
+				position
 				);
 		this.config = neuronsConfig;
 	}

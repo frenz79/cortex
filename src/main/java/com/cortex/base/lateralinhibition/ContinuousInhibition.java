@@ -1,6 +1,6 @@
 package com.cortex.base.lateralinhibition;
 
-import com.cortex.base.AbstractNeuron.SynapseBranch;
+import com.cortex.base.SynapseBranch;
 import com.cortex.base.utils.Maths;
 
 /**

@@ -1,7 +1,6 @@
 package com.cortex.base.lateralinhibition;
 
-import com.cortex.base.AbstractNeuron.SynapseBranch;
-import com.cortex.base.utils.Maths;
+import com.cortex.base.SynapseBranch;
 
 /**
  * Dendritic Softmax
