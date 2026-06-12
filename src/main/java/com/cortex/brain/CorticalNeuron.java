@@ -63,6 +63,33 @@ public class CorticalNeuron extends AbstractNeuron {
 	}
 
 	/**
+	 * TODO:
+	 * - doppio modello di potenziale potential vs somaPotential 
+	 * - remove group.toArray(new SynapseBranch[0])
+	 * - competition dentro il loop
+FASE1 
+for (branch : branches) {
+    compute branchPotential
+    update branchActivity
+    update gain
+}
+
+FASE2
+Map<BranchType, List<SynapseBranch>> groups = groupBranchesByType();
+
+for (group : groups) {
+    strategy.updateInhibition(group, dt);
+}
+
+FASE 3 — somma nei soma
+for (branch : branches) {
+    soma += (branchPotential - inhibition) * gain;
+}
+
+
+	 *
+	 *
+	 *
 	 */	
 	@Override
 	public boolean process(long now) throws InterruptedException {
@@ -123,11 +150,9 @@ public class CorticalNeuron extends AbstractNeuron {
 	                );
 	            }
 	        }
-	        	        
-			// Apply lateral inhibition
-	        float inhibited = synapseBranch.branchPotential - synapseBranch.inhibition;
-	        // Apply branch gain
-	        float modulated = inhibited * synapseBranch.gain;
+
+	        // Apply branch gain and inhibition
+			float modulated = (synapseBranch.branchPotential * synapseBranch.gain) - synapseBranch.inhibition
 	        // Accumulate into soma potential
 	        somaPotential += modulated;
 		}
