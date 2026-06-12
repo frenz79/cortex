@@ -1,10 +1,10 @@
 package com.cortex.base;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -125,16 +125,13 @@ public class SynapsesBuilder {
 					+inFarFF.size()
 					+inFarFB.size();
 		}
-		public boolean isOneEmpty() {
-			return inNear.isEmpty()
-				||outNear.isEmpty()
-				||inFar.isEmpty()
-				||outFar.isEmpty()
-				||outFarFF.isEmpty()
-				||outFarFB.isEmpty()
-				||inFarFF.isEmpty()
-				||inFarFB.isEmpty();
+		public boolean hasInternalSynapses() {
+			return !inNear.isEmpty()
+				|| !outNear.isEmpty()
+				|| !inFar.isEmpty()
+				|| !outFar.isEmpty();
 		}
+		
 		public boolean contains(Synapse s) {
 			return inNear.contains(s)
 					||outNear.contains(s)
@@ -151,7 +148,7 @@ public class SynapsesBuilder {
 			ret.addAll(	splitIfBigger(inNear, true, BranchType.NEAR, 32) );
 			ret.addAll(	splitIfBigger(inFar, true, BranchType.FAR, 32) );
 			ret.addAll(	splitIfBigger(outNear, false, BranchType.NEAR, 32) );
-			ret.addAll(	splitIfBigger(outNear, false, BranchType.FAR, 32) );
+			ret.addAll(	splitIfBigger(outFar, false, BranchType.FAR, 32) );
 			ret.addAll(	splitIfBigger(outFarFF, false, BranchType.LAYER_FEEDFORWARD, 32) );
 			ret.addAll(	splitIfBigger(outFarFB, false, BranchType.LAYER_FEEDBACK, 32) );
 			ret.addAll(	splitIfBigger(inFarFF, true, BranchType.LAYER_FEEDFORWARD, 32) );
@@ -159,6 +156,27 @@ public class SynapsesBuilder {
 			return ret;
 		}
 		
+		private Collection<SynapseBranch> splitIfBigger(Set<Synapse> syn, boolean inc, BranchType bt, int limit) {
+		    List<SynapseBranch> ret = new ArrayList<>();
+
+		    int size = syn.size();
+		    if (size <= limit) {
+		        ret.add(new SynapseBranch(syn.toArray(new Synapse[0]), inc, bt));
+		        return ret;
+		    }
+
+		    Synapse[] arr = syn.toArray(new Synapse[0]);
+
+		    for (int i = 0; i < size; i += limit) {
+		        int end = Math.min(i + limit, size);
+		        Synapse[] chunk = Arrays.copyOfRange(arr, i, end);
+		        ret.add(new SynapseBranch(chunk, inc, bt));
+		    }
+
+		    return ret;
+		}
+
+		/*
 		private Collection<? extends SynapseBranch> splitIfBigger(Set<Synapse> syn, boolean inc, BranchType bt, int limit) {
 			List<SynapseBranch> ret = new ArrayList<>();			
 			if (syn.size() > limit) {
@@ -180,6 +198,7 @@ public class SynapsesBuilder {
 			}
 			return ret;
 		}
+		*/
 	}
 	
 	public SynapsesBuilder( AbstractNeuron[] neurons ) {
@@ -241,7 +260,7 @@ public class SynapsesBuilder {
 
 		// Check all neurons have at least one input / output
 		for (AbstractNeuron src : ns) {
-			if ( neuronSynapses[src.getIndex()]==null || neuronSynapses[src.getIndex()].isOneEmpty()) {
+			if ( neuronSynapses[src.getIndex()]==null || neuronSynapses[src.getIndex()].hasInternalSynapses()) {
 				List<Neighbor> far = Functions.findRandomNeurons(ns, src, farCount);
 				while(!far.isEmpty()) {
 
