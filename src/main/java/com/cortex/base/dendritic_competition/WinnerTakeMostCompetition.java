@@ -1,4 +1,4 @@
-package com.cortex.base.lateralinhibition;
+package com.cortex.base.dendritic_competition;
 
 import com.cortex.base.SynapseBranch;
 
@@ -8,17 +8,17 @@ import com.cortex.base.SynapseBranch;
  * - only one branch wins -> others are inhibited
  * - meant for features extraction 
  */
-public class WinnerTakeMostInhibition implements ILateralInhibitionStrategy {
+public class WinnerTakeMostCompetition implements IDendriticCompetitionStrategy {
 
-	private final WinnerTakeMostInhibitionConfig cfg;
+	private final WinnerTakeMostCompetitionConfig cfg;
 
-	public WinnerTakeMostInhibition(WinnerTakeMostInhibitionConfig cfg) {
+	public WinnerTakeMostCompetition(WinnerTakeMostCompetitionConfig cfg) {
 		super();
 		this.cfg = cfg;
 	}
 
 	@Override
-	public void updateInhibition(SynapseBranch[] branches, long dt) {
+	public void updateCompetition(SynapseBranch[] branches, long dt) {
 
 		// trova il branch vincitore
 		SynapseBranch winner = null;

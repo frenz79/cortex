@@ -1,33 +1,17 @@
 package com.cortex.base.layers;
 
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.layers.Emisphere.CorticalNeuronFactory;
-import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 
-public final class SphericalLayer extends AbstractLayer {
-
-	private Map<Long, IntList> spatialHash;
-	private final float cellSize;
+public final class SphericalLayer extends Abstract3DLayer {
 	
 	public SphericalLayer(LayerConfig config) {
 		super(config);
-		this.cellSize = config.DIMENSION / 2.0f;
-	}
-
-	public IntList getSpatialHashCell( AbstractNeuron n ) {
-		return this.spatialHash.get(Functions.getCellKey(n, cellSize));
 	}
 
 	@Override
-	public SphericalLayer populate( CorticalNeuronFactory neuronFactory ) {
-		long startTime = System.nanoTime();
-		this.neurons = new AbstractNeuron[getNeuronsCount()];
-
+	protected SphericalLayer internalPopulate( CorticalNeuronFactory neuronFactory ) {
 		//  golden spiral / Fibonacci sphere variation
 		float gr = (float) (3-Maths.sqrt(5));
 		float lambda = (float) (Maths.PI * gr);
@@ -49,15 +33,6 @@ public final class SphericalLayer extends AbstractLayer {
 				isInhibitor(), new Point3f(x,y,z)
 			);
 		}
-
-		this.spatialHash = Functions.buildSpatialHash(getNeurons(), cellSize );
-
-		long endTime = System.nanoTime();
-		logger.info("L{} generated {} neurons in {} micros",
-			getLayerId(),
-			getNeuronsCount(),
-			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
-		);
 		return this;
-	}  
+	}
 }

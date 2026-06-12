@@ -22,7 +22,7 @@ import com.cortex.brain.BrainLayersConnConfig;
 import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.LayerConnectionsConfig;
 
-public class Emisphere<L extends AbstractLayer> {
+public class Emisphere<L extends Abstract3DLayer> {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 	
@@ -145,11 +145,11 @@ public class Emisphere<L extends AbstractLayer> {
 		return (L) l;
 	}
 	
-	public AbstractLayer getSensorsTargetLayer() {
+	public Abstract3DLayer getSensorsTargetLayer() {
 		return getLayer(SENSORS_TARGET_LAYER);
 	}
 
-	public AbstractLayer getClassifiersSourceLayer() {
+	public Abstract3DLayer getClassifiersSourceLayer() {
 		return getLayer(CLASSIFIERS_TARGET_LAYER);
 	}
 

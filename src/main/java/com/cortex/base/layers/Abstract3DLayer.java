@@ -1,0 +1,80 @@
+package com.cortex.base.layers;
+
+import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.cortex.base.AbstractNeuron;
+import com.cortex.base.layers.Emisphere.CorticalNeuronFactory;
+import com.cortex.base.utils.IntList;
+
+public abstract class Abstract3DLayer {
+
+	final Logger logger = LogManager.getLogger(this.getClass());
+
+	protected final LayerConfig config;
+	protected AbstractNeuron[] neurons;
+
+	private Map<Long, IntList> spatialHash;
+	private final float cellSize;
+	
+	public Abstract3DLayer(LayerConfig config) {
+		super();
+		this.config = config;
+		this.cellSize = config.DIMENSION / 2.0f;
+	}
+	
+	protected abstract Abstract3DLayer internalPopulate( CorticalNeuronFactory neuronFactory );
+
+	public Abstract3DLayer populate( CorticalNeuronFactory neuronFactory ) {
+		long startTime = System.nanoTime();
+		this.neurons = new AbstractNeuron[getNeuronsCount()];
+		
+		internalPopulate(neuronFactory);
+		this.spatialHash = Functions.buildSpatialHash(getNeurons(), cellSize );
+		
+		long endTime = System.nanoTime();
+		logger.info("L{} generated {} neurons in {} micros",
+			getLayerId(),
+			getNeuronsCount(),
+			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
+		);
+		
+		return this;
+	}
+
+	public IntList getSpatialHashCell( AbstractNeuron n ) {
+		return this.spatialHash.get(Functions.getCellKey(n, cellSize));
+	}
+	
+	public LayerConfig getConfig() {
+		return config;
+	}
+
+	public int getLayerId() {
+		return config.getLayerId();
+	} 
+
+	protected boolean randomBoolean( float trueProbability ) {
+		return ThreadLocalRandom.current().nextFloat(0.0f, 1.0f)<=trueProbability;
+	}
+
+	protected boolean isInhibitor( ) {
+		return randomBoolean( config.INHIBITOR_FREQ );
+	}
+
+	public AbstractNeuron[] getNeurons() {
+		return neurons;
+	}
+
+	public int getNeuronsCount() {
+		return config.NEURONS_COUNT;
+	}
+
+	public Map<Long, IntList> getSpatialHash() {
+		return spatialHash;
+	}
+}

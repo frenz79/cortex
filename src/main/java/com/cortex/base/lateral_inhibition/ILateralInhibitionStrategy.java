@@ -1,4 +1,4 @@
-package com.cortex.base.lateralinhibition;
+package com.cortex.base.lateral_inhibition;
 
 import com.cortex.base.SynapseBranch;
 

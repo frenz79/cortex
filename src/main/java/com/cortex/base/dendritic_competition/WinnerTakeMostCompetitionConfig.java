@@ -1,11 +1,11 @@
-package com.cortex.base.lateralinhibition;
+package com.cortex.base.dendritic_competition;
 
-public class WinnerTakeMostInhibitionConfig {
+public class WinnerTakeMostCompetitionConfig {
 
     public final float WTA_INHIBITION_LEVEL;
     public final long WTA_TAU_NANOS;
 
-    private WinnerTakeMostInhibitionConfig(Builder b) {
+    private WinnerTakeMostCompetitionConfig(Builder b) {
         this.WTA_INHIBITION_LEVEL = b.WTA_INHIBITION_LEVEL;
         this.WTA_TAU_NANOS = b.WTA_TAU_NANOS;
     }
@@ -29,8 +29,8 @@ public class WinnerTakeMostInhibitionConfig {
             return this;
         }
 
-        public WinnerTakeMostInhibitionConfig build() {
-            return new WinnerTakeMostInhibitionConfig(this);
+        public WinnerTakeMostCompetitionConfig build() {
+            return new WinnerTakeMostCompetitionConfig(this);
         }
     }
 }

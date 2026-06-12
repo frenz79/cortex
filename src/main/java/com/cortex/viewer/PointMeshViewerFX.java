@@ -9,7 +9,7 @@ import java.util.Set;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.AbstractNeuron.SynapseBranch;
-import com.cortex.base.layers.AbstractLayer;
+import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.SphericalLayer;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.utils.IntList;
@@ -304,7 +304,7 @@ public class PointMeshViewerFX extends Application {
 	private void highlightSpatialCell(AbstractNeuron hit) {
 		if (!showNeuronSpatialCell) return;
 
-		AbstractLayer layer = brain.getLayer(hit.getLayerId());
+		Abstract3DLayer layer = brain.getLayer(hit.getLayerId());
 		IntList cell = ((SphericalLayer)layer).getSpatialHashCell(hit);
 
 		PhongMaterial mat = new PhongMaterial(Color.YELLOWGREEN);

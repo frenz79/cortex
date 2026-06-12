@@ -1,11 +1,11 @@
-package com.cortex.base.lateralinhibition;
+package com.cortex.base.dendritic_competition;
 
-public class NormalizedBranchInhibitionConfig {
+public class NormalizedCompetitionConfig {
 
 	public float NORMALIZATION_STRENGTH = 1.0f;
 	public float STABILITY_FACTOR = 0.1f;
 	
-	private NormalizedBranchInhibitionConfig(Builder b) {
+	private NormalizedCompetitionConfig(Builder b) {
         this.NORMALIZATION_STRENGTH = b.NORMALIZATION_STRENGTH;
         this.STABILITY_FACTOR = b.STABILITY_FACTOR;
     }
@@ -29,8 +29,8 @@ public class NormalizedBranchInhibitionConfig {
             return this;
         }
 
-        public NormalizedBranchInhibitionConfig build() {
-            return new NormalizedBranchInhibitionConfig(this);
+        public NormalizedCompetitionConfig build() {
+            return new NormalizedCompetitionConfig(this);
         }
     }
 }

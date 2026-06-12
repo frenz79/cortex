@@ -1,4 +1,4 @@
-package com.cortex.base.lateralinhibition;
+package com.cortex.base.dendritic_competition;
 
 import com.cortex.base.SynapseBranch;
 
@@ -8,17 +8,17 @@ import com.cortex.base.SynapseBranch;
  * - all branches contribute -> none is inhibited
  * - high stability
  */
-public class NormalizedBranchInhibition implements ILateralInhibitionStrategy {
+public class NormalizedCompetition implements IDendriticCompetitionStrategy {
 
-	private final NormalizedBranchInhibitionConfig cfg;
+	private final NormalizedCompetitionConfig cfg;
 	
-	public NormalizedBranchInhibition(NormalizedBranchInhibitionConfig cfg) {
+	public NormalizedCompetition(NormalizedCompetitionConfig cfg) {
 		super();
 		this.cfg = cfg;
 	}
 	
 	@Override
-	public void updateInhibition(SynapseBranch[] branches, long dt) {
+	public void updateCompetition(SynapseBranch[] branches, long dt) {
 
 	    float sum = 0f;
 	    for (SynapseBranch b : branches)

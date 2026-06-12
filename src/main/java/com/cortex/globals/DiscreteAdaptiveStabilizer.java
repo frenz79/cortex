@@ -3,7 +3,7 @@ package com.cortex.globals;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.layers.AbstractLayer;
+import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.utils.Maths;
@@ -121,7 +121,7 @@ public class DiscreteAdaptiveStabilizer {
 	}	
 
 	private void boostGlobalExcitation() {
-		for (AbstractLayer l : brain.getAllLayers()) {
+		for (Abstract3DLayer l : brain.getAllLayers()) {
 			LayerConfig lc = l.getConfig();
 			ExcitatorySynapticPlasticityConfig e = lc.SYNAPSE_PLASTICITY_CONFIG.excitatory();
 			e.INITIAL_WEIGHT *= 1.03f;
@@ -132,7 +132,7 @@ public class DiscreteAdaptiveStabilizer {
 	}
 
 	private void dampGlobalExcitation() {
-		for (AbstractLayer l : brain.getAllLayers()) {
+		for (Abstract3DLayer l : brain.getAllLayers()) {
 			LayerConfig lc = l.getConfig();
 			ExcitatorySynapticPlasticityConfig e = lc.SYNAPSE_PLASTICITY_CONFIG.excitatory();
 			e.INITIAL_WEIGHT *= 0.97f;
@@ -182,7 +182,7 @@ public class DiscreteAdaptiveStabilizer {
 	    if (ticksSinceLastIntervention < 3) return;
 	    ticksSinceLastIntervention = 0;
 
-	    AbstractLayer layer = stats.layer();
+	    Abstract3DLayer layer = stats.layer();
 	    int lid = layer.getLayerId();
 
 	    CorticalNeuronsConfig ncfg =
@@ -433,7 +433,7 @@ public class DiscreteAdaptiveStabilizer {
 		e.W_BASELINE     = Maths.clamp(e.W_BASELINE, 0.05f, 0.60f);
 	}
 
-	private void log(AbstractLayer layer, String msg) {
+	private void log(Abstract3DLayer layer, String msg) {
 		logger.info("[Stabilizer][L" + layer.getLayerId() + "] " + msg);
 	}
 }

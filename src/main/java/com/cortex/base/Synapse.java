@@ -177,7 +177,7 @@ public final class Synapse implements IPlasticSynapse {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(state.activityCounter, length, post, pre);
+		return Objects.hash(post, pre);
 	}
 
 	@Override
@@ -189,8 +189,6 @@ public final class Synapse implements IPlasticSynapse {
 		if (getClass() != obj.getClass())
 			return false;
 		Synapse other = (Synapse) obj;
-		return state.activityCounter == other.state.activityCounter
-				&& Float.floatToIntBits(length) == Float.floatToIntBits(other.length)
-				&& Objects.equals(post, other.post) && Objects.equals(pre, other.pre);
+		return Objects.equals(post, other.post) && Objects.equals(pre, other.pre);
 	}
 }

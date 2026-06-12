@@ -4,12 +4,13 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.SynapseBranch.BranchType;
-import com.cortex.base.lateralinhibition.ILateralInhibitionStrategy;
+import com.cortex.base.lateral_inhibition.ILateralInhibitionStrategy;
 import com.cortex.base.utils.Point3f;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
@@ -39,9 +40,9 @@ public abstract class AbstractNeuron implements IProcessable {
 	private SynapseBranch[] incomingBranches;
 	private SynapseBranch[] outgoingBranches;
 	
-	public void fillSynapseBranches( SynapseBranch[] sb ) {
-		this.synapsesBranches = new SynapseBranch[sb.length];
-		System.arraycopy(sb, 0, synapsesBranches, 0, sb.length);
+	public void fillSynapseBranches( List<SynapseBranch> sb ) {
+		this.synapsesBranches = new SynapseBranch[sb.size()];
+		System.arraycopy(sb, 0, synapsesBranches, 0, sb.size());
 		int inc = 0;
 		int out = 0;
 		for (int i=0; i<synapsesBranches.length; i++) {
@@ -210,5 +211,22 @@ public abstract class AbstractNeuron implements IProcessable {
 	@Override
 	public String toString() {
 		return "AbstractNeuron [layerId=" + layerId + ", index=" + index + ", position=" + position + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(index, layerId);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AbstractNeuron other = (AbstractNeuron) obj;
+		return index == other.index && layerId == other.layerId;
 	}
 }

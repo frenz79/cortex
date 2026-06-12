@@ -8,7 +8,7 @@ import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
 import com.cortex.base.SynapseBranch;
 import com.cortex.base.SynapseBranch.BranchType;
-import com.cortex.base.lateralinhibition.ILateralInhibitionStrategy;
+import com.cortex.base.lateral_inhibition.ILateralInhibitionStrategy;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 
@@ -152,7 +152,7 @@ for (branch : branches) {
 	        }
 
 	        // Apply branch gain and inhibition
-			float modulated = (synapseBranch.branchPotential * synapseBranch.gain) - synapseBranch.inhibition
+			float modulated = (synapseBranch.branchPotential * synapseBranch.gain) - synapseBranch.inhibition;
 	        // Accumulate into soma potential
 	        somaPotential += modulated;
 		}

@@ -12,7 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.layers.AbstractLayer;
+import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.modules.IActuator;
 import com.cortex.base.modules.IClassifier;
 import com.cortex.base.modules.ISensor;
@@ -144,7 +144,7 @@ public class NeuralEngine {
 				                ? 0
 				                : TimeUnit.NANOSECONDS.toMicros(timeWindow / runsWindow);
 						
-						for (AbstractLayer layer : brain.getAllLayers()) {
+						for (Abstract3DLayer layer : brain.getAllLayers()) {
 							int layerId = layer.getLayerId();
 							metricsRecorder.pollLayerStats(
 								now, 

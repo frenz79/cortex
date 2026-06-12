@@ -1,4 +1,4 @@
-package com.cortex.base.lateralinhibition;
+package com.cortex.base.dendritic_competition;
 
 import com.cortex.base.SynapseBranch;
 import com.cortex.base.utils.Maths;
@@ -9,17 +9,17 @@ import com.cortex.base.utils.Maths;
  * - more active branches -> less inhibited
  * - less active branches -> more inhibited
  */
-public class ContinuousInhibition implements ILateralInhibitionStrategy {
+public class ContinuousCompetition implements IDendriticCompetitionStrategy {
 
-	private final ContinuousInhibitionConfig cfg;
+	private final ContinuousCompetitionConfig cfg;
 	
-	public ContinuousInhibition(ContinuousInhibitionConfig cfg) {
+	public ContinuousCompetition(ContinuousCompetitionConfig cfg) {
 		super();
 		this.cfg = cfg;
 	}
 	
 	@Override
-	public void updateInhibition(SynapseBranch[] branches, long dt) {
+	public void updateCompetition(SynapseBranch[] branches, long dt) {
 	    float maxActivity = 0f;
 	    for (SynapseBranch b : branches)
 	        if (b.branchActivity > maxActivity)

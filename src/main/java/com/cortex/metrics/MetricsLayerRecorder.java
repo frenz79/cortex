@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
-import com.cortex.base.layers.AbstractLayer;
+import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.utils.Maths;
 import com.cortex.globals.EventBus.SynapseUpdatedData;
@@ -18,7 +18,7 @@ import com.cortex.globals.EventBus.SynapseUpdatedData;
 public class MetricsLayerRecorder {
 	protected final Logger logger = LogManager.getLogger(this.getClass());
 	
-	private final AbstractLayer layer;
+	private final Abstract3DLayer layer;
 
 	private final LongAdder spikeCounter = new LongAdder();
 	private final Set<AbstractNeuron> activeNeurons = ConcurrentHashMap.newKeySet();
@@ -30,7 +30,7 @@ public class MetricsLayerRecorder {
 	private final LongAdder saturatedMin = new LongAdder();
 	private final LongAdder saturatedMax = new LongAdder();
 	
-	public MetricsLayerRecorder(AbstractLayer layer) {
+	public MetricsLayerRecorder(Abstract3DLayer layer) {
 		this.layer = layer;
 	}
 	
@@ -129,7 +129,7 @@ public class MetricsLayerRecorder {
 		);
 	}
 
-	public AbstractLayer getLayer() {
+	public Abstract3DLayer getLayer() {
 		return layer;
 	}
 }

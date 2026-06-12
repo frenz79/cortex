@@ -1,11 +1,11 @@
-package com.cortex.base.lateralinhibition;
+package com.cortex.base.dendritic_competition;
 
-public class ContinuousInhibitionConfig {
+public class ContinuousCompetitionConfig {
 
 	public long INHIBITION_TAU_NANOS = 50_000_000;
 	public float INHIBITION_MAX = 1.0f;
 	
-	private ContinuousInhibitionConfig(Builder b) {
+	private ContinuousCompetitionConfig(Builder b) {
         this.INHIBITION_TAU_NANOS = b.INHIBITION_TAU_NANOS;
         this.INHIBITION_MAX = b.INHIBITION_MAX;
     }
@@ -29,8 +29,8 @@ public class ContinuousInhibitionConfig {
             return this;
         }
 
-        public ContinuousInhibitionConfig build() {
-            return new ContinuousInhibitionConfig(this);
+        public ContinuousCompetitionConfig build() {
+            return new ContinuousCompetitionConfig(this);
         }
     }
 }
