@@ -25,4 +25,10 @@ public final class SynapseBranch {
 	public float branchActivity;       // Recent activity (for decay)
 	public float inhibition;           // Lateral inhibition level
 	public float gain = 1.0f;          // Branch modulator
+
+	@Override
+	public String toString() {
+		return "SynapseBranch [incoming=" + incoming + ", type=" + type + ", branchPotential=" + branchPotential
+				+ ", branchActivity=" + branchActivity + ", inhibition=" + inhibition + ", gain=" + gain + "]";
+	}
 }

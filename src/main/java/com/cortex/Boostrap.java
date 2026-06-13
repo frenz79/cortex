@@ -211,9 +211,9 @@ public class Boostrap {
 		}));
 
 		// Open UI
-	//	if (args.length>0 && args[0].equals("+ui")) {
-	//		PointMeshViewerFX.launchViewer(brain, retina);
-	//	}
+		if (args.length>0 && args[0].equals("+ui")) {
+			PointMeshViewerFX.launchViewer(brain, null/*retina*/);
+		}
 		
 		// ..give the life!
 		engine.start();

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -39,11 +40,18 @@ public class SynapsesBuilder {
 	private final NeuronSynapses[] neuronSynapses;
 	
 	public void build() {
+		logger.info("Creating synapses branches..");
+		/*
 		for (int i=0; i<neurons.length; i++) {
 			var n = neurons[i];
 			NeuronSynapses ns = neuronSynapses[n.getIndex()];
 			n.fillSynapseBranches( ns.toSynapseBranches() );
-		}	
+		}
+		*/
+		Arrays.stream(neurons).parallel().forEach( n -> {
+			NeuronSynapses ns = neuronSynapses[n.getIndex()];
+			n.fillSynapseBranches( ns.toSynapseBranches() );
+		});
 	}
 	
 	private final void add(NeuronSynapses[] syns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
@@ -96,14 +104,14 @@ public class SynapsesBuilder {
 	}
 	
 	static class NeuronSynapses {
-		public final Set<Synapse> inNear  = new HashSet<>();
-		public final Set<Synapse> outNear = new HashSet<>();
-		public final Set<Synapse> inFar   = new HashSet<>();
-		public final Set<Synapse> outFar  = new HashSet<>();
-		public final Set<Synapse> outFarFF= new HashSet<>();
-		public final Set<Synapse> outFarFB= new HashSet<>();
-		public final Set<Synapse> inFarFF = new HashSet<>();
-		public final Set<Synapse> inFarFB = new HashSet<>();
+		public final Set<Synapse> inNear  = ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> outNear = ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> inFar   = ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> outFar  = ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> outFarFF= ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> outFarFB= ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> inFarFF = ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> inFarFB = ConcurrentHashMap.newKeySet();
 		
 		public boolean isAllEmpty() {
 			return inNear.isEmpty()
@@ -260,6 +268,10 @@ public class SynapsesBuilder {
 
 		// Check all neurons have at least one input / output
 		for (AbstractNeuron src : ns) {
+			IPlasticityRule synPlast = src.isInhibitor() 
+					?new InhibitorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.inhibitory())
+					:new ExcitatorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.excitatory());
+			
 			if ( neuronSynapses[src.getIndex()]==null || neuronSynapses[src.getIndex()].hasInternalSynapses()) {
 				List<Neighbor> far = Functions.findRandomNeurons(ns, src, farCount);
 				while(!far.isEmpty()) {
@@ -276,19 +288,14 @@ public class SynapsesBuilder {
 					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
 
 					if (ds >= dd) continue;
-					
-					IPlasticityRule synPlast = src.isInhibitor() 
-						?new InhibitorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.inhibitory())
-						:new ExcitatorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.excitatory());
-					
 					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, synPlast);
 					
 					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
 						add( neuronSynapses, s, src, BranchType.FAR, true  );
 						add( neuronSynapses, s, dst, BranchType.FAR, false );
-					}
-					connectionsCount++;
-					break;
+						connectionsCount++;
+						break;
+					}					
 				}
 			}
 		}
@@ -300,6 +307,7 @@ public class SynapsesBuilder {
 			connectionsCount,
 			TimeUnit.NANOSECONDS.toMicros(endTime - startTime) + " micros"
 		);
+		
 		return;
 	}	
 
@@ -328,6 +336,8 @@ public class SynapsesBuilder {
 				connections
 			);
 		});
+		
+		logger.info("buildLayersSynapses..finished!");
 	}
 
 	private int linkLayers(
@@ -360,6 +370,12 @@ public class SynapsesBuilder {
 				?BranchType.LAYER_FEEDFORWARD
 				:BranchType.LAYER_FEEDBACK;
 		
+
+		InhibitorySynapticPlasticityRule inhibitorySynapticPlasticityRule = 
+				new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory());
+		ExcitatorySynapticPlasticityRule excitatorySynapticPlasticityRule =
+				new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory());
+		
 		// Round-robin
 		for (int round = 0; round < maxConn; round++) {
 			for (AbstractNeuron src : srcs) {
@@ -389,18 +405,17 @@ public class SynapsesBuilder {
 						continue;
 					}
 					
-					IPlasticityRule synPlast = src.isInhibitor() 
-							?new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory())
-							:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory());
+					IPlasticityRule synPlast = src.isInhibitor()
+						?inhibitorySynapticPlasticityRule:excitatorySynapticPlasticityRule;
 					
 					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, synPlast);
 					
 					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
 						add( neuronSynapses, s, src, bt, true  );
 						add( neuronSynapses, s, dst, bt, false );
-					}					
-					connectionsCount++;
-					break;
+						connectionsCount++;
+						break;
+					} 	
 				}
 			}
 		}
@@ -444,12 +459,11 @@ public class SynapsesBuilder {
 				}
 
 				AbstractNeuron extNeuron = matrix[rx][ry];
-						
+				IPlasticityRule synPlast = extNeuron.isInhibitor() 
+						?new InhibitorySynapticPlasticityRule( synCfg.inhibitory())
+						:new ExcitatorySynapticPlasticityRule( synCfg.excitatory());
+				
 				for ( int i : rndIdx ) {
-					IPlasticityRule synPlast = extNeuron.isInhibitor() 
-							?new InhibitorySynapticPlasticityRule( synCfg.inhibitory())
-							:new ExcitatorySynapticPlasticityRule( synCfg.excitatory());
-					
 					var intNeuron = conns.get(i);
 					Synapse s;
 					
@@ -462,23 +476,23 @@ public class SynapsesBuilder {
 					var ns = extNeuronSynapses[to1DIndex(rx,ry,h)];
 					if (!ns.contains(s)) {
 						add(ns, s, extNeuron, BranchType.LAYER_FEEDFORWARD, isIncoming);
-						add(ns, s, intNeuron.neuron(), BranchType.LAYER_FEEDFORWARD, !isIncoming);	
-					}
-					connections++;
+						add(ns, s, intNeuron.neuron(), BranchType.LAYER_FEEDFORWARD, !isIncoming);
+						connections++;
+					}					
 				}
 			}
 		}
 		return connections;
 	}
 
-	public static int to1DIndex(int row, int col, int numCols) {
+	private static final int to1DIndex(int row, int col, int numCols) {
         if (row < 0 || col < 0 || col >= numCols) {
             throw new IllegalArgumentException("Invalid row or column index");
         }
         return row * numCols + col;
     }
 	
-	public static List<Neighbor> toNeighbors(IntList idxs, AbstractNeuron[] neurons, float px, float py, float pz) {
+	private static final List<Neighbor> toNeighbors(IntList idxs, AbstractNeuron[] neurons, float px, float py, float pz) {
 		ArrayList<Neighbor> out = new ArrayList<>(idxs.size());
 		for (int i = 0; i < idxs.size(); i++) {
 			int ni = idxs.get(i);
@@ -491,207 +505,3 @@ public class SynapsesBuilder {
 		return out;
 	}
 }
-
-	/*
-	public static int create( AbstractNeuron srcNeuron, Neighbor toNeuron, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
-		return link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
-	}
-
-	public static int create( AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
-		return link( srcNeuron, toNeuron, distance, baseSpeed, near, plasticityCfg );
-	}
-
-	public static int create( Neighbor srcNeuron, AbstractNeuron toNeuron, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg ) {
-		return link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
-	}
-
-	public static int create( AbstractNeuron srcNeuron, Collection<Neighbor> toNeurons, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
-		for (Neighbor toNeuron : toNeurons) {
-			link( srcNeuron, toNeuron.neuron(), toNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
-		}
-		return toNeurons.size();
-	}
-
-	public static int create( Collection<Neighbor> srcNeurons, AbstractNeuron toNeuron, long baseSpeed, boolean near,SynapsePlasticityConfig plasticityCfg ) {
-		for (Neighbor srcNeuron : srcNeurons) {
-			link( srcNeuron.neuron(), toNeuron, srcNeuron.getRealDistance(), baseSpeed, near, plasticityCfg );
-		}
-		return srcNeurons.size();
-	}
-
-	private static final int link(AbstractNeuron srcNeuron, AbstractNeuron toNeuron, float distance, long baseSpeed, boolean near, SynapsePlasticityConfig plasticityCfg) {
-		Synapse s = new Synapse( 
-				srcNeuron, 
-				toNeuron, 
-				distance, 
-				baseSpeed,
-				srcNeuron.isInhibitor() 
-				?new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory())
-						:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory())
-				);
-		if (srcNeuron.getLayerId()==toNeuron.getLayerId()) {
-			srcNeuron.addSynapse( s, false, near); 
-			toNeuron.addSynapse( s, true, near);
-		} else {
-			srcNeuron.addSynapse( s, false, srcNeuron.getLayerId()); 
-			toNeuron.addSynapse( s, true, toNeuron.getLayerId());
-		}
-		return 1;
-	}
-	*/
-/*
-	// Used only at build time
-	public void addSynapse(Synapse s, boolean incoming, boolean near) {
-		try {
-			int index = (incoming ? 0 : 2) + (near ? 0 : 1);
-			if (synapsesBranchesTmp.length==1) {
-				// Special case for sensors
-				index = 0;
-			}
-			synchronized(synapsesBranchesTmp[index]) {
-				synapsesBranchesTmp[index].add(s);
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to add incoming:{} synapse to:{}",incoming, this.toString());
-			throw ex;
-		}
-	}
-	// Used only at build time
-	public void addSynapse(Synapse s, boolean incoming, int layer) {
-		try {
-			int index = 4 + layer;
-			if (synapsesBranchesTmp.length==1) {
-				// Special case for sensors
-				index = 0;
-			} else {
-				int maxLayers = (synapsesBranchesTmp.length-4)/2;
-				if (!incoming) index += maxLayers;
-			}
-			synchronized(synapsesBranchesTmp[index]) {
-				synapsesBranchesTmp[index].add(s);
-			}
-		} catch (Exception ex) {
-			logger.error("Failed to add incoming:{} synapse to:{}",incoming, this.toString());
-			throw ex;
-		}
-	}
-
-	
-	// Called only at build time
-		public boolean hasOutSynapses() {
-			if (synapsesBranchesTmp!=null) {
-				for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-					if (!isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
-						return true;
-					}
-				}
-			} else {
-				for (SynapseBranch sb : synapsesBranches) {
-					if (!sb.incoming && sb.synapses.length>0) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-		// Called only at build time
-		public boolean hasInSynapses() {
-			if (synapsesBranchesTmp!=null) {
-				for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-					if (isIncomingBranch(i) && !synapsesBranchesTmp[i].isEmpty()){
-						return true;
-					}
-				}
-			} else {
-				for (SynapseBranch sb : synapsesBranches) {
-					if (sb.incoming && sb.synapses.length>0) {
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-		// Called only at build time
-		public int getInSynapsesCount() {
-			int count = 0;
-			if (synapsesBranchesTmp!=null) {
-				for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-					if (isIncomingBranch(i)){
-						count += synapsesBranchesTmp[i].size();
-					}
-				}
-			} else {
-				for (SynapseBranch sb : synapsesBranches) {
-					if (sb.incoming) {
-						count += sb.synapses.length;
-					}
-				}
-			}
-			return count;
-		}
-		// Called only at build time
-		public int getOutSynapsesCount() {
-			int count = 0;
-			if (synapsesBranchesTmp!=null) {
-				for (int i=0;i<this.synapsesBranchesTmp.length; i++) {
-					if (!isIncomingBranch(i)){
-						count += synapsesBranchesTmp[i].size();
-					}
-				}
-			} else {
-				for (SynapseBranch sb : synapsesBranches) {
-					if (!sb.incoming) {
-						count += sb.synapses.length;
-					}
-				}
-			}
-			return count;
-		}
-		*/
-	
-	/*
-	 List<SynapseBranch> in = new ArrayList<>();
-		List<SynapseBranch> out = new ArrayList<>();
-
-		for (int i = 0; i < synapsesBranchesTmp.length; i++) {
-
-			List<Synapse> list = synapsesBranchesTmp[i];
-			Synapse[] arr = list.toArray(new Synapse[0]);
-
-			boolean incoming = isIncomingBranch(i);
-
-			if (arr.length > 32) { // TODO: from config
-
-				// numero di sub-branches
-				int numSplits = (int) Math.ceil(arr.length / 32.0);
-
-				for (int s = 0; s < numSplits; s++) {
-
-					int start = s * 32;
-					int end = Math.min(start + 32, arr.length);
-
-					Synapse[] split = Arrays.copyOfRange(arr, start, end);
-
-					SynapseBranch b = new SynapseBranch(split, incoming);
-
-					if (incoming) in.add(b);
-					else out.add(b);
-				}
-
-			} else {
-
-				SynapseBranch b = new SynapseBranch(arr, incoming);
-
-				if (incoming) in.add(b);
-				else out.add(b);
-			}
-		}
-
-		incomingBranches = in.toArray(new SynapseBranch[0]);
-		outgoingBranches = out.toArray(new SynapseBranch[0]);
-
-		Arrays.fill(synapsesBranchesTmp, null);
-		synapsesBranchesTmp = null;
-		*/
-	
-

@@ -86,9 +86,9 @@ public class PointMeshViewerFX extends Application {
 		selectedSphere.setVisible(false);
 		root3d.getChildren().add(selectedSphere);
 
-		buildNeuronMesh();
 		root3d.getChildren().addAll(synapseLines);
-
+		buildNeuronMesh();
+		
 		subScene = new SubScene(root3d, 800, 600, true, SceneAntialiasing.BALANCED);
 		subScene.setFill(Color.BLACK);
 
@@ -296,7 +296,6 @@ public class PointMeshViewerFX extends Application {
 						synapseLines.getChildren().add(line);
 					}
 				}
-
 			}
 		}
 	}
@@ -421,6 +420,5 @@ public class PointMeshViewerFX extends Application {
 				}	
 			}			
 		}
-	}	
-
+	}
 }
