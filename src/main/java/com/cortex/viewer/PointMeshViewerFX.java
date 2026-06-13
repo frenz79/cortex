@@ -8,13 +8,13 @@ import java.util.Map;
 import java.util.Set;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.AbstractNeuron.SynapseBranch;
+import com.cortex.base.Synapse;
+import com.cortex.base.SynapseBranch;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.SphericalLayer;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Point3f;
-import com.cortex.base.Synapse;
 import com.cortex.brain.Brain;
 
 import javafx.application.Application;
@@ -244,7 +244,7 @@ public class PointMeshViewerFX extends Application {
 		double camDist = Math.abs(translate.getZ());
 		double tolerance = 0.2; //0.02 * camDist;
 		// double tolerance = 0.08;
-		for (AbstractNeuron n : brain.getAllNeurons()) {
+		for (AbstractNeuron n : brain.getEmisphere(0).getAllNeurons()) {
 			Point3D p = neuronToLocal(n);
 			double dist = p.distance(hitPoint);
 			// Click on empty space
@@ -304,7 +304,7 @@ public class PointMeshViewerFX extends Application {
 	private void highlightSpatialCell(AbstractNeuron hit) {
 		if (!showNeuronSpatialCell) return;
 
-		Abstract3DLayer layer = brain.getLayer(hit.getLayerId());
+		Abstract3DLayer layer = brain.getEmisphere(0).getLayer(hit.getLayerId());
 		IntList cell = ((SphericalLayer)layer).getSpatialHashCell(hit);
 
 		PhongMaterial mat = new PhongMaterial(Color.YELLOWGREEN);
@@ -328,7 +328,7 @@ public class PointMeshViewerFX extends Application {
 	private void buildNeuronMesh() {
 		Map<Integer, TriangleMesh> map = new HashMap<>();
 
-		for (AbstractNeuron n : brain.getAllNeurons()) {
+		for (AbstractNeuron n : brain.getEmisphere(0).getAllNeurons()) {
 			int layer = n.getLayerId();
 			map.putIfAbsent(layer, new TriangleMesh());
 			TriangleMesh mesh = map.get(layer);

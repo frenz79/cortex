@@ -99,11 +99,14 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
 
 	@Override
 	public int getSynapsesCount() {
+		/*
 		int ret = 0;
     	for (int x = 0; x < neurons[0].length; x++) {
     	    ret += neurons[0][x].getInSynapsesCount();
     	}
 		return ret;
+		*/
+		return 0;
 	}
 
 	@Override

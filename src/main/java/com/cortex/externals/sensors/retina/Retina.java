@@ -1,16 +1,12 @@
 package com.cortex.externals.sensors.retina;
 
 import java.awt.image.BufferedImage;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Spike;
-import com.cortex.base.Synapse;
-import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
@@ -56,7 +52,7 @@ public class Retina implements ISensor {
 		}
 
 		updateMicrosaccades( now );
-
+/*
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
 				float lum = sampleLuminanceFromIntegral(x, y); //sampleLuminanceFromSource(x, y);
@@ -78,6 +74,7 @@ public class Retina implements ISensor {
 				}
 			}
 		}
+		*/
 		return true;
 	}
 
@@ -229,11 +226,13 @@ public class Retina implements ISensor {
 	@Override
 	public int getSynapsesCount() {
 		int ret = 0;
+		/*
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
 				ret += retinaNeurons[x][y].getOutSynapsesCount();
 			}
 		}
+		*/
 		return ret;
 	}
 

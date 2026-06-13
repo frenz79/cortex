@@ -12,14 +12,15 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.Commons;
 import com.cortex.base.Synapse;
+import com.cortex.base.layers.MultiLayersConfig;
+import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.modules.ISupervisor;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.brain.Brain;
-import com.cortex.brain.BrainLayersConfig;
-import com.cortex.brain.BrainLayersConnConfig;
+import com.cortex.brain.Emisphere;
 import com.cortex.externals.classifiers.ocr.OCRCharacterNeuron;
 import com.cortex.externals.classifiers.ocr.OCRClassifier;
 import com.cortex.externals.classifiers.ocr.OCRSupervisor;
@@ -55,21 +56,27 @@ public class Boostrap {
 
 	private final static Logger logger = LogManager.getLogger(Boostrap.class);
 	
-	public static Brain buildBrain( int totalNeurons, int connScale ) {
-		BrainLayersConfig layersCfg = new BrainLayersConfig();	
+	public static Emisphere<?> buildEmisphere( int totalNeurons, int connScale ) {
+		MultiLayersConfig layersCfg = new MultiLayersConfig();	
 		
-		return Brain.newBuilder()
+		return Emisphere.newBuilder()
 			.addLayerConfig(layersCfg.l0_config((int)(totalNeurons*0.15f), 5*connScale,  7*connScale, 0.60f))
 			.addLayerConfig(layersCfg.l1_config((int)(totalNeurons*0.20f), 8*connScale, 12*connScale, 0.50f))
 			.addLayerConfig(layersCfg.l2_config((int)(totalNeurons*0.25f),10*connScale, 15*connScale, 0.40f))
 			.addLayerConfig(layersCfg.l3_config((int)(totalNeurons*0.20f),12*connScale, 18*connScale, 0.30f))
 			.addLayerConfig(layersCfg.l4_config((int)(totalNeurons*0.12f), 7*connScale, 10*connScale, 0.20f))
 			.addLayerConfig(layersCfg.l5_config((int)(totalNeurons*0.08f), 8*connScale, 12*connScale, 0.10f))
-			.addLayerConnectionConfig( new BrainLayersConnConfig(connScale) )
+			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
 			.withTotalNeurons(totalNeurons)
 			.build();
 	}
 
+	public static Brain buildBrain( Emisphere<?> ...emispheres ) {	
+		return Brain.newBuilder()
+			.addEmispheres(emispheres)
+			.build();
+	}
+	/*
 	public static ISensor buildAndConnectRetina( Brain brain ) throws IOException {
 		Retina retina = new Retina(
 			RetinaConfig.newBuilder(70, 70).build(),
@@ -97,7 +104,9 @@ public class Boostrap {
 				);
 		return retina;
 	}
-
+	*/
+	
+	/*
 	public static ISupervisor<OCRCharacterNeuron> buildAndConnectOCR( Brain brain ) {
 		OCRClassifier ocrClassifier = new OCRClassifier();		
 		brain.getClassifiersSourceLayer().link( ocrClassifier, 10, 40, 2.5f, 
@@ -121,26 +130,28 @@ public class Boostrap {
 		ocrSupervisor.setExpected(ocrClassifier.getCharacterNeuronForLetter('A'));
 		return ocrSupervisor;
 	}
-
+	*/
 	public static void main(String[] args) throws IOException, InterruptedException { 
 		int totalNeurons = 40_000;
 		int connScale = 50;
 
+		Emisphere<?> emisphere = buildEmisphere( totalNeurons, connScale );
+				
 		// Create Brain
-		Brain brain = buildBrain(totalNeurons, connScale);
-		logger.info("Number of Neurons:{}",brain.getNeuronsCount());
+		Brain brain = buildBrain(emisphere);
+		logger.info("Number of Neurons:{} ",brain.getNeuronsCount());
 		logger.info("Number of Synapses:{}",brain.getSynapsesCount());
 
 		// Create sensors
-		ISensor retina = buildAndConnectRetina( brain );
-		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
+//		ISensor retina = buildAndConnectRetina( brain );
+//		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
 
 		// Connect OCR Classifier to L4
-		ISupervisor<OCRCharacterNeuron> ocrSupervisor = buildAndConnectOCR( brain );		
-		logger.info("Number of OCR Synapses{}",ocrSupervisor.getClassifier().getSynapsesCount());
+//		ISupervisor<OCRCharacterNeuron> ocrSupervisor = buildAndConnectOCR( brain );		
+//		logger.info("Number of OCR Synapses{}",ocrSupervisor.getClassifier().getSynapsesCount());
 
 		// Stabilizer
-		DiscreteAdaptiveStabilizer stabilizer = new DiscreteAdaptiveStabilizer( brain,
+		DiscreteAdaptiveStabilizer stabilizer = new DiscreteAdaptiveStabilizer( emisphere,
 			DiscreteAdaptiveStabilizerConfig.newBuilder()
 			.addLayerParams(0, new LayerAdaptiveParams(
 			        0.10f, 0.30f,		// TARGET_FIRING_LOW - HIGH
@@ -182,16 +193,16 @@ public class Boostrap {
 		NeuralEngine engine = new NeuralEngine( brain, new NeuralEngineConfig() );
 		engine.withMetricsRecorder( metricsRecorder );
 
-		brain.attachSensor( retina );
-		brain.attachClassifier( ocrSupervisor.getClassifier() );
-		brain.attachSupervisor( ocrSupervisor );
-		brain.compact();
+//		brain.attachSensor( retina );
+//		brain.attachClassifier( ocrSupervisor.getClassifier() );
+//		brain.attachSupervisor( ocrSupervisor );
+//		brain.compact();
 		
 		CountDownLatch keepAlive = new CountDownLatch(1);
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			logger.info("Shutting down...");
 			try {
-				retina.stop();
+//				retina.stop();
 			} catch (Exception ignored) {}
 			try {
 				engine.stop();
@@ -200,15 +211,15 @@ public class Boostrap {
 		}));
 
 		// Open UI
-		if (args.length>0 && args[0].equals("+ui")) {
-			PointMeshViewerFX.launchViewer(brain, retina);
-		}
+	//	if (args.length>0 && args[0].equals("+ui")) {
+	//		PointMeshViewerFX.launchViewer(brain, retina);
+	//	}
 		
 		// ..give the life!
 		engine.start();
 		Thread.sleep(200); // breve delay per garantire che il thinker sia operativo
 
-		retina.start();
+//		retina.start();
 
 		keepAlive.await();
 		logger.info("Main exiting");

@@ -40,16 +40,21 @@ public abstract class AbstractNeuron implements IProcessable {
 	private SynapseBranch[] incomingBranches;
 	private SynapseBranch[] outgoingBranches;
 	
+	private int inSynapsesCount = 0;
+	private int outSynapsesCount = 0;
+	
 	public void fillSynapseBranches( List<SynapseBranch> sb ) {
 		this.synapsesBranches = new SynapseBranch[sb.size()];
-		System.arraycopy(sb, 0, synapsesBranches, 0, sb.size());
+		System.arraycopy(sb.toArray(new SynapseBranch[sb.size()]), 0, synapsesBranches, 0, sb.size());
 		int inc = 0;
 		int out = 0;
 		for (int i=0; i<synapsesBranches.length; i++) {
 			if (synapsesBranches[i].incoming) {
 				inc++;
+				inSynapsesCount += synapsesBranches[i].synapses.length;
 			} else {
 				out++;
+				outSynapsesCount += synapsesBranches[i].synapses.length;
 			}
 		}
 		this.incomingBranches = new SynapseBranch[inc];
@@ -228,5 +233,13 @@ public abstract class AbstractNeuron implements IProcessable {
 			return false;
 		AbstractNeuron other = (AbstractNeuron) obj;
 		return index == other.index && layerId == other.layerId;
+	}
+
+	public int getInSynapsesCount() {
+		return inSynapsesCount;
+	}
+
+	public int getOutSynapsesCount() {
+		return outSynapsesCount;
 	}
 }

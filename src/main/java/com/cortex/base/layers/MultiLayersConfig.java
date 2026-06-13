@@ -1,13 +1,13 @@
-package com.cortex.brain;
+package com.cortex.base.layers;
 
 import static com.cortex.base.Commons.ALWAYS_CONNECT_PREDICATE;
 
-import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
-import com.cortex.base.plasticity.SynapsePlasticityConfig;;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
+import com.cortex.brain.CorticalNeuronsConfig;;
 
-public class BrainLayersConfig {
+public class MultiLayersConfig {
 
 	public LayerConfig l0_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
 	    return LayerConfig.newBuilder(0)

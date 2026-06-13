@@ -1,13 +1,12 @@
-package com.cortex.brain;
+package com.cortex.base.layers;
 
 import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Commons;
-import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
 
-public class LayerConnectionsConfig {
+public class LayerConnConfig {
 	public int MIN_CONNECTIONS;
 	public int MAX_CONNECTIONS;
 	public float MAX_DISTANCE;
@@ -22,10 +21,10 @@ public class LayerConnectionsConfig {
     }   
     
     public static class Builder {
-        private final LayerConnectionsConfig cfg;
+        private final LayerConnConfig cfg;
         
         public Builder() {
-            this.cfg = new LayerConnectionsConfig();
+            this.cfg = new LayerConnConfig();
         }
         
         public Builder from(Abstract3DLayer SOURCE_LAYER) {
@@ -83,7 +82,7 @@ public class LayerConnectionsConfig {
                  throw new IllegalArgumentException("NEURON_FILTER_PREDICATE must not be null");          
         }
         
-        public LayerConnectionsConfig build() {
+        public LayerConnConfig build() {
             validate();
             return cfg;
         }

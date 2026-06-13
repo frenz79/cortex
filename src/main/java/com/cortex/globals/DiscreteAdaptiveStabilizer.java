@@ -7,8 +7,8 @@ import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.utils.Maths;
-import com.cortex.brain.Brain;
 import com.cortex.brain.CorticalNeuronsConfig;
+import com.cortex.brain.Emisphere;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.metrics.LayerStats;
@@ -17,7 +17,7 @@ public class DiscreteAdaptiveStabilizer {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
-	private final Brain brain;
+	private final Emisphere<?> emisphere;
 	private final DiscreteAdaptiveStabilizerConfig config;
 	private final LayerStats[] layerStats;
 	private final StatsEMA[] ema;
@@ -63,11 +63,11 @@ public class DiscreteAdaptiveStabilizer {
 	    return alpha * value + (1f - alpha) * prev;
 	}
 
-	public DiscreteAdaptiveStabilizer( Brain brain, DiscreteAdaptiveStabilizerConfig config ) {
+	public DiscreteAdaptiveStabilizer( Emisphere<?> emisphere, DiscreteAdaptiveStabilizerConfig config ) {
 		this.config = config;
-		this.brain = brain;
-		this.layerStats = new LayerStats[ brain.getAllLayers().size() ];
-		this.ema = new StatsEMA[brain.getAllLayers().size()];
+		this.emisphere = emisphere;
+		this.layerStats = new LayerStats[ emisphere.getAllLayers().size() ];
+		this.ema = new StatsEMA[emisphere.getAllLayers().size()];
 
 		EventBus.addListener(EventType.LAYER_STATS,  new EventListener() {
 
@@ -86,7 +86,7 @@ public class DiscreteAdaptiveStabilizer {
 	public void stabilize(LayerStats stats) {
 		stabilizeLocal(stats);
 
-		for (int lid = 0; lid < brain.getAllLayers().size()-1; lid++) {
+		for (int lid = 0; lid < emisphere.getAllLayers().size()-1; lid++) {
 			LayerStats src = layerStats[lid];
 			LayerStats dst = layerStats[lid+1];
 			if (src!=null && dst!=null) {
@@ -99,9 +99,9 @@ public class DiscreteAdaptiveStabilizer {
 
 	private void stabilizeGlobal() {
 		float avgFire = 0f;
-		int layers = brain.getAllLayers().size();
+		int layers = emisphere.getAllLayers().size();
 
-		for (int lid = 0; lid < brain.getAllLayers().size()-1; lid++) {
+		for (int lid = 0; lid < emisphere.getAllLayers().size()-1; lid++) {
 			if (layerStats[lid]!=null && layerStats[lid].activeNeurons() > 0) {
 				avgFire += ema[lid].fireAll;
 			}
@@ -121,7 +121,7 @@ public class DiscreteAdaptiveStabilizer {
 	}	
 
 	private void boostGlobalExcitation() {
-		for (Abstract3DLayer l : brain.getAllLayers()) {
+		for (Abstract3DLayer l : emisphere.getAllLayers()) {
 			LayerConfig lc = l.getConfig();
 			ExcitatorySynapticPlasticityConfig e = lc.SYNAPSE_PLASTICITY_CONFIG.excitatory();
 			e.INITIAL_WEIGHT *= 1.03f;
@@ -132,7 +132,7 @@ public class DiscreteAdaptiveStabilizer {
 	}
 
 	private void dampGlobalExcitation() {
-		for (Abstract3DLayer l : brain.getAllLayers()) {
+		for (Abstract3DLayer l : emisphere.getAllLayers()) {
 			LayerConfig lc = l.getConfig();
 			ExcitatorySynapticPlasticityConfig e = lc.SYNAPSE_PLASTICITY_CONFIG.excitatory();
 			e.INITIAL_WEIGHT *= 0.97f;

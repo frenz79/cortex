@@ -1,4 +1,4 @@
-package com.cortex.base.layers;
+package com.cortex.brain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,14 +13,16 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.SynapsesBuilder;
+import com.cortex.base.layers.Abstract3DLayer;
+import com.cortex.base.layers.LayerConfig;
+import com.cortex.base.layers.LayerConnConfig;
+import com.cortex.base.layers.MultiLayersConnConfig;
+import com.cortex.base.layers.SphericalLayer;
 import com.cortex.base.modules.IActuator;
 import com.cortex.base.modules.IClassifier;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.modules.ISupervisor;
 import com.cortex.base.utils.Point3f;
-import com.cortex.brain.BrainLayersConnConfig;
-import com.cortex.brain.CorticalNeuron;
-import com.cortex.brain.LayerConnectionsConfig;
 
 public class Emisphere<L extends Abstract3DLayer> {
 
@@ -30,16 +32,15 @@ public class Emisphere<L extends Abstract3DLayer> {
 	private static final int SENSORS_TARGET_LAYER = 0;
 	
 	protected List<L> layers = new ArrayList<>();
-	protected List<LayerConnectionsConfig>	layersConnConfig = new ArrayList<>();
 	
 	// Single Neurons storage
 	private volatile CorticalNeuron[] neurons;
 	
 	private int totalNeurons = 0;
 	private CorticalNeuronFactory neuronFactory;
-	private BrainLayersConnConfig brainLayersConnConfig;
+	private MultiLayersConnConfig multiLayersConnConfig;
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
-	private final List<LayerConnectionsConfig> layersConnConfigs = new ArrayList<>();
+	private final List<LayerConnConfig> layersConnConfigs = new ArrayList<>();
 	
 	private final List<ISensor> sensors;
 	private final List<IActuator> actuators;
@@ -106,11 +107,30 @@ public class Emisphere<L extends Abstract3DLayer> {
 		}
 	}
 	
+	private L buildLayer( LayerConfig cfg ) {
+		SphericalLayer l = (SphericalLayer) new SphericalLayer(cfg)
+				.populate( this.neuronFactory );
+		return (L) l;
+	}
+	
 	private void generateConnections() {
-		this.layersConnConfig = this.brainLayersConnConfig.getLayersConnectionsConfig(layers);
-		new SynapsesBuilder( )
-			.generateConnections(layersConnConfigs);
+		SynapsesBuilder bld = new SynapsesBuilder( this.neurons );
+		/*
+		for ( L layer : layers ) {
+			bld.buildInternalSynapses( layer );
+		}
+		*/
+		logger.info("Generating internal layer connections");
+		layers.parallelStream().forEach( l -> {
+			bld.buildInternalSynapses( l );
+		});
 		
+		logger.info("Generating layer to layer connections");
+		var layersConnConfig = this.multiLayersConnConfig.getLayersConnectionsConfig(layers);
+		bld.buildLayersSynapses(layersConnConfig);		
+		// bld.buildExternalSynapses(null, null, getSensorsTargetLayer(), totalNeurons, SENSORS_TARGET_LAYER, CLASSIFIERS_TARGET_LAYER, null, null, false)
+	
+		bld.build();
 	}
 	
 	public void process(long now) {
@@ -136,13 +156,6 @@ public class Emisphere<L extends Abstract3DLayer> {
 	            n.setActive(stay);
 	        }
 	    });
-	}
-		
-	protected L buildLayer( LayerConfig cfg ) {
-		SphericalLayer l = (SphericalLayer) new SphericalLayer(cfg)
-				.populate( this.neuronFactory )
-				.connectInternal();
-		return (L) l;
 	}
 	
 	public Abstract3DLayer getSensorsTargetLayer() {
@@ -193,28 +206,6 @@ public class Emisphere<L extends Abstract3DLayer> {
 		return supervisors;
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	public List<L> getAllLayers() {
 		return layers;
 	}
@@ -222,20 +213,40 @@ public class Emisphere<L extends Abstract3DLayer> {
 	public L getLayer(int index) {
 		return layers.get(index);
 	}
+	
+	public static Builder newBuilder() {
+		return new Builder();
+	}   
 
-	public int getNeuronsCount() {
-		int ret = 0;
-		for ( L l : layers ) {
-			ret += l.getNeuronsCount();
+	public static class Builder<L extends Abstract3DLayer> {
+		private final Emisphere<L> emisphere;
+
+		public Builder() {
+			this.emisphere = new Emisphere<>();
 		}
-		return ret;
+
+		public Builder<L> addLayerConfig(LayerConfig cfg) {
+			emisphere.layersConfigs.add(cfg);
+			return this;
+		}
+
+		public Builder<L> addMultiLayersConnConfig(MultiLayersConnConfig cfg) {
+			emisphere.multiLayersConnConfig = cfg;
+			return this;
+		}
+
+		public Builder<L> withTotalNeurons(int totalNeurons) {
+			emisphere.totalNeurons = totalNeurons;
+			return this;
+		}	     
+
+		private void validate() {
+
+		}
+
+		public Emisphere<L> build() {
+			validate();
+			return emisphere.build();
+		}
 	}
-
-	public int getSynapsesCount() {
-		int ret = 0;
-		for ( L l : layers ) {
-			ret += l.getSynapsesCount();
-		}
-		return ret;
-	}	
 }

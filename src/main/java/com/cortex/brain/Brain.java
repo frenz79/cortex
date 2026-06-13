@@ -6,8 +6,8 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.layers.Emisphere;
-import com.cortex.base.layers.LayerConfig;
+import com.cortex.base.AbstractNeuron;
+import com.cortex.base.Synapse;
 
 public class Brain {
 
@@ -20,6 +20,11 @@ public class Brain {
 			e.process(now);
 		}
 	}	
+	
+	public Brain build( ) {
+
+		return this;
+	}
 
 	public static Builder newBuilder() {
 		return new Builder();
@@ -32,20 +37,17 @@ public class Brain {
 			this.brain = new Brain();
 		}
 
-		public Builder addLayerConfig(LayerConfig cfg) {
-			brain.layersConfigs.add(cfg);
+		public Builder addEmisphere(Emisphere<?> em) {
+			brain.emispheres.add(em);
+			return this;
+		} 
+		
+		public Builder addEmispheres(Emisphere<?>[] em) {
+			for (Emisphere<?>e : em) {
+				brain.emispheres.add(e);
+			}
 			return this;
 		}
-
-		public Builder addLayerConnectionConfig(BrainLayersConnConfig cfg) {
-			brain.brainLayersConnConfig = cfg;
-			return this;
-		}
-
-		public Builder withTotalNeurons(int totalNeurons) {
-			brain.totalNeurons = totalNeurons;
-			return this;
-		}	     
 
 		private void validate() {
 
@@ -55,5 +57,25 @@ public class Brain {
 			validate();
 			return brain.build();
 		}
+	}
+
+	public List<Emisphere<?>> getEmispheres() {
+		return emispheres;
+	}
+	
+	public Emisphere<?> getEmisphere(int id) {
+		return emispheres.get(id);
+	}
+
+	public int getNeuronsCount() {
+		int ret = 0;
+		for ( Emisphere<?> e : emispheres ) {
+			ret += e.getAllNeurons().length;
+		}
+		return ret;
+	}
+
+	public int getSynapsesCount() {
+		return Synapse.getSynapsesCount();
 	}
 }

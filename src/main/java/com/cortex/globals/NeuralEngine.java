@@ -74,7 +74,7 @@ public class NeuralEngine {
 				long start = System.nanoTime();
 				tick(start);
 				localCounter++;
-				brain.processAllActiveNeurons(start);
+				brain.process(start);
 				long elapsed = System.nanoTime()-start;
 				processCounterTotal.increment();
 				processTimeTotalNanos.add(elapsed);
@@ -83,7 +83,7 @@ public class NeuralEngine {
 			}
 		});
 		neuronThread.start();
-
+/*
 		// IO loop for sensors/actuators/classifiers/supervisors
 		logger.info("sensors/actuators/classifiers/supervisors thread started!");
 		Runnable ioRunnable = () -> {
@@ -159,6 +159,7 @@ public class NeuralEngine {
 					TimeUnit.NANOSECONDS
 				);
 		}
+		*/
 	}
 
 	public synchronized void stop() {

@@ -38,7 +38,7 @@ public class MetricsRecorder {
 				
 				if (layerId<0) return;
 		        layersStats.computeIfAbsent(layerId, 
-		        	k -> new MetricsLayerRecorder(brain.getLayer(layerId)))
+		        	k -> new MetricsLayerRecorder(brain.getEmisphere(0).getLayer(layerId)))
 		        		.neuronFired(n);
 			}
 		});
@@ -53,7 +53,7 @@ public class MetricsRecorder {
 					if (layerId<0) return;
 					
 			        layersStats.computeIfAbsent(layerId, 
-			           	k -> new MetricsLayerRecorder(brain.getLayer(layerId)))
+			           	k -> new MetricsLayerRecorder(brain.getEmisphere(0).getLayer(layerId)))
 			        		.updateSynapticStatistics( (Synapse)source, (SynapseUpdatedData)data);
 				} catch (Exception ex) {
 					logger.error("Handled Exception:", ex);
@@ -97,7 +97,7 @@ public class MetricsRecorder {
 					+ " | ENERGY" 
 					);
 			
-			for (Abstract3DLayer l : brain.getAllLayers()) {
+			for (Abstract3DLayer l : brain.getEmisphere(0).getAllLayers()) {
 				LayerStats stats = getAndResetStats(l.getLayerId());
 				if (stats != null) {
 					System.out.println(

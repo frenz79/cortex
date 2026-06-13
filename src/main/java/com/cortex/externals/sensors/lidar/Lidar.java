@@ -1,16 +1,9 @@
 package com.cortex.externals.sensors.lidar;
 
-import java.util.List;
-
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Spike;
-import com.cortex.base.Synapse;
-import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.cortex.base.modules.ISensor;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
-
-import javafx.scene.shape.Sphere;
 
 public class Lidar implements ISensor {
 
@@ -35,13 +28,13 @@ public class Lidar implements ISensor {
 
     @Override
     public boolean process(long now) throws InterruptedException {
-
+    	
         this.lastProcessTime = now;
 
         if (!active || distances == null) {
             return true;
         }
-
+        /*
         for (int i = 0; i < config.RAYS; i++) {
             float d = normalize(distances[i]);
             int c = neurons[i].process(now, d);
@@ -59,6 +52,7 @@ public class Lidar implements ISensor {
 				}
             }
         }
+        */
         return true;
     }
 
@@ -124,9 +118,9 @@ public class Lidar implements ISensor {
     @Override
     public int getSynapsesCount() {
         int ret = 0;
-        for (int i = 0; i < config.RAYS; i++) {
-            ret += neurons[i].getOutSynapsesCount();
-        }
+   //     for (int i = 0; i < config.RAYS; i++) {
+    //        ret += neurons[i].getOutSynapsesCount();
+     //   }
         return ret;
     }
 

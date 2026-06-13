@@ -1,9 +1,7 @@
 package com.cortex.externals.classifiers.ocr;
 
-import com.cortex.base.AbstractNeuron.SynapseBranch;
 import com.cortex.base.modules.ISupervisor;
 import com.cortex.base.utils.Maths;
-import com.cortex.base.Synapse;
 
 public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 
@@ -23,6 +21,7 @@ public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {
 
 	@Override
 	public void process(long now) {
+		/*
 	    OCRCharacterNeuron winner = classifier.getClassificationResult();
 	    if (winner == null || expected == null) return;
 

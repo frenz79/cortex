@@ -1,15 +1,14 @@
 package com.cortex.base;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.plasticity.ExcitatorySynapticPlasticityRule;
 import com.cortex.base.plasticity.IPlasticSynapse;
 import com.cortex.base.plasticity.IPlasticityRule;
-import com.cortex.base.plasticity.InhibitorySynapticPlasticityRule;
 import com.cortex.base.utils.Maths;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
@@ -20,6 +19,8 @@ public final class Synapse implements IPlasticSynapse {
 
 	static final Logger logger = LogManager.getLogger(Synapse.class);
 
+	private static final AtomicInteger synapsesCount = new AtomicInteger(0);
+	
 	// Hot fields grouped together for better locality
 	final class SynapseState {
 		public static final int BUFFER_SIZE = 8;
@@ -48,13 +49,25 @@ public final class Synapse implements IPlasticSynapse {
 	private static final float ETA_MYELIN = 0.0001f;	
 	private static final float MAX_MYELIN = 1.0f;
 
-	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
+	private Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
 		this.pre = pre;
 		this.post = post;
 		this.length = length;
 		this.baseSpeed = baseSpeed;
 		this.plasticityRule = plasticityRule;
 	}
+	
+	public static Synapse create(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
+		synapsesCount.incrementAndGet();
+		return new Synapse(
+			pre, post, length, baseSpeed, plasticityRule	
+		);
+	}
+	
+	public static int getSynapsesCount() {
+		return synapsesCount.get();
+	}
+	
 	/*
 	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, boolean inhibitor) {
 		this( pre,

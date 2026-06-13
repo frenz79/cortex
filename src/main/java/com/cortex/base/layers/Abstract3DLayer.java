@@ -8,8 +8,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.layers.Emisphere.CorticalNeuronFactory;
 import com.cortex.base.utils.IntList;
+import com.cortex.brain.Emisphere.CorticalNeuronFactory;
 
 public abstract class Abstract3DLayer {
 
@@ -17,7 +17,7 @@ public abstract class Abstract3DLayer {
 
 	protected final LayerConfig config;
 	protected AbstractNeuron[] neurons;
-
+	private int synapsesCount = 0;
 	private Map<Long, IntList> spatialHash;
 	private final float cellSize;
 	
@@ -76,5 +76,13 @@ public abstract class Abstract3DLayer {
 
 	public Map<Long, IntList> getSpatialHash() {
 		return spatialHash;
+	}
+
+	public int getSynapsesCount() {
+		return synapsesCount;
+	}
+
+	public void setSynapsesCount(int synapsesCount) {
+		this.synapsesCount = synapsesCount;
 	}
 }

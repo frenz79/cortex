@@ -16,9 +16,11 @@ import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.cortex.base.Commons.SYNAPSE_SPEED;
 import com.cortex.base.SynapseBranch.BranchType;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.Functions;
+import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.Neighbor;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityRule;
 import com.cortex.base.plasticity.IPlasticityRule;
@@ -27,9 +29,7 @@ import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
-import com.cortex.brain.BrainLayersConnConfig.SYNAPSE_SPEED;
 import com.cortex.brain.CorticalNeuronsConfig;
-import com.cortex.brain.LayerConnectionsConfig;
 
 public class SynapsesBuilder {
 
@@ -251,7 +251,7 @@ public class SynapsesBuilder {
 					?new InhibitorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.inhibitory())
 					:new ExcitatorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.excitatory());
 						
-				var s = new Synapse(src, dst, target.getRealDistance(), baseSpeed, synPlast);
+				var s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, synPlast);
 				add( neuronSynapses, s, src, target.near()?BranchType.NEAR:BranchType.FAR, true  );
 				add( neuronSynapses, s, dst, target.near()?BranchType.NEAR:BranchType.FAR, false );
 				connectionsCount++;
@@ -281,7 +281,7 @@ public class SynapsesBuilder {
 						?new InhibitorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.inhibitory())
 						:new ExcitatorySynapticPlasticityRule( layer.getConfig().SYNAPSE_PLASTICITY_CONFIG.excitatory());
 					
-					Synapse s = new Synapse(src, dst, target.getRealDistance(), baseSpeed, synPlast);
+					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, synPlast);
 					
 					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
 						add( neuronSynapses, s, src, BranchType.FAR, true  );
@@ -304,7 +304,7 @@ public class SynapsesBuilder {
 	}	
 
 	// Generate Synapses between layers	
-	public void buildLayersSynapses( List<LayerConnectionsConfig> configs ) {	
+	public void buildLayersSynapses( List<LayerConnConfig> configs ) {	
 		configs.parallelStream().forEach(
 			e -> {
 			Abstract3DLayer srcLayer = e.SOURCE_LAYER;
@@ -393,7 +393,7 @@ public class SynapsesBuilder {
 							?new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory())
 							:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory());
 					
-					Synapse s = new Synapse(src, dst, target.getRealDistance(), baseSpeed, synPlast);
+					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, synPlast);
 					
 					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
 						add( neuronSynapses, s, src, bt, true  );
@@ -454,9 +454,9 @@ public class SynapsesBuilder {
 					Synapse s;
 					
 					if (!isIncoming) {					
-						s = new Synapse( extNeuron, intNeuron.neuron(), intNeuron.getRealDistance(), baseSpeed, synPlast );
+						s = Synapse.create( extNeuron, intNeuron.neuron(), intNeuron.getRealDistance(), baseSpeed, synPlast );
 					} else {
-						s = new Synapse( intNeuron.neuron(), extNeuron, intNeuron.getRealDistance(), baseSpeed, synPlast );
+						s = Synapse.create( intNeuron.neuron(), extNeuron, intNeuron.getRealDistance(), baseSpeed, synPlast );
 					}
 					
 					var ns = extNeuronSynapses[to1DIndex(rx,ry,h)];

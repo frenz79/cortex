@@ -1,10 +1,5 @@
 package com.cortex.externals.classifiers.ocr;
 
-import java.util.function.Consumer;
-
-import com.cortex.base.AbstractNeuron.SynapseBranch;
-import com.cortex.base.Spike;
-import com.cortex.base.Synapse;
 import com.cortex.externals.AbstractExternalNeuron;
 import com.google.common.util.concurrent.AtomicDouble;
 
@@ -25,6 +20,7 @@ public class OCRCharacterNeuron extends AbstractExternalNeuron {
 
 	public float scoreSpikes(long wnd, long now) {
 		AtomicDouble score = new AtomicDouble(0.0);
+		/*
 		for (SynapseBranch synapseBranch : getInSynapseBranches()) {
 			for ( Synapse synapse : synapseBranch.synapses ) {
 				Consumer<Spike> spikesConsumer = spike -> {
@@ -37,7 +33,7 @@ public class OCRCharacterNeuron extends AbstractExternalNeuron {
 				synapse.forEachSpike(now, spikesConsumer);
 			}
 		}
-
+		*/
 		float ret = score.floatValue();
 
 		lastScoreTime = now;
