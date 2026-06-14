@@ -62,7 +62,7 @@ public final class Synapse implements IPlasticSynapse {
 			throw new RuntimeException("Invalid synapse: pre or post are null");
 		if (pre==post) 
 			throw new RuntimeException("Invalid synapse: pre==post");
-		if (pre.getPosition().equals(post.getPosition())) 
+		if (pre.getPosition()!=null && post.getPosition()!=null && pre.getPosition().equals(post.getPosition())) 
 			throw new RuntimeException("Invalid synapse: pre.position==post.position");
 		if (length==0) 
 			throw new RuntimeException("Invalid synapse: length");

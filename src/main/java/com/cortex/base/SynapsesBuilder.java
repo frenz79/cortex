@@ -59,6 +59,7 @@ public final class SynapsesBuilder {
 		//for ( Entry<IExternal, NeuronSynapses[]> extEntry : extNeuronSynapses.entrySet()) {
 		
 		extNeuronSynapses.entrySet().parallelStream().forEach( extEntry -> {
+			/*
 			AbstractNeuron[][] matrix = extEntry.getKey().getNeurons();
 			int w = matrix.length;
 			int h = matrix[0].length;
@@ -68,6 +69,15 @@ public final class SynapsesBuilder {
 					for ( NeuronSynapses ns : extEntry.getValue() ) {
 						n.fillSynapseBranches( ns.toSynapseBranches() );
 					}					
+				}
+			}
+			*/
+			for ( NeuronSynapses ns : extEntry.getValue() ) {
+				for ( Synapse s : ns.inExt ) {
+					s.getSource().fillSynapseBranches( ns.toSynapseBranches() );
+				}
+				for ( Synapse s : ns.outExt ) {
+					s.getTarget().fillSynapseBranches( ns.toSynapseBranches() );
 				}
 			}
 		});		
@@ -500,10 +510,13 @@ public final class SynapsesBuilder {
 							ns = new NeuronSynapses();
 							extNs[idx] = ns;
 						}
-						add(extNs, s, extNeuron, BranchType.EXTERNAL, isIncoming);
-						add(neuronSynapses, s, intNeuron.neuron(), BranchType.EXTERNAL, !isIncoming);						
+						add(extNs, s, extNeuron, BranchType.EXTERNAL, !isIncoming);
+						add(neuronSynapses, s, intNeuron.neuron(), BranchType.EXTERNAL, isIncoming);						
 						connections++;
-					}					
+					}
+					if (ns.size()>maxConn) {
+						break;
+					}
 				}
 			}
 		}

@@ -72,7 +72,7 @@ public class Boostrap {
 	}
 	*/
 	public static void main(String[] args) throws IOException, InterruptedException { 
-		int totalNeurons = 40_000;
+		int totalNeurons = 20_000;
 		int connScale = 50;
 
 		Retina retina = new Retina(
@@ -171,7 +171,7 @@ public class Boostrap {
 
 		// Open UI
 		if (args.length>0 && args[0].equals("+ui")) {
-			PointMeshViewerFX.launchViewer(brain, null/*retina*/);
+			PointMeshViewerFX.launchViewer(brain, retina);
 		}
 		
 		// ..give the life!
