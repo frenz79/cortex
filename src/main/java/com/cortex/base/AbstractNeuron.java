@@ -43,6 +43,28 @@ public abstract class AbstractNeuron implements IProcessable {
 	private int inSynapsesCount = 0;
 	private int outSynapsesCount = 0;
 	
+	public void attachSynapseBranch(SynapseBranch sb) {
+		if (sb.type!=BranchType.EXTERNAL)
+			throw new RuntimeException("Only external branches can be attached");
+		
+		synapsesBranches = attach(synapsesBranches, sb);
+		
+		if (sb.incoming) {
+			incomingBranches = attach(incomingBranches, sb);
+			inSynapsesCount += sb.synapses.length;
+		} else {
+			outgoingBranches = attach(outgoingBranches, sb);
+			outSynapsesCount += sb.synapses.length;
+		}
+	}
+	
+	private static final SynapseBranch[] attach(SynapseBranch[] arr, SynapseBranch sb) {
+		SynapseBranch[] arrNew =  new SynapseBranch[arr.length+1];
+		System.arraycopy(arr, 0, arrNew, 0, arr.length);
+		arrNew[arr.length] = sb;
+		return arrNew;
+	}
+	
 	public void fillSynapseBranches( List<SynapseBranch> sb ) {
 		this.synapsesBranches = new SynapseBranch[sb.size()];
 		System.arraycopy(sb.toArray(new SynapseBranch[sb.size()]), 0, synapsesBranches, 0, sb.size());

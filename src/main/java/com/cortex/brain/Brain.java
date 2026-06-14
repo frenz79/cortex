@@ -2,12 +2,16 @@ package com.cortex.brain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Synapse;
+import com.cortex.base.modules.IActuator;
+import com.cortex.base.modules.IClassifier;
+import com.cortex.base.modules.ISensor;
+import com.cortex.base.modules.ISupervisor;
 
 public class Brain {
 
@@ -46,6 +50,26 @@ public class Brain {
 			for (Emisphere<?>e : em) {
 				brain.emispheres.add(e);
 			}
+			return this;
+		}
+		
+		public Builder attachSensor(ISensor s, Emisphere<?> em) {
+			em.attachSensor(Objects.requireNonNull(s));
+			return this;
+		}
+
+		public Builder attachActuator(IActuator a, Emisphere<?> em) {
+			em.attachActuator(Objects.requireNonNull(a));
+			return this;
+		}
+
+		public Builder attachClassifier(IClassifier<?> c, Emisphere<?> em) {
+			em.attachClassifier(Objects.requireNonNull(c));
+			return this;
+		}
+
+		public Builder attachSupervisor(ISupervisor<?> s, Emisphere<?> em) {
+			em.attachSupervisor(Objects.requireNonNull(s));
 			return this;
 		}
 

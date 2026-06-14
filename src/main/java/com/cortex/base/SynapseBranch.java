@@ -6,7 +6,8 @@ public final class SynapseBranch {
 	    NEAR,
 	    FAR,
 	    LAYER_FEEDFORWARD,
-	    LAYER_FEEDBACK
+	    LAYER_FEEDBACK,
+	    EXTERNAL // Sensors, actuators, classifiers..etc
 	}
 	
 	public final Synapse[] synapses;

@@ -76,8 +76,8 @@ public class Boostrap {
 			.addEmispheres(emispheres)
 			.build();
 	}
-	/*
-	public static ISensor buildAndConnectRetina( Brain brain ) throws IOException {
+	
+	public static ISensor buildRetina( Brain brain ) throws IOException {
 		Retina retina = new Retina(
 			RetinaConfig.newBuilder(70, 70).build(),
 			RetinaNeuronConfig.newBuilder().build()
@@ -85,7 +85,7 @@ public class Boostrap {
 		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
 
 		// Connect retina to L0
-		brain.getSensorsTargetLayer().link(retina, 4500, 5000, 0.5f, 
+		brain.link(retina, 4500, 5000, 0.5f, 
 				Commons.SKIP_INHIBITOR_CONNECT_PREDICATE, 
 				new SynapsePlasticityConfig(
 					ExcitatorySynapticPlasticityConfig.newBuilder()
@@ -104,7 +104,7 @@ public class Boostrap {
 				);
 		return retina;
 	}
-	*/
+	
 	
 	/*
 	public static ISupervisor<OCRCharacterNeuron> buildAndConnectOCR( Brain brain ) {

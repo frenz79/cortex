@@ -172,7 +172,7 @@ public class Emisphere<L extends Abstract3DLayer> {
 	
 	public void attachSensor(ISensor s) {
 		logger.info("Sensor attached:{}",s );
-		this.sensors.add(Objects.requireNonNull(s));
+		this.sensors.add(Objects.requireNonNull(s));	
 	}
 
 	public void attachActuator(IActuator a) {
