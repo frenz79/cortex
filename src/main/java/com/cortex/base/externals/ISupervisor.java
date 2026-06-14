@@ -1,4 +1,4 @@
-package com.cortex.base.modules;
+package com.cortex.base.externals;
 
 import com.cortex.base.AbstractNeuron;
 

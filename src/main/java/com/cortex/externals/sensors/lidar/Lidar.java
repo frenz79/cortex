@@ -1,7 +1,8 @@
 package com.cortex.externals.sensors.lidar;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.modules.ISensor;
+import com.cortex.base.externals.ExternalConnConfig;
+import com.cortex.base.externals.ISensor;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 
@@ -126,6 +127,12 @@ public class Lidar implements ISensor {
 
 	@Override
 	public Point3f getPluginSite() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ExternalConnConfig getExternalConnConfig() {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -10,20 +10,10 @@ import javax.imageio.ImageIO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.Commons;
-import com.cortex.base.Synapse;
 import com.cortex.base.layers.MultiLayersConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
-import com.cortex.base.modules.ISensor;
-import com.cortex.base.modules.ISupervisor;
-import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
-import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
-import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.brain.Brain;
 import com.cortex.brain.Emisphere;
-import com.cortex.externals.classifiers.ocr.OCRCharacterNeuron;
-import com.cortex.externals.classifiers.ocr.OCRClassifier;
-import com.cortex.externals.classifiers.ocr.OCRSupervisor;
 import com.cortex.externals.sensors.retina.Retina;
 import com.cortex.externals.sensors.retina.RetinaConfig;
 import com.cortex.externals.sensors.retina.RetinaNeuronConfig;
@@ -55,57 +45,7 @@ import com.cortex.viewer.PointMeshViewerFX;
 public class Boostrap {
 
 	private final static Logger logger = LogManager.getLogger(Boostrap.class);
-	
-	public static Emisphere<?> buildEmisphere( int totalNeurons, int connScale ) {
-		MultiLayersConfig layersCfg = new MultiLayersConfig();	
-		
-		return Emisphere.newBuilder()
-			.addLayerConfig(layersCfg.l0_config((int)(totalNeurons*0.15f), 5*connScale,  7*connScale, 0.60f))
-			.addLayerConfig(layersCfg.l1_config((int)(totalNeurons*0.20f), 8*connScale, 12*connScale, 0.50f))
-			.addLayerConfig(layersCfg.l2_config((int)(totalNeurons*0.25f),10*connScale, 15*connScale, 0.40f))
-			.addLayerConfig(layersCfg.l3_config((int)(totalNeurons*0.20f),12*connScale, 18*connScale, 0.30f))
-			.addLayerConfig(layersCfg.l4_config((int)(totalNeurons*0.12f), 7*connScale, 10*connScale, 0.20f))
-			.addLayerConfig(layersCfg.l5_config((int)(totalNeurons*0.08f), 8*connScale, 12*connScale, 0.10f))
-			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
-			.withTotalNeurons(totalNeurons)
-			.build();
-	}
 
-	public static Brain buildBrain( Emisphere<?> ...emispheres ) {	
-		return Brain.newBuilder()
-			.addEmispheres(emispheres)
-			.build();
-	}
-	
-	public static ISensor buildRetina( Brain brain ) throws IOException {
-		Retina retina = new Retina(
-			RetinaConfig.newBuilder(70, 70).build(),
-			RetinaNeuronConfig.newBuilder().build()
-		);
-		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
-
-		// Connect retina to L0
-		brain.link(retina, 4500, 5000, 0.5f, 
-				Commons.SKIP_INHIBITOR_CONNECT_PREDICATE, 
-				new SynapsePlasticityConfig(
-					ExcitatorySynapticPlasticityConfig.newBuilder()
-						.withSTDP(0.0015f, 0.0025f, 40_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
-						.withWeights(0.04f, 0.12f, 0.01f, 0.08f)// INITIAL, W_MAX, W_MIN, W_BASELINE
-						.withEligibilityDecaySeconds(0.997f) 	// ELIGIBILITY_DECAY
-						.withPlasticity(20f, 5f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
-						.withHomeostaticRate(0.02f) 			// HOMEOSTATIC_RATE
-						.build(),
-					InhibitorySynapticPlasticityConfig.newBuilder()
-						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
-						.withLearningRate(0.005f)				// LEARNING_RATE
-						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
-						.build()
-						)	
-				);
-		return retina;
-	}
-	
-	
 	/*
 	public static ISupervisor<OCRCharacterNeuron> buildAndConnectOCR( Brain brain ) {
 		OCRClassifier ocrClassifier = new OCRClassifier();		
@@ -135,17 +75,36 @@ public class Boostrap {
 		int totalNeurons = 40_000;
 		int connScale = 50;
 
-		Emisphere<?> emisphere = buildEmisphere( totalNeurons, connScale );
+		Retina retina = new Retina(
+			RetinaConfig.newBuilder(70, 70).build(),
+			RetinaNeuronConfig.newBuilder().build()
+		);
+		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
+		
+		MultiLayersConfig layersCfg = new MultiLayersConfig();	
+		Emisphere<?> emisphere =  Emisphere.newBuilder()
+			.addLayerConfig(layersCfg.l0_config((int)(totalNeurons*0.15f), 5*connScale,  7*connScale, 0.60f))
+			.addLayerConfig(layersCfg.l1_config((int)(totalNeurons*0.20f), 8*connScale, 12*connScale, 0.50f))
+			.addLayerConfig(layersCfg.l2_config((int)(totalNeurons*0.25f),10*connScale, 15*connScale, 0.40f))
+			.addLayerConfig(layersCfg.l3_config((int)(totalNeurons*0.20f),12*connScale, 18*connScale, 0.30f))
+			.addLayerConfig(layersCfg.l4_config((int)(totalNeurons*0.12f), 7*connScale, 10*connScale, 0.20f))
+			.addLayerConfig(layersCfg.l5_config((int)(totalNeurons*0.08f), 8*connScale, 12*connScale, 0.10f))
+			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
+			.withTotalNeurons(totalNeurons)
+			.attachSensor(retina)
+			.build();
 				
 		// Create Brain
-		Brain brain = buildBrain(emisphere);
+		Brain brain = Brain.newBuilder()
+			.addEmisphere(emisphere)
+			.build();
+		
 		logger.info("Number of Neurons:{} ",brain.getNeuronsCount());
 		logger.info("Number of Synapses:{}",brain.getSynapsesCount());
-
+		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
+		
 		// Create sensors
-//		ISensor retina = buildAndConnectRetina( brain );
-//		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
-
+		
 		// Connect OCR Classifier to L4
 //		ISupervisor<OCRCharacterNeuron> ocrSupervisor = buildAndConnectOCR( brain );		
 //		logger.info("Number of OCR Synapses{}",ocrSupervisor.getClassifier().getSynapsesCount());

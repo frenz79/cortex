@@ -1,12 +1,14 @@
-package com.cortex.base.modules;
+package com.cortex.base.externals;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.IProcessable;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 
-public interface ISensor extends IProcessable {
+public interface IExternal extends IProcessable {
 
+	public ExternalConnConfig getExternalConnConfig();
+	
 	public long getWaitTimeNanos();
 	
 	public String getId();
@@ -21,7 +23,7 @@ public interface ISensor extends IProcessable {
 	
 	public AbstractNeuron[][] getNeurons();
 	
-	public static float randomGaussian() {
+	public default float randomGaussian() {
 		return (float)Maths.nextGaussian();
 	}
 

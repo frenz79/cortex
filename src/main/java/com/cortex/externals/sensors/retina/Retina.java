@@ -7,7 +7,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.modules.ISensor;
+import com.cortex.base.Commons;
+import com.cortex.base.externals.ExternalConnConfig;
+import com.cortex.base.externals.ISensor;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 
@@ -100,8 +105,8 @@ public class Retina implements ISensor {
 
 	private boolean updateMicrosaccades(long timeNanos) {
 		if (timeNanos - lastSaccadeTime > (retinaConfig.MICROSACCADE_PERIOD_NANOS + ThreadLocalRandom.current().nextInt(1_000_000, 5_000_000))) {
-			microDx = ISensor.randomGaussian() * retinaConfig.MICROSACCADE_AMPLITUDE;
-			microDy = ISensor.randomGaussian() * retinaConfig.MICROSACCADE_AMPLITUDE;
+			microDx = randomGaussian() * retinaConfig.MICROSACCADE_AMPLITUDE;
+			microDy = randomGaussian() * retinaConfig.MICROSACCADE_AMPLITUDE;
 			lastSaccadeTime = timeNanos;
 			return true;
 		}
@@ -147,7 +152,7 @@ public class Retina implements ISensor {
 
 		for (int x=0; x<sourceLuminance.length; x++) {
 			for (int y=0; y<sourceLuminance[x].length; y++) {
-				sourceLuminance[x][y] = calculateLuminance(x,y, image) + ISensor.randomGaussian() * 0.002f;
+				sourceLuminance[x][y] = calculateLuminance(x,y, image) + randomGaussian() * 0.002f;
 			}
 		}
 
@@ -157,13 +162,11 @@ public class Retina implements ISensor {
 		logger.info("Image loaded into retina");
 	}
 
-
 	private float sumRegion(float[][] integral, int x1, int y1, int x2, int y2) {
 		float A = (x1 > 0 && y1 > 0) ? integral[x1 - 1][y1 - 1] : 0;
 		float B = (y1 > 0) ? integral[x2][y1 - 1] : 0;
 		float C = (x1 > 0) ? integral[x1 - 1][y2] : 0;
 		float D = integral[x2][y2];
-
 		return D - B - C + A;
 	}
 
@@ -183,10 +186,8 @@ public class Retina implements ISensor {
 				}
 			}
 		}
-
 		return integral;
 	}
-
 
 	private static float calculateLuminance(int x, int y, BufferedImage image) {
 		int color = image.getRGB(x, y);
@@ -226,13 +227,11 @@ public class Retina implements ISensor {
 	@Override
 	public int getSynapsesCount() {
 		int ret = 0;
-		/*
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
 				ret += retinaNeurons[x][y].getOutSynapsesCount();
 			}
 		}
-		*/
 		return ret;
 	}
 
@@ -246,5 +245,31 @@ public class Retina implements ISensor {
 		return "Retina [retinaNeurons=" + retinaNeurons.length + ", sourceWidth=" + sourceWidth + ", sourceHeight=" + sourceHeight
 				+ ", sourceScaleX=" + sourceScaleX + ", sourceScaleY=" + sourceScaleY + ", microDx=" + microDx
 				+ ", microDy=" + microDy + "]";
+	}
+
+	@Override
+	public ExternalConnConfig getExternalConnConfig() {
+		return ExternalConnConfig.newBuilder()
+			.withConnections(4500, 5000)
+			.withMaxDistance(0.5f)
+			.withNeuronFilter(Commons.SKIP_INHIBITOR_CONNECT_PREDICATE)
+			.withLikedLayerId(0)
+			.withPlasticity(
+				new SynapsePlasticityConfig(
+					ExcitatorySynapticPlasticityConfig.newBuilder()
+						.withSTDP(0.0015f, 0.0025f, 40_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
+						.withWeights(0.04f, 0.12f, 0.01f, 0.08f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withEligibilityDecaySeconds(0.997f) 	// ELIGIBILITY_DECAY
+						.withPlasticity(20f, 5f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
+						.withHomeostaticRate(0.02f) 			// HOMEOSTATIC_RATE
+						.build(),
+					InhibitorySynapticPlasticityConfig.newBuilder()
+						.withWeights(0.80f, 3.0f, 0.2f)			// INITIAL, W_MAX, W_MIN,
+						.withLearningRate(0.005f)				// LEARNING_RATE
+						.withTargetFiringRate(2.5f)				// TARGET_FIRING_RATE
+						.build()
+						)	
+				)
+			.build();				
 	}
 }

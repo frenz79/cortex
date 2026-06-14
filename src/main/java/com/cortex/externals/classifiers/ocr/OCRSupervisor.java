@@ -1,6 +1,6 @@
 package com.cortex.externals.classifiers.ocr;
 
-import com.cortex.base.modules.ISupervisor;
+import com.cortex.base.externals.ISupervisor;
 import com.cortex.base.utils.Maths;
 
 public class OCRSupervisor implements ISupervisor<OCRCharacterNeuron> {

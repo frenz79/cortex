@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.Commons.SYNAPSE_SPEED;
 import com.cortex.base.SynapseBranch.BranchType;
+import com.cortex.base.externals.IExternal;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.Functions;
 import com.cortex.base.layers.LayerConnConfig;
@@ -38,10 +40,12 @@ public final class SynapsesBuilder {
 
 	private final AbstractNeuron[] neurons;
 	private final NeuronSynapses[] neuronSynapses;
+	private final Map<IExternal,NeuronSynapses[]> extNeuronSynapses;
 	
 	public SynapsesBuilder( AbstractNeuron[] neurons ) {
 		this.neurons = neurons;
 		this.neuronSynapses = new NeuronSynapses[neurons.length];
+		this.extNeuronSynapses = new HashMap<>();
 	}
 	
 	public void build() {
@@ -50,6 +54,23 @@ public final class SynapsesBuilder {
 			NeuronSynapses ns = neuronSynapses[n.getIndex()];
 			n.fillSynapseBranches( ns.toSynapseBranches() );
 		});
+		
+		logger.info("Creating synapses branches for externals");
+		//for ( Entry<IExternal, NeuronSynapses[]> extEntry : extNeuronSynapses.entrySet()) {
+		
+		extNeuronSynapses.entrySet().parallelStream().forEach( extEntry -> {
+			AbstractNeuron[][] matrix = extEntry.getKey().getNeurons();
+			int w = matrix.length;
+			int h = matrix[0].length;
+			for (int rx = 0; rx < w; rx++) {
+				for (int ry = 0; ry < h; ry++) {
+					AbstractNeuron n = matrix[rx][ry];
+					for ( NeuronSynapses ns : extEntry.getValue() ) {
+						n.fillSynapseBranches( ns.toSynapseBranches() );
+					}					
+				}
+			}
+		});		
 	}
 	
 	private static final void add(NeuronSynapses[] syns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
@@ -79,7 +100,9 @@ public final class SynapsesBuilder {
 			if (inc) ns.inNear.add(s);
 			else ns.outNear.add(s);
 			break;
-		default:
+		case EXTERNAL:
+			if (inc) ns.inExt.add(s);
+			else ns.outExt.add(s);
 			break;
 		}
 	}
@@ -88,7 +111,6 @@ public final class SynapsesBuilder {
 		var srcSyns = syns[src.getIndex()];
 		var dstSyns = syns[dst.getIndex()];
 		if (srcSyns==null || dstSyns==null) return false;
-		
 		return srcSyns.contains(s) || dstSyns.contains(s);
 	}
 	
@@ -111,26 +133,28 @@ public final class SynapsesBuilder {
 		public final Set<Synapse> outFarFB= ConcurrentHashMap.newKeySet();
 		public final Set<Synapse> inFarFF = ConcurrentHashMap.newKeySet();
 		public final Set<Synapse> inFarFB = ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> inExt   = ConcurrentHashMap.newKeySet();
+		public final Set<Synapse> outExt   = ConcurrentHashMap.newKeySet();
 		
 		public boolean isAllEmpty() {
 			return inNear.isEmpty()
-				&&outNear.isEmpty()
-				&&inFar.isEmpty()
-				&&outFar.isEmpty()
-				&&outFarFF.isEmpty()
-				&&outFarFB.isEmpty()
-				&&inFarFF.isEmpty()
-				&&inFarFB.isEmpty();
+				&& outNear.isEmpty()
+				&& inFar.isEmpty()
+				&& outFar.isEmpty()
+				&& outFarFF.isEmpty()
+				&& outFarFB.isEmpty()
+				&& inFarFF.isEmpty()
+				&& inFarFB.isEmpty();
 		}
 		public int size() {
 			return inNear.size()
-					+outNear.size()
-					+inFar.size()
-					+outFar.size()
-					+outFarFF.size()
-					+outFarFB.size()
-					+inFarFF.size()
-					+inFarFB.size();
+				+ outNear.size()
+				+ inFar.size()
+				+ outFar.size()
+				+ outFarFF.size()
+				+ outFarFB.size()
+				+ inFarFF.size()
+				+ inFarFB.size();
 		}
 		public boolean hasInternalSynapses() {
 			return !inNear.isEmpty()
@@ -141,25 +165,39 @@ public final class SynapsesBuilder {
 		
 		public boolean contains(Synapse s) {
 			return inNear.contains(s)
-					||outNear.contains(s)
-					||inFar.contains(s)
-					||outFar.contains(s)
-					||outFarFF.contains(s)
-					||outFarFB.contains(s)
-					||inFarFF.contains(s)
-					||inFarFB.contains(s);
+				|| outNear.contains(s)
+				|| inFar.contains(s)
+				|| outFar.contains(s)
+				|| outFarFF.contains(s)
+				|| outFarFB.contains(s)
+				|| inFarFF.contains(s)
+				|| inFarFB.contains(s);
 		}
 		
 		public List<SynapseBranch> toSynapseBranches() {
-			List<SynapseBranch> ret = new ArrayList<>(16);			
-			ret.addAll(	splitIfBigger(inNear, true, BranchType.NEAR, 32) );
-			ret.addAll(	splitIfBigger(inFar, true, BranchType.FAR, 32) );
-			ret.addAll(	splitIfBigger(outNear, false, BranchType.NEAR, 32) );
-			ret.addAll(	splitIfBigger(outFar, false, BranchType.FAR, 32) );
-			ret.addAll(	splitIfBigger(outFarFF, false, BranchType.LAYER_FEEDFORWARD, 32) );
-			ret.addAll(	splitIfBigger(outFarFB, false, BranchType.LAYER_FEEDBACK, 32) );
-			ret.addAll(	splitIfBigger(inFarFF, true, BranchType.LAYER_FEEDFORWARD, 32) );
-			ret.addAll(	splitIfBigger(inFarFB, true, BranchType.LAYER_FEEDBACK, 32) );
+			List<SynapseBranch> ret = new ArrayList<>(16);	
+			if (!inNear.isEmpty())
+				ret.addAll(	splitIfBigger(inNear, true, BranchType.NEAR, 32) );
+			if (!inFar.isEmpty())
+				ret.addAll(	splitIfBigger(inFar, true, BranchType.FAR, 32) );
+			if (!outNear.isEmpty())
+				ret.addAll(	splitIfBigger(outNear, false, BranchType.NEAR, 32) );
+			if (!outFar.isEmpty())
+				ret.addAll(	splitIfBigger(outFar, false, BranchType.FAR, 32) );
+			if (!outFarFF.isEmpty())
+				ret.addAll(	splitIfBigger(outFarFF, false, BranchType.LAYER_FEEDFORWARD, 32) );
+			if (!outFarFB.isEmpty())
+				ret.addAll(	splitIfBigger(outFarFB, false, BranchType.LAYER_FEEDBACK, 32) );
+			if (!inFarFF.isEmpty())
+				ret.addAll(	splitIfBigger(inFarFF, true, BranchType.LAYER_FEEDFORWARD, 32) );
+			if (!inFarFB.isEmpty())
+				ret.addAll(	splitIfBigger(inFarFB, true, BranchType.LAYER_FEEDBACK, 32) );
+			if (!inExt.isEmpty())
+				ret.addAll(	Collections.singletonList(
+		        	new SynapseBranch(inExt.toArray(new Synapse[0]), true, BranchType.EXTERNAL)) );
+			if (!outExt.isEmpty())
+				ret.addAll(	Collections.singletonList(
+		        	new SynapseBranch(outExt.toArray(new Synapse[0]), false, BranchType.EXTERNAL)) );
 			return ret;
 		}
 		
@@ -192,7 +230,6 @@ public final class SynapsesBuilder {
 		long baseSpeed = SYNAPSE_SPEED.FAST.getBaseSpeed();
 
 		Map<AbstractNeuron, List<Neighbor>> neighbors = new ConcurrentHashMap<>((int)(N*1.2f));
-	//	for (AbstractNeuron n : ns) {
 		Arrays.stream(ns).parallel().forEach( n -> {
 			List<Neighbor> local = new ArrayList<>(
 				Functions.findNearestNeurons(ns, n, localCount, layer.getConfig().CONNECTION_FILTER)
@@ -275,7 +312,6 @@ public final class SynapsesBuilder {
 			connectionsCount,
 			TimeUnit.NANOSECONDS.toMicros(endTime - startTime) + " micros"
 		);
-		
 		return;
 	}	
 
@@ -303,8 +339,7 @@ public final class SynapsesBuilder {
 				dstLayer.getLayerId(),
 				connections
 			);
-		});
-		
+		});	
 		logger.info("buildLayersSynapses..finished!");
 	}
 
@@ -338,7 +373,6 @@ public final class SynapsesBuilder {
 				?BranchType.LAYER_FEEDFORWARD
 				:BranchType.LAYER_FEEDBACK;
 		
-
 		InhibitorySynapticPlasticityRule inhibitorySynapticPlasticityRule = 
 				new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory());
 		ExcitatorySynapticPlasticityRule excitatorySynapticPlasticityRule =
@@ -347,7 +381,6 @@ public final class SynapsesBuilder {
 		// Round-robin
 		for (int round = 0; round < maxConn; round++) {
 			for (AbstractNeuron src : srcs) {
-
 				List<Neighbor> neigh = neighbors.get(src);
 				if (neigh.isEmpty()) continue;
 
@@ -390,7 +423,22 @@ public final class SynapsesBuilder {
 		return connectionsCount;
 	}
 
-	public int buildExternalSynapses(Point3f pluginSite, AbstractNeuron[][] matrix, Abstract3DLayer targetLayer, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
+	public int buildExternalSynapses( IExternal ext, Abstract3DLayer targetLayer ) {
+		return 	buildExternalSynapses(
+			ext,
+			ext.getPluginSite(),
+			ext.getNeurons(),
+			targetLayer,
+			ext.getExternalConnConfig().MIN_CONNECTIONS,
+			ext.getExternalConnConfig().MAX_CONNECTIONS,
+			ext.getExternalConnConfig().MAX_DISTANCE,
+			ext.getExternalConnConfig().NEURON_FILTER_PREDICATE,
+			ext.getExternalConnConfig().SYNAPSE_PLASTICITY_CONFIG,
+			ext.getExternalConnConfig().INCOMING
+		);
+	}
+	
+	private int buildExternalSynapses(IExternal external, Point3f pluginSite, AbstractNeuron[][] matrix, Abstract3DLayer targetLayer, int minConn, int maxConn, float maxDistance, Predicate<AbstractNeuron> filter, SynapsePlasticityConfig synCfg, boolean isIncoming ) {
 		int w = matrix.length;
 		int h = matrix[0].length;
 		int connections = 0;
@@ -417,8 +465,12 @@ public final class SynapsesBuilder {
 		conns.removeIf(n -> !filter.test(n.neuron()));
 		//conns.removeIf(n -> n.getRealDistance() > maxDistance);
 		
-		NeuronSynapses[] extNeuronSynapses = new NeuronSynapses[w*h];
-		
+		NeuronSynapses[] extNs = extNeuronSynapses.get(external);
+		if (extNs==null) {
+			extNs = new NeuronSynapses[w*h];
+			extNeuronSynapses.put(external, extNs);
+		}
+				
 		for (int rx = 0; rx < w; rx++) {
 			for (int ry = 0; ry < h; ry++) {
 				List<Integer> rndIdx = new ArrayList<>(60);
@@ -441,10 +493,15 @@ public final class SynapsesBuilder {
 						s = Synapse.create( intNeuron.neuron(), extNeuron, intNeuron.getRealDistance(), baseSpeed, synPlast );
 					}
 					
-					var ns = extNeuronSynapses[to1DIndex(rx,ry,h)];
-					if (!ns.contains(s)) {
-						add(ns, s, extNeuron, BranchType.LAYER_FEEDFORWARD, isIncoming);
-						add(ns, s, intNeuron.neuron(), BranchType.LAYER_FEEDFORWARD, !isIncoming);
+					int idx = to1DIndex(rx,ry,h);
+					var ns = extNs[idx];
+					if (ns==null || !ns.contains(s) /*!areAlreadyConnected(neuronSynapses, s, src, dst)*/) {
+						if (ns==null) {
+							ns = new NeuronSynapses();
+							extNs[idx] = ns;
+						}
+						add(extNs, s, extNeuron, BranchType.EXTERNAL, isIncoming);
+						add(neuronSynapses, s, intNeuron.neuron(), BranchType.EXTERNAL, !isIncoming);						
 						connections++;
 					}					
 				}

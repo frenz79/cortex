@@ -13,15 +13,15 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.SynapsesBuilder;
+import com.cortex.base.externals.IActuator;
+import com.cortex.base.externals.IClassifier;
+import com.cortex.base.externals.ISensor;
+import com.cortex.base.externals.ISupervisor;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.base.layers.SphericalLayer;
-import com.cortex.base.modules.IActuator;
-import com.cortex.base.modules.IClassifier;
-import com.cortex.base.modules.ISensor;
-import com.cortex.base.modules.ISupervisor;
 import com.cortex.base.utils.Point3f;
 
 public class Emisphere<L extends Abstract3DLayer> {
@@ -115,11 +115,6 @@ public class Emisphere<L extends Abstract3DLayer> {
 	
 	private void generateConnections() {
 		SynapsesBuilder bld = new SynapsesBuilder( this.neurons );
-		/*
-		for ( L layer : layers ) {
-			bld.buildInternalSynapses( layer );
-		}
-		*/
 		logger.info("Generating internal layer connections");
 		layers.parallelStream().forEach( l -> {
 			bld.buildInternalSynapses( l );
@@ -127,9 +122,13 @@ public class Emisphere<L extends Abstract3DLayer> {
 		
 		logger.info("Generating layer to layer connections");
 		var layersConnConfig = this.multiLayersConnConfig.getLayersConnectionsConfig(layers);
-		bld.buildLayersSynapses(layersConnConfig);		
-		// bld.buildExternalSynapses(null, null, getSensorsTargetLayer(), totalNeurons, SENSORS_TARGET_LAYER, CLASSIFIERS_TARGET_LAYER, null, null, false)
-	
+		bld.buildLayersSynapses(layersConnConfig);
+		
+		logger.info("Generating external synapses to layer connections");
+		for ( ISensor s : sensors ) {
+			bld.buildExternalSynapses( s, layers.get(s.getExternalConnConfig().LIKED_LAYER_ID) );
+		}		
+		
 		bld.build();
 	}
 	
@@ -169,26 +168,6 @@ public class Emisphere<L extends Abstract3DLayer> {
 	public AbstractNeuron[] getAllNeurons() {
 		return neurons;
 	}
-	
-	public void attachSensor(ISensor s) {
-		logger.info("Sensor attached:{}",s );
-		this.sensors.add(Objects.requireNonNull(s));	
-	}
-
-	public void attachActuator(IActuator a) {
-		logger.info("Actuator attached:{}",a );
-		this.actuators.add(Objects.requireNonNull(a));
-	}
-
-	public void attachClassifier(IClassifier<?> c) {
-		logger.info("Classifier attached:{}",c );
-		this.classifiers.add(Objects.requireNonNull(c));
-	}
-
-	public void attachSupervisor(ISupervisor<?> s) {
-		logger.info("Supervisor attached:{}", s );
-		this.supervisors.add(Objects.requireNonNull(s));
-	}
 
 	public List<ISensor> getSensors() {
 		return sensors;
@@ -219,6 +198,7 @@ public class Emisphere<L extends Abstract3DLayer> {
 	}   
 
 	public static class Builder<L extends Abstract3DLayer> {
+		final Logger logger = LogManager.getLogger(this.getClass());
 		private final Emisphere<L> emisphere;
 
 		public Builder() {
@@ -238,7 +218,31 @@ public class Emisphere<L extends Abstract3DLayer> {
 		public Builder<L> withTotalNeurons(int totalNeurons) {
 			emisphere.totalNeurons = totalNeurons;
 			return this;
-		}	     
+		}	
+		
+		public Builder<L>  attachSensor(ISensor s) {
+			logger.info("Sensor attached:{}",s );
+			emisphere.sensors.add(Objects.requireNonNull(s));	
+			return this;
+		}
+
+		public Builder<L>  attachActuator(IActuator a) {
+			logger.info("Actuator attached:{}",a );
+			emisphere.actuators.add(Objects.requireNonNull(a));
+			return this;
+		}
+
+		public Builder<L>  attachClassifier(IClassifier<?> c) {
+			logger.info("Classifier attached:{}",c );
+			emisphere.classifiers.add(Objects.requireNonNull(c));
+			return this;
+		}
+
+		public Builder<L>  attachSupervisor(ISupervisor<?> s) {
+			logger.info("Supervisor attached:{}", s );
+			emisphere.supervisors.add(Objects.requireNonNull(s));
+			return this;
+		}
 
 		private void validate() {
 
