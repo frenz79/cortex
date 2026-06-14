@@ -1,9 +1,7 @@
 package com.cortex.viewer;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,7 +51,7 @@ public class PointMeshViewerFX extends Application {
 	private final Group synapseLines = new Group();
 	private final Sphere selectedSphere = new Sphere(0.02);
 	private final PhongMaterial selectedMaterial = new PhongMaterial();
-	private final List<Sphere> neuronSpheres = new ArrayList<>();
+	//private final List<Sphere> neuronSpheres = new ArrayList<>();
 
 	private final Tooltip dynamicTooltip = new Tooltip();
 	private long lastTooltipUpdate = 0;
@@ -278,20 +276,19 @@ public class PointMeshViewerFX extends Application {
 		if (showInputSynapses) {
 			for (SynapseBranch sb : n.getInSynapseBranches()) {
 				for ( Synapse s : sb.synapses ) {
-					if (s.getSource()!=null && s.getSource().getPosition()!=null) {
-						Point3D a = neuronToLocal(s.getSource());
+					if (s.getTarget().getPosition()!=null) {
+						Point3D a = neuronToLocal(s.getTarget());
 						Node line = makeConnection(a, b, Color.YELLOW);
 						synapseLines.getChildren().add(line);
 					}
 				}
-
 			}
 		}
 		if (showOutputSynapses) {
 			for (SynapseBranch sb : n.getOutSynapseBranches()) {
 				for ( Synapse s : sb.synapses ) {
-					if (s.getTarget()!=null && s.getTarget().getPosition()!=null) {
-						Point3D a = neuronToLocal(s.getTarget());
+					if ( s.getSource().getPosition()!=null) {
+						Point3D a = neuronToLocal(s.getSource());
 						Node line = makeConnection(a, b, Color.BLUE);
 						synapseLines.getChildren().add(line);
 					}
@@ -319,7 +316,7 @@ public class PointMeshViewerFX extends Application {
 			sphere.setTranslateY(p.y());
 			sphere.setTranslateZ(p.z());
 
-			neuronSpheres.add(sphere);
+			//neuronSpheres.add(sphere);
 			root3d.getChildren().add(sphere);	
 		}		
 	}
@@ -414,7 +411,7 @@ public class PointMeshViewerFX extends Application {
 						sphere.setTranslateY(p.y());
 						sphere.setTranslateZ(p.z());
 
-						neuronSpheres.add(sphere);
+//						neuronSpheres.add(sphere);
 						root3d.getChildren().add(sphere);
 					}
 				}	

@@ -58,6 +58,15 @@ public final class Synapse implements IPlasticSynapse {
 	}
 	
 	public static Synapse create(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
+		if (pre==null || post==null) 
+			throw new RuntimeException("Invalid synapse: pre or post are null");
+		if (pre==post) 
+			throw new RuntimeException("Invalid synapse: pre==post");
+		if (pre.getPosition().equals(post.getPosition())) 
+			throw new RuntimeException("Invalid synapse: pre.position==post.position");
+		if (length==0) 
+			throw new RuntimeException("Invalid synapse: length");
+		
 		synapsesCount.incrementAndGet();
 		return new Synapse(
 			pre, post, length, baseSpeed, plasticityRule	
@@ -68,28 +77,6 @@ public final class Synapse implements IPlasticSynapse {
 		return synapsesCount.get();
 	}
 	
-	/*
-	public Synapse(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, boolean inhibitor) {
-		this( pre,
-			  post,
-			  length,
-			  baseSpeed,
-			  inhibitor?new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory())
-				:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory())
-		);
-	}
-	
-	Synapse s = new Synapse( 
-			srcNeuron, 
-			toNeuron, 
-			distance, 
-			baseSpeed,
-			srcNeuron.isInhibitor() 
-			?new InhibitorySynapticPlasticityRule( plasticityCfg.inhibitory())
-					:new ExcitatorySynapticPlasticityRule( plasticityCfg.excitatory())
-			);
-	*/
-
 	public void addSpike(Spike spike) {
 		// fifo...
 		if (((state.writeIndex + 1) & (SynapseState.BUFFER_SIZE - 1)) == (state.readIndex & (SynapseState.BUFFER_SIZE - 1))) {
@@ -203,5 +190,11 @@ public final class Synapse implements IPlasticSynapse {
 			return false;
 		Synapse other = (Synapse) obj;
 		return Objects.equals(post, other.post) && Objects.equals(pre, other.pre);
+	}
+
+	@Override
+	public String toString() {
+		return "Synapse [baseSpeed=" + baseSpeed + ", length=" + length + ", pre=" + pre + ", post=" + post
+				+ ", plasticityRule=" + plasticityRule + ", state=" + state + "]";
 	}
 }

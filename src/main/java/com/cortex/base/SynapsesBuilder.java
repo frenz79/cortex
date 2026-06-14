@@ -3,8 +3,8 @@ package com.cortex.base;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -32,29 +32,27 @@ import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 import com.cortex.brain.CorticalNeuronsConfig;
 
-public class SynapsesBuilder {
+public final class SynapsesBuilder {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 
 	private final AbstractNeuron[] neurons;
 	private final NeuronSynapses[] neuronSynapses;
 	
+	public SynapsesBuilder( AbstractNeuron[] neurons ) {
+		this.neurons = neurons;
+		this.neuronSynapses = new NeuronSynapses[neurons.length];
+	}
+	
 	public void build() {
 		logger.info("Creating synapses branches..");
-		/*
-		for (int i=0; i<neurons.length; i++) {
-			var n = neurons[i];
-			NeuronSynapses ns = neuronSynapses[n.getIndex()];
-			n.fillSynapseBranches( ns.toSynapseBranches() );
-		}
-		*/
 		Arrays.stream(neurons).parallel().forEach( n -> {
 			NeuronSynapses ns = neuronSynapses[n.getIndex()];
 			n.fillSynapseBranches( ns.toSynapseBranches() );
 		});
 	}
 	
-	private final void add(NeuronSynapses[] syns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
+	private static final void add(NeuronSynapses[] syns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
 		var ns = syns[n.getIndex()];
 		if (ns==null) {
 			ns = new NeuronSynapses();
@@ -63,7 +61,7 @@ public class SynapsesBuilder {
 		add(ns, s, n, bt, inc);
 	}
 	
-	private final void add(NeuronSynapses ns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
+	private static final void add(NeuronSynapses ns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
 		switch(bt) {
 		case FAR:
 			if (inc) ns.inFar.add(s);
@@ -86,24 +84,25 @@ public class SynapsesBuilder {
 		}
 	}
 	
-	private final boolean areAlreadyConnected(NeuronSynapses[] syns, Synapse s, AbstractNeuron src, AbstractNeuron dst) {
+	private static final boolean areAlreadyConnected(NeuronSynapses[] syns, Synapse s, AbstractNeuron src, AbstractNeuron dst) {
 		var srcSyns = syns[src.getIndex()];
 		var dstSyns = syns[dst.getIndex()];
 		if (srcSyns==null || dstSyns==null) return false;
 		
 		return srcSyns.contains(s) || dstSyns.contains(s);
 	}
-	private int getOutSynapsesCount(NeuronSynapses[] syns, AbstractNeuron n) {
+	
+	private static int getOutSynapsesCount(NeuronSynapses[] syns, AbstractNeuron n) {
 		var ns = syns[n.getIndex()];
 		return (ns==null)?0:ns.outFar.size()+ns.outNear.size();
 	}
 
-	private int getInSynapsesCount(NeuronSynapses[] syns, AbstractNeuron n) {
+	private static int getInSynapsesCount(NeuronSynapses[] syns, AbstractNeuron n) {
 		var ns = syns[n.getIndex()];
 		return (ns==null)?0:ns.inFar.size()+ns.inNear.size();
 	}
 	
-	static class NeuronSynapses {
+	static final class NeuronSynapses {
 		public final Set<Synapse> inNear  = ConcurrentHashMap.newKeySet();
 		public final Set<Synapse> outNear = ConcurrentHashMap.newKeySet();
 		public final Set<Synapse> inFar   = ConcurrentHashMap.newKeySet();
@@ -164,15 +163,14 @@ public class SynapsesBuilder {
 			return ret;
 		}
 		
-		private Collection<SynapseBranch> splitIfBigger(Set<Synapse> syn, boolean inc, BranchType bt, int limit) {
-		    List<SynapseBranch> ret = new ArrayList<>();
-
+		private static Collection<SynapseBranch> splitIfBigger(Set<Synapse> syn, boolean inc, BranchType bt, int limit) {
 		    int size = syn.size();
 		    if (size <= limit) {
-		        ret.add(new SynapseBranch(syn.toArray(new Synapse[0]), inc, bt));
-		        return ret;
+		        return Collections.singletonList(
+		        	new SynapseBranch(syn.toArray(new Synapse[0]), inc, bt));
 		    }
-
+		    
+		    List<SynapseBranch> ret = new ArrayList<>();
 		    Synapse[] arr = syn.toArray(new Synapse[0]);
 
 		    for (int i = 0; i < size; i += limit) {
@@ -180,38 +178,8 @@ public class SynapsesBuilder {
 		        Synapse[] chunk = Arrays.copyOfRange(arr, i, end);
 		        ret.add(new SynapseBranch(chunk, inc, bt));
 		    }
-
 		    return ret;
 		}
-
-		/*
-		private Collection<? extends SynapseBranch> splitIfBigger(Set<Synapse> syn, boolean inc, BranchType bt, int limit) {
-			List<SynapseBranch> ret = new ArrayList<>();			
-			if (syn.size() > limit) {
-				Synapse[] synArr = new Synapse[limit];
-				int i=0;
-				int count = 0;
-				for ( Iterator<Synapse> iter=syn.iterator(); iter.hasNext(); ) {
-					Synapse s = iter.next();
-					synArr[i++] = s;					
-					if (i==limit || i==syn.size()) {
-						ret.add( new SynapseBranch(	synArr, inc, bt ));
-						i=0;
-						count++;
-						synArr = new Synapse[syn.size()-limit*count];
-					}
-				}
-			} else {
-				ret.add( new SynapseBranch(	syn.toArray(new Synapse[0]), inc, bt ));
-			}
-			return ret;
-		}
-		*/
-	}
-	
-	public SynapsesBuilder( AbstractNeuron[] neurons ) {
-		this.neurons = neurons;
-		this.neuronSynapses = new NeuronSynapses[neurons.length];
 	}
 	
 	public void buildInternalSynapses( Abstract3DLayer layer ) {
@@ -223,9 +191,9 @@ public class SynapsesBuilder {
 		int farCount   = layer.getConfig().MAX_CONNECTIONS - localCount;
 		long baseSpeed = SYNAPSE_SPEED.FAST.getBaseSpeed();
 
-		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>((int)(N*1.2f));
-
-		for (AbstractNeuron n : ns) {
+		Map<AbstractNeuron, List<Neighbor>> neighbors = new ConcurrentHashMap<>((int)(N*1.2f));
+	//	for (AbstractNeuron n : ns) {
+		Arrays.stream(ns).parallel().forEach( n -> {
 			List<Neighbor> local = new ArrayList<>(
 				Functions.findNearestNeurons(ns, n, localCount, layer.getConfig().CONNECTION_FILTER)
 			);
@@ -235,7 +203,7 @@ public class SynapsesBuilder {
 			all.addAll(local);
 			all.addAll(far);
 			neighbors.put(n, all);
-		}
+		});
 
 		for (int round = 0; round < layer.getConfig().MAX_CONNECTIONS; round++) {
 			for (AbstractNeuron src : ns) {		
