@@ -26,7 +26,12 @@ public final class SynapseBranch {
 	public float branchActivity;       // Recent activity (for decay)
 	public float inhibition;           // Lateral inhibition level
 	public float gain = 1.0f;          // Branch modulator
+	public boolean active = false;	   // A synapse has spikes to process
 
+	public boolean isActive() {
+		return active;
+	}
+	
 	@Override
 	public String toString() {
 		return "SynapseBranch [incoming=" + incoming + ", type=" + type + ", branchPotential=" + branchPotential

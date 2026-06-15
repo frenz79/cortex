@@ -270,6 +270,7 @@ public class DiscreteAdaptiveStabilizer {
 	    // ---------------------------------------------------------
 	    // 4) Vincoli "morbidi" per layer (solo limiti, non set fissi)
 	    // ---------------------------------------------------------
+	    /*
 	    if (lid == 0) ncfg.REPOLARIZATION_PER_NANOS =
 	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.15f);
 	    if (lid == 1) ncfg.REPOLARIZATION_PER_NANOS =
@@ -282,7 +283,7 @@ public class DiscreteAdaptiveStabilizer {
 	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.12f);
 	    if (lid == 5) ncfg.REPOLARIZATION_PER_NANOS =
 	    		Maths.min(ncfg.REPOLARIZATION_PER_NANOS, 0.10f);
-
+*/
 	    if (lid == 3) ncfg.FIRING_THRESHOLD =
 	    		Maths.max(ncfg.FIRING_THRESHOLD, 0.30f);
 	    if (lid == 4) ncfg.FIRING_THRESHOLD =
@@ -308,7 +309,7 @@ public class DiscreteAdaptiveStabilizer {
 	        float dLeak = clampDelta(0.02f * sign * scale, config.MAX_LEAK_STEP);
 
 	        ncfg.FIRING_THRESHOLD         += dTh;
-	        ncfg.REPOLARIZATION_PER_NANOS += dLeak;
+	  //      ncfg.REPOLARIZATION_PER_NANOS += dLeak;
 
 	        if (sign > 0) {
 	            // firing troppo alto → riduci LTP, aumenta LTD
@@ -336,7 +337,7 @@ public class DiscreteAdaptiveStabilizer {
 	        // se sparsità troppo bassa → aumenti leak (meno attivi)
 	        // se troppo alta → riduci leak (più attivi)
 	        float dLeak = clampDelta(0.02f * signS * scaleS, config.MAX_LEAK_STEP);
-	        ncfg.REPOLARIZATION_PER_NANOS += dLeak;
+	   //     ncfg.REPOLARIZATION_PER_NANOS += dLeak;
 	    }
 
 	    // ---------------------------------------------------------
@@ -361,7 +362,7 @@ public class DiscreteAdaptiveStabilizer {
 	        float dTh   = clampDelta(0.01f, config.MAX_THRESHOLD_STEP);
 	        float dLeak = clampDelta(0.02f, config.MAX_LEAK_STEP);
 	        ncfg.FIRING_THRESHOLD          += dTh;
-	        ncfg.REPOLARIZATION_PER_NANOS += dLeak;
+	 //       ncfg.REPOLARIZATION_PER_NANOS += dLeak;
 	    }
 
 	    // ---------------------------------------------------------
@@ -397,7 +398,7 @@ public class DiscreteAdaptiveStabilizer {
 	    // ---------------------------------------------------------
 	    if (stats.activeNeurons() == 0) {
 	        ncfg.FIRING_THRESHOLD         -= 0.02f;
-	        ncfg.REPOLARIZATION_PER_NANOS -= 0.02f;
+	   //     ncfg.REPOLARIZATION_PER_NANOS -= 0.02f;
 
 	        pcfg.INITIAL_WEIGHT    += 0.005f;
 	        pcfg.W_BASELINE        += 0.005f;
@@ -406,7 +407,7 @@ public class DiscreteAdaptiveStabilizer {
 	        clampWeights(pcfg);
 
 	        ncfg.FIRING_THRESHOLD         = Maths.max(0.03f, ncfg.FIRING_THRESHOLD);
-	        ncfg.REPOLARIZATION_PER_NANOS = Maths.max(0.02f, ncfg.REPOLARIZATION_PER_NANOS);
+	    //    ncfg.REPOLARIZATION_PER_NANOS = Maths.max(0.02f, ncfg.REPOLARIZATION_PER_NANOS);
 	    }
 	}
 
@@ -418,7 +419,7 @@ public class DiscreteAdaptiveStabilizer {
 
 	private final static void clampNeuronParams(CorticalNeuronsConfig ncfg) {
 		ncfg.FIRING_THRESHOLD = Maths.clamp(ncfg.FIRING_THRESHOLD, 0.2f, 2.0f );
-		ncfg.REPOLARIZATION_PER_NANOS = Maths.clamp(ncfg.REPOLARIZATION_PER_NANOS, 0.05f, 1.0f );
+	//	ncfg.REPOLARIZATION_PER_NANOS = Maths.clamp(ncfg.REPOLARIZATION_PER_NANOS, 0.05f, 1.0f );
 	}
 
 	private final static void clampPlasticityParams(ExcitatorySynapticPlasticityConfig pcfg) {

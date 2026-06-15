@@ -1,7 +1,9 @@
 package com.cortex.base.lateral_inhibition;
 
-import com.cortex.base.SynapseBranch;
+import com.cortex.base.AbstractNeuron;
 
 public interface ILateralInhibitionStrategy {
-	 void updateInhibition(SynapseBranch[] branches, long deltaTimeNanos);
+	
+	 void updateInhibition(long deltaTimeNanos, AbstractNeuron n, float gain);
+	 
 }

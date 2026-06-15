@@ -53,16 +53,16 @@ public class Emisphere<L extends Abstract3DLayer> {
 		private int counter = 0;
 
 		public synchronized CorticalNeuron buildNeuron( 
-				int layerId, 
+				Abstract3DLayer layer, 
 				boolean inhibitor, 
 				Point3f position
 				) {
 			CorticalNeuron n = new CorticalNeuron(
 					counter, 
-					layerId, 
-					configs.get(layerId).HAS_INCOMING, 
-					configs.get(layerId).HAS_OUTGOING, 
-					configs.get(layerId).CORTICAL_NEURONS_CONFIG,
+					layer, 
+					configs.get(layer.getLayerId()).HAS_INCOMING, 
+					configs.get(layer.getLayerId()).HAS_OUTGOING, 
+					configs.get(layer.getLayerId()).CORTICAL_NEURONS_CONFIG,
 					inhibitor, 
 					position
 					);

@@ -1,6 +1,5 @@
 package com.cortex.base.layers;
 
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -9,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.utils.IntList;
+import com.cortex.base.utils.SpatialHash;
 import com.cortex.brain.Emisphere.CorticalNeuronFactory;
 
 public abstract class Abstract3DLayer {
@@ -18,23 +18,21 @@ public abstract class Abstract3DLayer {
 	protected final LayerConfig config;
 	protected AbstractNeuron[] neurons;
 	private int synapsesCount = 0;
-	private Map<Long, IntList> spatialHash;
-	private final float cellSize;
+	private SpatialHash spatialHash;
 	
 	public Abstract3DLayer(LayerConfig config) {
 		super();
 		this.config = config;
-		this.cellSize = config.DIMENSION / 2.0f;
 	}
 	
-	protected abstract Abstract3DLayer internalPopulate( CorticalNeuronFactory neuronFactory );
+	protected abstract Abstract3DLayer internalPopulate(CorticalNeuronFactory neuronFactory );
 
 	public Abstract3DLayer populate( CorticalNeuronFactory neuronFactory ) {
 		long startTime = System.nanoTime();
 		this.neurons = new AbstractNeuron[getNeuronsCount()];
 		
 		internalPopulate(neuronFactory);
-		this.spatialHash = Functions.buildSpatialHash(getNeurons(), cellSize );
+		this.spatialHash = new SpatialHash(getNeurons(), config.DIMENSION / 2.0f );
 		
 		long endTime = System.nanoTime();
 		logger.info("L{} generated {} neurons in {} micros",
@@ -47,7 +45,7 @@ public abstract class Abstract3DLayer {
 	}
 
 	public IntList getSpatialHashCell( AbstractNeuron n ) {
-		return this.spatialHash.get(Functions.getCellKey(n, cellSize));
+		return this.spatialHash.getSpatialHashCell(n);
 	}
 	
 	public LayerConfig getConfig() {
@@ -74,7 +72,7 @@ public abstract class Abstract3DLayer {
 		return config.NEURONS_COUNT;
 	}
 
-	public Map<Long, IntList> getSpatialHash() {
+	public SpatialHash getSpatialHash() {
 		return spatialHash;
 	}
 

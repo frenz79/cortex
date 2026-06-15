@@ -1,18 +1,23 @@
 package com.cortex.brain;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import com.cortex.base.SynapseBranch.BranchType;
+import com.cortex.base.dendritic_competition.ContinuousCompetition;
+import com.cortex.base.dendritic_competition.DendriticCompetitionStrategiesConfig;
+import com.cortex.base.dendritic_competition.IDendriticCompetitionStrategy;
+import com.cortex.base.dendritic_competition.NormalizedCompetition;
+import com.cortex.base.dendritic_competition.WinnerTakeMostCompetition;
 
 public class CorticalNeuronsConfig {
 
 	public int MAX_FAN_IN = 250;
 	public int MAX_FAN_OUT = 250;
 		
-	public float POTENTIAL_MAX = 3.0f;
-	public float POTENTIAL_MIN = -2.0f;
 	public float FIRING_THRESHOLD = 0.12f;
-	public float POTENTIAL_ZERO = 0.0f;
 	public long  REFRACTORY_PERIOD_NANOS = TimeUnit.MILLISECONDS.toNanos(5);
-	public float REPOLARIZATION_PER_NANOS  = /*TimeUnit.NANOSECONDS.toSeconds(1) */ 0.2f; // potential units per second
 	public long  RATE_WINDOW_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
 	public float RATE_DECAY_PER_WINDOW = 0.95f; // per RATE_WINDOW
 
@@ -22,6 +27,31 @@ public class CorticalNeuronsConfig {
 	public long  BRANCH_GAIN_TAU_NANOS = 50_000_000L; // 50 ms
 	
 	public int MAX_SYNAPSES_PER_BRANCH = 32;
+	
+	public DendriticCompetitionStrategiesConfig DENDIRITIC_COMPETITION_STRATEGIES_CONFIG;
+	
+	public final Map<BranchType,IDendriticCompetitionStrategy> DENDIRITIC_COMPETITION_STRATEGIES = new EnumMap<>(BranchType.class);
+
+	public long INHIBITION_TAU_NANOS = 50_000_000L; // 50 ms
+	public float INHIBITION_DECAY_PER_WINDOW = 0.95f;
+
+	private CorticalNeuronsConfig() {
+		DENDIRITIC_COMPETITION_STRATEGIES_CONFIG = DendriticCompetitionStrategiesConfig.newBuilder().build();
+		
+		DENDIRITIC_COMPETITION_STRATEGIES.put(
+		    BranchType.NEAR,
+		    new WinnerTakeMostCompetition(DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.WINNER_TAKE_MOST_CONFIG)
+		);
+		DENDIRITIC_COMPETITION_STRATEGIES.put(
+		    BranchType.FAR,
+		    new ContinuousCompetition(DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.CONTINOUS_CONFIG)
+		);
+		DENDIRITIC_COMPETITION_STRATEGIES.put(
+		    BranchType.LAYER_FEEDFORWARD,
+		    new NormalizedCompetition(DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.NORMALIZED_CONFIG)
+		);
+		// No competition for EXTERNAL
+	}
 	
 	public static Builder newBuilder() {
 		return new Builder();
@@ -39,21 +69,9 @@ public class CorticalNeuronsConfig {
 			cfg.MAX_FAN_OUT = MAX_FAN_OUT;
 			return this;
 		}
-		
-		public Builder withPotential(float POTENTIAL_MIN, float POTENTIAL_MAX, float POTENTIAL_ZERO) {
-			cfg.POTENTIAL_MIN = POTENTIAL_MIN;
-			cfg.POTENTIAL_MAX = POTENTIAL_MAX;
-			cfg.POTENTIAL_ZERO = POTENTIAL_ZERO;
-			return this;
-		}
 
 		public Builder withRefractoryPeriodNanos(long REFRACTORY_PERIOD_NANOS) {
 			cfg.REFRACTORY_PERIOD_NANOS = REFRACTORY_PERIOD_NANOS;
-			return this;
-		}
-
-		public Builder withRepolarizationPerSecond(float REPOLARIZATION_PER_SECOND) {
-			cfg.REFRACTORY_PERIOD_NANOS = (long)(TimeUnit.SECONDS.toNanos(1)*REPOLARIZATION_PER_SECOND);
 			return this;
 		}
 
@@ -62,22 +80,24 @@ public class CorticalNeuronsConfig {
 			return this;
 		}
 
+		public Builder withDendriticCompetitionStrategiesConfig(DendriticCompetitionStrategiesConfig DENDIRITIC_COMPETITION_STRATEGIES) {
+			cfg.DENDIRITIC_COMPETITION_STRATEGIES_CONFIG = DENDIRITIC_COMPETITION_STRATEGIES;
+			return this;
+		}
+		
+		public Builder withInhibitionDecay( long INHIBITION_TAU_NANOS, float INHIBITION_DECAY_PER_WINDOW ) {		
+			cfg.INHIBITION_TAU_NANOS = INHIBITION_TAU_NANOS;
+			cfg.INHIBITION_DECAY_PER_WINDOW = INHIBITION_DECAY_PER_WINDOW;
+			return this;
+		}
+
 		public Builder withRatePerSecond( long RATE_WINDOW_SECOND, float RATE_DECAY_PER_WINDOW ) {		
 			cfg.RATE_WINDOW_NANOS = (long)(TimeUnit.SECONDS.toNanos(1)*RATE_WINDOW_SECOND);;
 			cfg.RATE_DECAY_PER_WINDOW = RATE_DECAY_PER_WINDOW;
 			return this;
 		}
-
+		
 		private void validate() {
-			if (cfg.POTENTIAL_MAX <= cfg.POTENTIAL_MIN)
-				throw new IllegalArgumentException("POTENTIAL_MAX must be > POTENTIAL_MIN");
-
-			if (cfg.FIRING_THRESHOLD <= cfg.POTENTIAL_MIN || cfg.FIRING_THRESHOLD >= cfg.POTENTIAL_MAX)
-				throw new IllegalArgumentException("FIRING_THRESHOLD must be between POTENTIAL_MIN and POTENTIAL_MAX");
-
-			if (cfg.REPOLARIZATION_PER_NANOS <= 0)
-				throw new IllegalArgumentException("REPOLARIZATION_PER_NANOS must be > 0");
-
 			if (cfg.RATE_WINDOW_NANOS <= 0)
 				throw new IllegalArgumentException("RATE_WINDOW must be > 0");
 
@@ -87,6 +107,20 @@ public class CorticalNeuronsConfig {
 
 		public CorticalNeuronsConfig build() {
 			validate();
+			 // Rebuild strategies based on the final config
+	        cfg.DENDIRITIC_COMPETITION_STRATEGIES.clear();
+	        cfg.DENDIRITIC_COMPETITION_STRATEGIES.put(
+	            BranchType.NEAR,
+	            new WinnerTakeMostCompetition(cfg.DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.WINNER_TAKE_MOST_CONFIG)
+	        );
+	        cfg.DENDIRITIC_COMPETITION_STRATEGIES.put(
+	            BranchType.FAR,
+	            new ContinuousCompetition(cfg.DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.CONTINOUS_CONFIG)
+	        );
+	        cfg.DENDIRITIC_COMPETITION_STRATEGIES.put(
+	            BranchType.LAYER_FEEDFORWARD,
+	            new NormalizedCompetition(cfg.DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.NORMALIZED_CONFIG)
+	        );
 			return cfg;
 		}
 	}

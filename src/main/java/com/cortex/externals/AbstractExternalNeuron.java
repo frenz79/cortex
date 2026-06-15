@@ -8,7 +8,7 @@ public abstract class AbstractExternalNeuron extends AbstractNeuron {
 			int index, 
 			boolean hasIncoming, 
 			boolean hasOutgoing) {
-		super(-1, index, hasIncoming, hasOutgoing, false, null);
+		super(null, index, hasIncoming, hasOutgoing, false, null);
 	}
 	
     @Override

@@ -14,14 +14,15 @@ import com.cortex.base.utils.IntFloatPair;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
+import com.cortex.base.utils.SpatialHash;
 
 public class Functions {
 	
-	public static final IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance, AbstractNeuron[] neurons, Map<Long, IntList> spatialHash ) {
+	public static final IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance, AbstractNeuron[] neurons, SpatialHash spatialHash ) {
 		return findKNearestApprox(p.x(), p.y(), p.z(), k, cellSize, maxDistance, neurons, spatialHash);
 	}
 
-	public static final IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance, AbstractNeuron[] neurons, Map<Long, IntList> spatialHash ) {
+	public static final IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance, AbstractNeuron[] neurons, SpatialHash spatialHash ) {
 		// buffer ordinato di dimensione k (distanze quadratiche)
 		IntFloatPair[] best = new IntFloatPair[k];
 		for (int i = 0; i < k; i++) best[i] = new IntFloatPair(-1, Float.POSITIVE_INFINITY);
@@ -38,7 +39,7 @@ public class Functions {
 			for (int dy = -radiusCells; dy <= radiusCells; dy++) {
 				for (int dz = -radiusCells; dz <= radiusCells; dz++) {
 					long key = getCellKey(cx + dx, cy + dy, cz + dz);
-					IntList bucket = spatialHash.get(key);
+					IntList bucket = spatialHash.getBucket(key);
 					if (bucket == null) continue;
 					for (int bi = 0; bi < bucket.size(); bi++) {
 						int ni = bucket.get(bi);
@@ -67,28 +68,6 @@ public class Functions {
 		return result;
 	}
 	
-	public static final Map<Long, IntList> buildSpatialHash(AbstractNeuron[] neurons, float cellSize) {
-		Map<Long, IntList> spatialHash = new HashMap<>( (Maths.floor(neurons.length*1.5)) );
-		int n = neurons.length;
-		for (int i = 0; i < n; i++) {
-			long key = getCellKey(neurons[i], cellSize);
-			IntList list = spatialHash.get(key);
-			if (list == null) {
-				list = new IntList(32);
-				spatialHash.put(key, list);
-			}
-			list.add(i);
-		}
-		return spatialHash ;
-	}
-
-	public static long getCellKey( AbstractNeuron n, float cellSize ) {
-		int cx = cellCoord(n.getPosition().x(), cellSize);
-		int cy = cellCoord(n.getPosition().y(), cellSize);
-		int cz = cellCoord(n.getPosition().z(), cellSize);
-		return getCellKey(cx, cy, cz);
-	}
-
 	public static final long getCellKey(int cx, int cy, int cz) {
 		return (((long)cx) << 42) ^ (((long)cy) << 21) ^ (long)cz;
 	}

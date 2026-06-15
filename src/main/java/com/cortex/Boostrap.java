@@ -72,7 +72,7 @@ public class Boostrap {
 	}
 	*/
 	public static void main(String[] args) throws IOException, InterruptedException { 
-		int totalNeurons = 20_000;
+		int totalNeurons = 40_000;
 		int connScale = 50;
 
 		Retina retina = new Retina(
@@ -152,7 +152,6 @@ public class Boostrap {
 		NeuralEngine engine = new NeuralEngine( brain, new NeuralEngineConfig() );
 		engine.withMetricsRecorder( metricsRecorder );
 
-//		brain.attachSensor( retina );
 //		brain.attachClassifier( ocrSupervisor.getClassifier() );
 //		brain.attachSupervisor( ocrSupervisor );
 //		brain.compact();
@@ -178,7 +177,7 @@ public class Boostrap {
 		engine.start();
 		Thread.sleep(200); // breve delay per garantire che il thinker sia operativo
 
-//		retina.start();
+		retina.start();
 
 		keepAlive.await();
 		logger.info("Main exiting");

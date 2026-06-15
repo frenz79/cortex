@@ -114,7 +114,7 @@ public final class Synapse implements IPlasticSynapse {
 		}
 	}
 
-	public boolean isEmpty() {
+	public boolean hasSpikes() {
 		return state.writeIndex == state.readIndex;
 	}
 

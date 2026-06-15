@@ -18,6 +18,7 @@ import com.cortex.base.externals.ISensor;
 import com.cortex.base.externals.ISupervisor;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.brain.Brain;
+import com.cortex.brain.Emisphere;
 import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {
@@ -83,39 +84,43 @@ public class NeuralEngine {
 			}
 		});
 		neuronThread.start();
-/*
+
 		// IO loop for sensors/actuators/classifiers/supervisors
 		logger.info("sensors/actuators/classifiers/supervisors thread started!");
 		Runnable ioRunnable = () -> {
 			long now = now();
 			try {
-				for (ISensor s : brain.getSensors()) {
-					if (s.isActive() && (now - s.getLastProcessTime()) > s.getWaitTimeNanos()) {
-						s.process(now);
-					}
-				}
-				for (IActuator a : brain.getActuators()) {
-					if (a.isActive() && (now - a.getLastProcessTime()) > a.getWaitTime()) {
-						a.process(now);
-					}
-				}
-				for (IClassifier<?> c : brain.getClassifiers()) {
-					try {
-						AbstractNeuron result = c.classify(now);
-						if (result != null) {
-							logger.info("Classifier result:{}", result);
+				 for (Emisphere<?> em : brain.getEmispheres()) {
+					for (ISensor s : em.getSensors()) {
+						if (s.isActive() && (now - s.getLastProcessTime()) > s.getWaitTimeNanos()) {
+							s.process(now);
 						}
-					} catch (Exception ex) {
-						logger.error("Handled Exception:",ex);
 					}
-				}
-				for (ISupervisor<?> s : brain.getSupervisors()) {
-					try {
-						s.process(now);
-					} catch (Exception ex) {
-						logger.error("Handled Exception:",ex);
+					/*
+					for (IActuator a : em.getActuators()) {
+						if (a.isActive() && (now - a.getLastProcessTime()) > a.getWaitTime()) {
+							a.process(now);
+						}
 					}
-				}
+					for (IClassifier<?> c : em.getClassifiers()) {
+						try {
+							AbstractNeuron result = c.classify(now);
+							if (result != null) {
+								logger.info("Classifier result:{}", result);
+							}
+						} catch (Exception ex) {
+							logger.error("Handled Exception:",ex);
+						}
+					}
+					for (ISupervisor<?> s : em.getSupervisors()) {
+						try {
+							s.process(now);
+						} catch (Exception ex) {
+							logger.error("Handled Exception:",ex);
+						}
+					}
+					*/
+				 }
 			} catch (Throwable t) {
 				t.printStackTrace();
 			}
@@ -143,23 +148,24 @@ public class NeuralEngine {
 				        long avgTimeMicros = (runsWindow == 0)
 				                ? 0
 				                : TimeUnit.NANOSECONDS.toMicros(timeWindow / runsWindow);
-						
-						for (Abstract3DLayer layer : brain.getAllLayers()) {
-							int layerId = layer.getLayerId();
-							metricsRecorder.pollLayerStats(
-								now, 
-								avgTimeMicros, 
-								runsWindow, 
-								layerId
-							);
-						}
+				        for (Emisphere<?> em : brain.getEmispheres()) {
+							for (Abstract3DLayer layer : em.getAllLayers()) {
+								int layerId = layer.getLayerId();
+								metricsRecorder.pollLayerStats(
+									now, 
+									avgTimeMicros, 
+									runsWindow, 
+									layerId
+								);
+							}
+				        }
 					},
 					1_000,
 					config.METRICS_PERIOD_NANOS, 
 					TimeUnit.NANOSECONDS
 				);
 		}
-		*/
+		
 	}
 
 	public synchronized void stop() {

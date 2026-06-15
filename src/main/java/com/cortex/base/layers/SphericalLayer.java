@@ -29,7 +29,7 @@ public final class SphericalLayer extends Abstract3DLayer {
 			float z = (float) Maths.cos(a1) * radius;
 
 			this.neurons[i] = neuronFactory.buildNeuron(
-				config.getLayerId(),
+				this,
 				isInhibitor(), new Point3f(x,y,z)
 			);
 		}

@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.lateral_inhibition.CombinedLateralInhibition;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
@@ -26,6 +27,7 @@ public class LayerConfig {
     public Predicate<AbstractNeuron> CONNECTION_FILTER = null;
     public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG = null;
     public CorticalNeuronsConfig CORTICAL_NEURONS_CONFIG = null;
+    public CombinedLateralInhibition COMBINED_LATERAL_INHIBITION = null;
     public float DIMENSION = 0;
     
     LayerConfig(int layerId) {
@@ -65,6 +67,11 @@ public class LayerConfig {
         
         public Builder withInhibitorFreq(float inhibitorFreq) {
             cfg.INHIBITOR_FREQ = inhibitorFreq;
+            return this;
+        }
+        
+        public Builder withCombinedLateralInhibition(CombinedLateralInhibition COMBINED_LATERAL_INHIBITION) {
+            cfg.COMBINED_LATERAL_INHIBITION = COMBINED_LATERAL_INHIBITION;
             return this;
         }
         
@@ -132,9 +139,6 @@ public class LayerConfig {
 
         if (n.FIRING_THRESHOLD <= 0f || n.FIRING_THRESHOLD > 1.0f)
             errors.add("FIRING_THRESHOLD fuori range (0 < thr <= 1): " + n.FIRING_THRESHOLD);
-
-        if (n.REPOLARIZATION_PER_NANOS < 0.01f || n.REPOLARIZATION_PER_NANOS > 0.50f)
-            errors.add("REPOLARIZATION_PER_SECOND fuori range (0.01–0.50): " + n.REPOLARIZATION_PER_NANOS);
 
         if (n.RATE_DECAY_PER_WINDOW <= 0f || n.RATE_DECAY_PER_WINDOW >= 1f)
             errors.add("RATE_DECAY_PER_WINDOW deve essere (0 < x < 1): " + n.RATE_DECAY_PER_WINDOW);
@@ -213,9 +217,6 @@ public class LayerConfig {
         		if (n.FIRING_THRESHOLD < 0.030f)
         			errors.add("Layer " + LAYER_ID + ": FIRING_THRESHOLD troppo basso per un layer profondo");
         	 }
-        	 
-            if (n.REPOLARIZATION_PER_NANOS < 0.05f)
-                errors.add("Layer " + LAYER_ID + ": REPOLARIZATION troppo bassa (rischio runaway)");
         }
 
         // -------------------------
