@@ -1,9 +1,8 @@
 package com.cortex.base.externals;
 
-import com.cortex.base.IProcessable;
 import com.cortex.brain.CorticalNeuron;
 
-public interface IActuator extends IProcessable {
+public interface IActuator {
 
 	public long getWaitTime();
 	

@@ -7,8 +7,11 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityRule;
 import com.cortex.base.plasticity.IPlasticSynapse;
 import com.cortex.base.plasticity.IPlasticityRule;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityRule;
+import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.base.utils.Maths;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
@@ -57,7 +60,14 @@ public final class Synapse implements IPlasticSynapse {
 		this.plasticityRule = plasticityRule;
 	}
 	
-	public static Synapse create(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
+	public static void destroy(Synapse s) {
+		if (s!=null) {
+			s=null;
+			synapsesCount.decrementAndGet();
+		}
+	}
+	
+	public static Synapse create(AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, SynapsePlasticityConfig synCfg) {
 		if (pre==null || post==null) 
 			throw new RuntimeException("Invalid synapse: pre or post are null");
 		if (pre==post) 
@@ -67,9 +77,13 @@ public final class Synapse implements IPlasticSynapse {
 		if (length==0) 
 			throw new RuntimeException("Invalid synapse: length");
 		
+		IPlasticityRule synPlast = pre.isInhibitor() 
+				?new InhibitorySynapticPlasticityRule( synCfg.inhibitory())
+				:new ExcitatorySynapticPlasticityRule( synCfg.excitatory());
+		
 		synapsesCount.incrementAndGet();
 		return new Synapse(
-			pre, post, length, baseSpeed, plasticityRule	
+			pre, post, length, baseSpeed, synPlast	
 		);
 	}
 	

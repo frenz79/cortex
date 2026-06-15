@@ -1,5 +1,5 @@
 package com.cortex.base.externals;
 
-public interface ISensor extends IExternal {
+public abstract class ISensor extends ExternalModule {
 
 }

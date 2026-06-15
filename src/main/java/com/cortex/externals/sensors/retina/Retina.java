@@ -1,6 +1,7 @@
 package com.cortex.externals.sensors.retina;
 
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.logging.log4j.LogManager;
@@ -8,15 +9,17 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Commons;
+import com.cortex.base.Spike;
+import com.cortex.base.Synapse;
+import com.cortex.base.SynapseBranch;
 import com.cortex.base.externals.ExternalConnConfig;
 import com.cortex.base.externals.ISensor;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
 import com.cortex.base.utils.Maths;
-import com.cortex.base.utils.Point3f;
 
-public class Retina implements ISensor {
+public class Retina extends ISensor {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
@@ -33,12 +36,10 @@ public class Retina implements ISensor {
 
 	private float microDx = 0;
 	private float microDy = 0;
-	private volatile boolean active;
+
 	private volatile long lastSaccadeTime = System.nanoTime();
-	private volatile long lastProcessTime = 0;
 
 	public Retina( RetinaConfig retinaConfig, RetinaNeuronConfig neuronsConfig ) {
-		this.active = false;
 		this.retinaConfig = retinaConfig;
 		this.retinaNeurons = new RetinaNeuron[retinaConfig.RETINA_W][retinaConfig.RETINA_H];
 		int counter = 0;
@@ -50,14 +51,12 @@ public class Retina implements ISensor {
 	}
 
 	@Override
-	public boolean process(long now) throws InterruptedException {
-		this.lastProcessTime = now;
-		if (!active || sourceLuminance==null) {
+	public boolean processExt(long now) throws InterruptedException {
+		if (sourceLuminance==null) {
 			return true;
 		}
 
 		updateMicrosaccades( now );
-/*
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
 				float lum = sampleLuminanceFromIntegral(x, y); //sampleLuminanceFromSource(x, y);
@@ -79,7 +78,6 @@ public class Retina implements ISensor {
 				}
 			}
 		}
-		*/
 		return true;
 	}
 
@@ -136,11 +134,6 @@ public class Retina implements ISensor {
 	@Override
 	public long getWaitTimeNanos() {
 		return retinaConfig.SAMPLING_PERIOD_NANOS;
-	}
-
-	@Override
-	public long getLastProcessTime() {
-		return this.lastProcessTime;
 	}
 
 	public void setImage(BufferedImage image) {
@@ -205,39 +198,8 @@ public class Retina implements ISensor {
 	}
 
 	@Override
-	public boolean isActive() {
-		return active;
-	}
-
-	@Override
-	public void stop() {
-		this.active = false;
-	}
-
-	@Override
-	public void start() {
-		this.active = true;
-	}
-
-	@Override
 	public AbstractNeuron[][] getNeurons() {
 		return retinaNeurons;
-	}
-
-	@Override
-	public int getSynapsesCount() {
-		int ret = 0;
-		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
-			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
-				ret += retinaNeurons[x][y].getOutSynapsesCount();
-			}
-		}
-		return ret;
-	}
-
-	@Override
-	public Point3f getPluginSite() {
-		return new Point3f(0.0f, 0.0f, 0.0f);
 	}
 
 	@Override
@@ -250,7 +212,7 @@ public class Retina implements ISensor {
 	@Override
 	public ExternalConnConfig getExternalConnConfig() {
 		return ExternalConnConfig.newBuilder()
-			.withConnections(4500, 5000)
+			.withConnections(16)
 			.withMaxDistance(0.5f)
 			.withNeuronFilter(Commons.SKIP_INHIBITOR_CONNECT_PREDICATE)
 			.withLikedLayerId(0)
@@ -271,5 +233,10 @@ public class Retina implements ISensor {
 						)	
 				)
 			.build();				
+	}
+
+	@Override
+	public boolean isProducer() {
+		return true;
 	}
 }

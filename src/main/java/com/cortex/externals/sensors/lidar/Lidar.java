@@ -4,9 +4,8 @@ import com.cortex.base.AbstractNeuron;
 import com.cortex.base.externals.ExternalConnConfig;
 import com.cortex.base.externals.ISensor;
 import com.cortex.base.utils.Maths;
-import com.cortex.base.utils.Point3f;
 
-public class Lidar implements ISensor {
+public class Lidar extends ISensor {
 
     private static final String SENSOR_ID = "LIDAR";
 
@@ -14,9 +13,6 @@ public class Lidar implements ISensor {
     private final LidarNeuron[] neurons;
 
     private volatile float[] distances; // input dal world
-
-    private volatile boolean active;
-    private volatile long lastProcessTime = 0;
 
     public Lidar(LidarConfig config, LidarNeuronConfig neuronConfig) {
         this.config = config;
@@ -28,11 +24,8 @@ public class Lidar implements ISensor {
     }
 
     @Override
-    public boolean process(long now) throws InterruptedException {
-    	
-        this.lastProcessTime = now;
-
-        if (!active || distances == null) {
+    public boolean processExt(long now) throws InterruptedException {
+        if (distances == null) {
             return true;
         }
         /*
@@ -56,9 +49,6 @@ public class Lidar implements ISensor {
         */
         return true;
     }
-
-    
-    	
     
     private float normalize(float distance) {
         // distanza → [0..1], invertita (vicino = 1)
@@ -82,28 +72,8 @@ public class Lidar implements ISensor {
     }
 
     @Override
-    public long getLastProcessTime() {
-        return lastProcessTime;
-    }
-
-    @Override
     public String getId() {
         return SENSOR_ID;
-    }
-
-    @Override
-    public boolean isActive() {
-        return active;
-    }
-
-    @Override
-    public void stop() {
-        this.active = false;
-    }
-
-    @Override
-    public void start() {
-        this.active = true;
     }
 
     @Override
@@ -117,23 +87,13 @@ public class Lidar implements ISensor {
     }
 
     @Override
-    public int getSynapsesCount() {
-        int ret = 0;
-   //     for (int i = 0; i < config.RAYS; i++) {
-    //        ret += neurons[i].getOutSynapsesCount();
-     //   }
-        return ret;
-    }
-
-	@Override
-	public Point3f getPluginSite() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public ExternalConnConfig getExternalConnConfig() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	@Override
+	public boolean isProducer() {
+		return true;
 	}
 }

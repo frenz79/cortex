@@ -7,12 +7,10 @@ import com.cortex.base.plasticity.SynapsePlasticityConfig;
 
 public class ExternalConnConfig {
 	
-	public int MIN_CONNECTIONS;
-	public int MAX_CONNECTIONS;
+	public int CONNECTIONS;
 	public float MAX_DISTANCE;
 	public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG;
 	public Predicate<AbstractNeuron> NEURON_FILTER_PREDICATE;
-	public boolean INCOMING;
 	public int LIKED_LAYER_ID;
 	
     public static Builder newBuilder() {
@@ -26,22 +24,14 @@ public class ExternalConnConfig {
         public Builder() {
             cfg = new ExternalConnConfig();
             // default sensati
-            cfg.MIN_CONNECTIONS = 1;
-            cfg.MAX_CONNECTIONS = 8;
+            cfg.CONNECTIONS = -1;
             cfg.MAX_DISTANCE = Float.MAX_VALUE;
             cfg.NEURON_FILTER_PREDICATE = n -> true;
-            cfg.INCOMING = true;
             cfg.LIKED_LAYER_ID = -1;
         }
 
-        public Builder incoming(boolean incoming) {
-            cfg.INCOMING = incoming;
-            return this;
-        }
-
-        public Builder withConnections(int min, int max) {
-            cfg.MIN_CONNECTIONS = min;
-            cfg.MAX_CONNECTIONS = max;
+        public Builder withConnections(int connections) {
+            cfg.CONNECTIONS = connections;
             return this;
         }
 
@@ -66,11 +56,8 @@ public class ExternalConnConfig {
         }
 
         private void validate() {
-            if (cfg.MIN_CONNECTIONS < 0)
+            if (cfg.CONNECTIONS < 0)
                 throw new IllegalArgumentException("MIN_CONNECTIONS < 0");
-
-            if (cfg.MAX_CONNECTIONS < cfg.MIN_CONNECTIONS)
-                throw new IllegalArgumentException("MAX_CONNECTIONS < MIN_CONNECTIONS");
 
             if (cfg.MAX_DISTANCE <= 0)
                 throw new IllegalArgumentException("MAX_DISTANCE must be > 0");
