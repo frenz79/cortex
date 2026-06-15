@@ -58,13 +58,13 @@ public final class SynapsesBuilder {
 				List<SynapseBranch> sb = ns.toSynapseBranches();
 				if (!ns.inExt.isEmpty()) {
 					for ( Synapse s : ns.inExt ) {
-						s.getTarget().fillSynapseBranches( sb );
+						s.getTarget().fillSynapseBranches( sb, true, false );
 						s.getSource().fillSynapseBranches( sb );
 					}
 				}
 				if (!ns.outExt.isEmpty()) {
 					for ( Synapse s : ns.outExt ) {
-						s.getTarget().fillSynapseBranches( sb );
+						s.getTarget().fillSynapseBranches( sb, true, true );
 						s.getSource().fillSynapseBranches( sb );
 					}
 				}

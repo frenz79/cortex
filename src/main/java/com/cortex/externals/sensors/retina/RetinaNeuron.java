@@ -6,8 +6,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.cortex.base.externals.AbstractExternalNeuron;
 import com.cortex.base.utils.Maths;
-import com.cortex.externals.AbstractExternalNeuron;
 
 public class RetinaNeuron extends AbstractExternalNeuron {
 

@@ -1,6 +1,6 @@
 package com.cortex.externals.classifiers.ocr;
 
-import com.cortex.externals.AbstractExternalNeuron;
+import com.cortex.base.externals.AbstractExternalNeuron;
 import com.google.common.util.concurrent.AtomicDouble;
 
 public class OCRCharacterNeuron extends AbstractExternalNeuron {

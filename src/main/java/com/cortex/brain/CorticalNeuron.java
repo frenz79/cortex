@@ -59,7 +59,8 @@ public class CorticalNeuron extends AbstractNeuron {
 
 			// Process synapses inside the branch .. 
 			// only if we know the branch have an active synapse in it
-			if (synapseBranch.isActive()) {
+		//	if (synapseBranch.isActive()) 
+			{
 				boolean branchStayActive = false;
 				for (Synapse synapse : synapseBranch.synapses) {
 					if (!synapse.hasSpikes()) continue;
@@ -69,6 +70,7 @@ public class CorticalNeuron extends AbstractNeuron {
 						// accumulate raw spike amplitude into branch potential
 						synapseBranch.branchPotential += spike.signedAmplitude();
 						synapse.onPreSpike(now);
+						this.setActive(true);
 					});
 					// update plasticity and decay for active synapses
 					synapse.update(deltaTimeNanos);

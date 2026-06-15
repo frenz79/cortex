@@ -1,4 +1,4 @@
-package com.cortex.externals;
+package com.cortex.base.externals;
 
 import com.cortex.base.AbstractNeuron;
 
@@ -15,5 +15,9 @@ public abstract class AbstractExternalNeuron extends AbstractNeuron {
     public boolean process(long currTimeNanos) {
         return true;
     }
-	
+    
+    @Override
+    public int getLayerId() {
+		return -1;
+	}
 }

@@ -64,13 +64,21 @@ public abstract class AbstractNeuron implements IProcessable {
 		return arrNew;
 	}
 	
+	private boolean isIncoming( boolean value, boolean overrideIncoming, boolean override ) {
+		return (overrideIncoming)?override:value;
+	}
+	
 	public void fillSynapseBranches( List<SynapseBranch> sb ) {
+		fillSynapseBranches(sb, false, false);
+	}
+	
+	public void fillSynapseBranches( List<SynapseBranch> sb, boolean overrideIncoming, boolean override ) {
 		this.synapsesBranches = new SynapseBranch[sb.size()];
 		System.arraycopy(sb.toArray(new SynapseBranch[sb.size()]), 0, synapsesBranches, 0, sb.size());
 		int inc = 0;
 		int out = 0;
 		for (int i=0; i<synapsesBranches.length; i++) {
-			if (synapsesBranches[i].incoming) {
+			if ( isIncoming(synapsesBranches[i].incoming,overrideIncoming,override)) {
 				inc++;
 				inSynapsesCount += synapsesBranches[i].synapses.length;
 			} else {
@@ -83,7 +91,7 @@ public abstract class AbstractNeuron implements IProcessable {
 		inc = 0;
 		out = 0;
 		for (int i=0; i<synapsesBranches.length; i++) {
-			if (synapsesBranches[i].incoming) {
+			if (isIncoming(synapsesBranches[i].incoming,overrideIncoming,override)) {
 				this.incomingBranches[inc++] = synapsesBranches[i];
 			} else {
 				this.outgoingBranches[out++] = synapsesBranches[i];
@@ -185,7 +193,7 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(index, getLayerId());
+		return Objects.hash(index, (layer!=null)?layer.getLayerId():-1);
 	}
 
 	@Override
