@@ -105,11 +105,11 @@ public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 	}
 	
 	// update called periodically; compute time-based decay for eligibility and homeostasis
-	public void update(long now, Synapse s) {
+	public float update(long now, Synapse s) {
 		if (lastEligibilityUpdateNanos <= 0L) {
 		    lastEligibilityUpdateNanos = now;
 		    lastHomeostasisUpdateNanos = now;
-		    return;
+		    return currentWeight;
 		}
 		
 		long dt = now - lastEligibilityUpdateNanos;
@@ -124,6 +124,7 @@ public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 	        }	        
 	        lastEligibilityUpdateNanos = now;
 	    }
+	    return currentWeight;
 	}
 
 	public float getWeight() {

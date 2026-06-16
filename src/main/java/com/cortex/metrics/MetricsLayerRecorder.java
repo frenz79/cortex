@@ -41,6 +41,9 @@ public class MetricsLayerRecorder {
 	}
 
 	MetricsLayerRecorder updateSynapticStatistics(Synapse source, SynapseUpdatedData data) {
+		// Fast exit when no data changes 
+		if (data.newValue() == data.oldValue()) return this;
+		
 		absWeightSum.add(Maths.abs(data.newValue() - data.oldValue()));
 		float oldW = data.oldValue();
 		float newW = data.newValue();

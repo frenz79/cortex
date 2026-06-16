@@ -150,8 +150,10 @@ public final class Synapse implements IPlasticSynapse {
 	@Override
 	public final void update(long t) {
 		float oldValue = this.plasticityRule.getWeight();
-		this.plasticityRule.update(t, this);
-		EventBus.fire(EventType.SYNAPSE_UPDATED, t, this, new SynapseUpdatedData(oldValue, this.plasticityRule.getWeight()));
+		float newValue = this.plasticityRule.update(t, this);
+		if (oldValue!=newValue) {
+			EventBus.fire(EventType.SYNAPSE_UPDATED, t, this, new SynapseUpdatedData(oldValue, newValue));
+		}
 	}
 
 	@Override

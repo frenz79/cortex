@@ -42,18 +42,20 @@ public abstract class AbstractNeuron implements IProcessable {
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
 	
-	public void attachSynapseBranch(SynapseBranch sb) {
-		if (sb.type!=BranchType.EXTERNAL)
-			throw new RuntimeException("Only external branches can be attached");
-		
-		synapsesBranches = attach(synapsesBranches, sb);
-		
-		if (sb.incoming) {
-			incomingBranches = attach(incomingBranches, sb);
-			inSynapsesCount += sb.synapses.length;
-		} else {
-			outgoingBranches = attach(outgoingBranches, sb);
-			outSynapsesCount += sb.synapses.length;
+	public void attachSynapseBranch(List<SynapseBranch> sbList) {
+		for ( SynapseBranch sb : sbList ) {
+			if (sb.type!=BranchType.EXTERNAL)
+				throw new RuntimeException("Only external branches can be attached");
+			
+			this.synapsesBranches = attach(this.synapsesBranches, sb);
+			
+			if (sb.incoming) {
+				this.incomingBranches = attach(this.incomingBranches, sb);
+				this.inSynapsesCount += sb.synapses.length;
+			} else {
+				this.outgoingBranches = attach(this.outgoingBranches, sb);
+				this.outSynapsesCount+= sb.synapses.length;
+			}
 		}
 	}
 	

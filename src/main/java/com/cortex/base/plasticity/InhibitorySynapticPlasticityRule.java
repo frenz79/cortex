@@ -41,11 +41,12 @@ public class InhibitorySynapticPlasticityRule implements IPlasticityRule {
 	}
 	
 	@Override
-    public void update(long now, Synapse s) {
+    public float update(long now, Synapse s) {
         float postRate = s.getTarget().getRecentFiringRate(now);
         float error = postRate - config.TARGET_FIRING_RATE;
         float dw = config.LEARNING_RATE * error;
         currentWeight = Maths.clamp(currentWeight + dw, config.W_MIN, config.W_MAX);
+        return currentWeight;
     }
 
 	@Override
