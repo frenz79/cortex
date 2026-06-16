@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.Commons.SYNAPSE_SPEED;
 import com.cortex.base.SynapseBranch.BranchType;
+import com.cortex.base.SynapseBranch.Direction;
 import com.cortex.base.externals.ExternalModule;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.Functions;
@@ -48,30 +49,33 @@ public final class SynapsesBuilder {
 		logger.info("Creating synapses branches..");
 		Arrays.stream(neurons).parallel().forEach( n -> {
 			NeuronSynapses ns = neuronSynapses[n.getIndex()];
-			n.fillSynapseBranches( ns.toSynapseBranches() );
+			List<SynapseBranch> sbList = ns.toSynapseBranches();
+			for ( SynapseBranch sb : sbList ) {
+				if (sb.direction == Direction.INCOMING)
+				    n.addIncomingBranch(sb);
+				else
+				    n.addOutgoingBranch(sb);
+			}
 		});
 		
 		logger.info("Creating synapses branches for externals");
 		
 		extNeuronSynapses.entrySet().parallelStream().forEach( extEntry -> {
 			for ( NeuronSynapses ns : extEntry.getValue() ) {
-				List<SynapseBranch> sb = ns.toSynapseBranches();
-				if (!ns.inExt.isEmpty()) {
-					for ( Synapse s : ns.inExt ) {
-						s.getTarget().fillSynapseBranches( sb );
-						s.getSource().attachSynapseBranch( sb );
-					}
-				}
-				if (!ns.outExt.isEmpty()) {
-					for ( Synapse s : ns.outExt ) {
-						s.getTarget().attachSynapseBranch( sb );
-						s.getSource().fillSynapseBranches( sb );
-					}
+				List<SynapseBranch> sbList = ns.toSynapseBranches();
+				for (SynapseBranch sb : sbList) {
+				    if (sb.direction == Direction.INCOMING) {
+				        // branch incoming → va al neurone target
+				        sb.synapses[0].getTarget().addIncomingBranch(sb);
+				    } else {
+				        // branch outgoing → va al neurone source
+				        sb.synapses[0].getSource().addOutgoingBranch(sb);
+				    }
 				}
 			}
 		});		
 	}
-	
+
 	private static final void add(NeuronSynapses[] syns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
 		var ns = syns[n.getIndex()];
 		if (ns==null) {
@@ -176,35 +180,35 @@ public final class SynapsesBuilder {
 		public List<SynapseBranch> toSynapseBranches() {
 			List<SynapseBranch> ret = new ArrayList<>(16);	
 			if (!inNear.isEmpty())
-				ret.addAll(	splitIfBigger(inNear, true, BranchType.NEAR, 32) );
+				ret.addAll(	splitIfBigger(inNear, BranchType.NEAR, 32, Direction.INCOMING) );
 			if (!inFar.isEmpty())
-				ret.addAll(	splitIfBigger(inFar, true, BranchType.FAR, 32) );
+				ret.addAll(	splitIfBigger(inFar, BranchType.FAR, 32, Direction.INCOMING) );
 			if (!outNear.isEmpty())
-				ret.addAll(	splitIfBigger(outNear, false, BranchType.NEAR, 32) );
+				ret.addAll(	splitIfBigger(outNear, BranchType.NEAR, 32, Direction.OUTGOING) );
 			if (!outFar.isEmpty())
-				ret.addAll(	splitIfBigger(outFar, false, BranchType.FAR, 32) );
+				ret.addAll(	splitIfBigger(outFar, BranchType.FAR, 32, Direction.OUTGOING) );
 			if (!outFarFF.isEmpty())
-				ret.addAll(	splitIfBigger(outFarFF, false, BranchType.LAYER_FEEDFORWARD, 32) );
+				ret.addAll(	splitIfBigger(outFarFF, BranchType.LAYER_FEEDFORWARD, 32, Direction.OUTGOING) );
 			if (!outFarFB.isEmpty())
-				ret.addAll(	splitIfBigger(outFarFB, false, BranchType.LAYER_FEEDBACK, 32) );
+				ret.addAll(	splitIfBigger(outFarFB, BranchType.LAYER_FEEDBACK, 32, Direction.OUTGOING) );
 			if (!inFarFF.isEmpty())
-				ret.addAll(	splitIfBigger(inFarFF, true, BranchType.LAYER_FEEDFORWARD, 32) );
+				ret.addAll(	splitIfBigger(inFarFF, BranchType.LAYER_FEEDFORWARD, 32, Direction.INCOMING) );
 			if (!inFarFB.isEmpty())
-				ret.addAll(	splitIfBigger(inFarFB, true, BranchType.LAYER_FEEDBACK, 32) );
+				ret.addAll(	splitIfBigger(inFarFB, BranchType.LAYER_FEEDBACK, 32, Direction.INCOMING) );
 			if (!inExt.isEmpty())
 				ret.addAll(	Collections.singletonList(
-		        	new SynapseBranch(inExt.toArray(new Synapse[0]), true, BranchType.EXTERNAL)) );
+		        	new SynapseBranch(inExt.toArray(new Synapse[0]), BranchType.EXTERNAL, Direction.INCOMING)) );
 			if (!outExt.isEmpty())
 				ret.addAll(	Collections.singletonList(
-		        	new SynapseBranch(outExt.toArray(new Synapse[0]), false, BranchType.EXTERNAL)) );
+		        	new SynapseBranch(outExt.toArray(new Synapse[0]), BranchType.EXTERNAL, Direction.OUTGOING)) );
 			return ret;
 		}
 		
-		private static Collection<SynapseBranch> splitIfBigger(Set<Synapse> syn, boolean inc, BranchType bt, int limit) {
+		private static Collection<SynapseBranch> splitIfBigger(Set<Synapse> syn, BranchType bt, int limit, Direction direction) {
 		    int size = syn.size();
 		    if (size <= limit) {
 		        return Collections.singletonList(
-		        	new SynapseBranch(syn.toArray(new Synapse[0]), inc, bt));
+		        	new SynapseBranch(syn.toArray(new Synapse[0]), bt, direction));
 		    }
 		    
 		    List<SynapseBranch> ret = new ArrayList<>();
@@ -213,7 +217,7 @@ public final class SynapsesBuilder {
 		    for (int i = 0; i < size; i += limit) {
 		        int end = Math.min(i + limit, size);
 		        Synapse[] chunk = Arrays.copyOfRange(arr, i, end);
-		        ret.add(new SynapseBranch(chunk, inc, bt));
+		        ret.add(new SynapseBranch(chunk, bt, direction));
 		    }
 		    return ret;
 		}

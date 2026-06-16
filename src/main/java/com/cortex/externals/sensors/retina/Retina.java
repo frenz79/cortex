@@ -211,8 +211,8 @@ public class Retina extends ISensor {
 	@Override
 	public ExternalConnConfig getExternalConnConfig() {
 		return ExternalConnConfig.newBuilder()
-			.withConnections(16)
-			.withMaxDistance(0.5f)
+			.withConnections(100)
+			.withMaxDistance(1.5f)
 			.withNeuronFilter(Commons.SKIP_INHIBITOR_CONNECT_PREDICATE)
 			.withLikedLayerId(0)
 			.withPlasticity(

@@ -1,12 +1,10 @@
 package com.cortex.base;
 
-import java.util.List;
 import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.SynapseBranch.BranchType;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.utils.Point3f;
 import com.cortex.globals.EventBus;
@@ -32,75 +30,44 @@ public abstract class AbstractNeuron implements IProcessable {
 	private final int spikeSign;
 	protected final NeuronState state = new NeuronState();
 
-	private SynapseBranch[] synapsesBranches;
-	private SynapseBranch[] incomingBranches;
-	private SynapseBranch[] outgoingBranches;
+	private SynapseBranch[] synapsesBranches = new SynapseBranch[0];
+	private SynapseBranch[] incomingBranches = new SynapseBranch[0];
+	private SynapseBranch[] outgoingBranches = new SynapseBranch[0];
 	
 	private int inSynapsesCount = 0;
 	private int outSynapsesCount = 0;
 	
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
-	
-	public void attachSynapseBranch(List<SynapseBranch> sbList) {
-		for ( SynapseBranch sb : sbList ) {
-			if (sb.type!=BranchType.EXTERNAL)
-				throw new RuntimeException("Only external branches can be attached");
-			
-			this.synapsesBranches = attach(this.synapsesBranches, sb);
-			
-			if (sb.incoming) {
-				this.incomingBranches = attach(this.incomingBranches, sb);
-				this.inSynapsesCount += sb.synapses.length;
-			} else {
-				this.outgoingBranches = attach(this.outgoingBranches, sb);
-				this.outSynapsesCount+= sb.synapses.length;
-			}
-		}
+		
+	public synchronized void addIncomingBranch( SynapseBranch sb ) {
+		addSynapseBranches( new SynapseBranch[] {sb}, true );
+	}
+	public synchronized void addOutgoingBranch( SynapseBranch sb ) {
+		addSynapseBranches( new SynapseBranch[] {sb}, false );
 	}
 	
-	private static final SynapseBranch[] attach(SynapseBranch[] arr, SynapseBranch sb) {
-		SynapseBranch[] arrNew =  new SynapseBranch[arr.length+1];
-		System.arraycopy(arr, 0, arrNew, 0, arr.length);
-		arrNew[arr.length] = sb;
-		return arrNew;
+	private final void addSynapseBranches( SynapseBranch[] sb, boolean addToIncoming ) {
+		SynapseBranch[] newSb = sb;
+		this.synapsesBranches = append(this.synapsesBranches, sb);
+		if (addToIncoming) {
+			this.incomingBranches = append(this.incomingBranches, newSb);
+			this.inSynapsesCount += newSb.length;
+		} else {
+			this.outgoingBranches = append(this.outgoingBranches, newSb);
+			this.outSynapsesCount += newSb.length;
+		}		
 	}
 	
-	private boolean isIncoming( boolean value, boolean overrideIncoming, boolean override ) {
-		return (overrideIncoming)?override:value;
+	private static final SynapseBranch[] append(SynapseBranch[] arr, SynapseBranch[] sb) {
+	    int len = sb.length;
+	    int arrLen = arr.length;
+	    SynapseBranch[] arrNew = new SynapseBranch[arrLen + len];
+	    System.arraycopy(arr, 0, arrNew, 0, arrLen);
+	    System.arraycopy(sb, 0, arrNew, arrLen, len);
+	    return arrNew;
 	}
-	
-	public void fillSynapseBranches( List<SynapseBranch> sb ) {
-		fillSynapseBranches(sb, false, false);
-	}
-	
-	public void fillSynapseBranches( List<SynapseBranch> sb, boolean overrideIncoming, boolean override ) {
-		this.synapsesBranches = new SynapseBranch[sb.size()];
-		System.arraycopy(sb.toArray(new SynapseBranch[sb.size()]), 0, synapsesBranches, 0, sb.size());
-		int inc = 0;
-		int out = 0;
-		for (int i=0; i<synapsesBranches.length; i++) {
-			if ( isIncoming(synapsesBranches[i].incoming,overrideIncoming,override)) {
-				inc++;
-				inSynapsesCount += synapsesBranches[i].synapses.length;
-			} else {
-				out++;
-				outSynapsesCount += synapsesBranches[i].synapses.length;
-			}
-		}
-		this.incomingBranches = new SynapseBranch[inc];
-		this.outgoingBranches = new SynapseBranch[out];
-		inc = 0;
-		out = 0;
-		for (int i=0; i<synapsesBranches.length; i++) {
-			if (isIncoming(synapsesBranches[i].incoming,overrideIncoming,override)) {
-				this.incomingBranches[inc++] = synapsesBranches[i];
-			} else {
-				this.outgoingBranches[out++] = synapsesBranches[i];
-			}
-		}
-	}
-	
+
 	public AbstractNeuron(Abstract3DLayer layer, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position ) {
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
@@ -111,8 +78,8 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public final void fire( long now ) throws InterruptedException {
 		state.pendingFire = true;
-		// log temporaneo
-	    //if (layer.getLayerId() == 0) { // L0
+		// Debug log
+	    // if (layer.getLayerId() == 0) { // L0
 	    //   logger.info("-->L0 neuron fired: {} at {}",index, now);
 	    //}
 	    
@@ -122,23 +89,22 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 
 	public void delayedFire( long now ) {	
-	//	if (layer!=null && layer.getLayerId() == 0) {
-	//	    logger.info("L0 {} fired, outgoing synapses count = {}", getIndex(), getOutSynapsesCount());
-	//	}
-		
-		for (SynapseBranch sb : synapsesBranches) {
-			if (sb.incoming) {
-				for (Synapse s : sb.synapses) {
-					if (s.wasFrequentlyActiveInLastWindow()) {
-						s.onPostSpike(now, now);
-					}
+		// Debug log
+		//	if (layer!=null && layer.getLayerId() == 0) {
+		//	    logger.info("L0 {} fired, outgoing synapses count = {}", getIndex(), getOutSynapsesCount());
+		//	}
+		for (SynapseBranch sb : incomingBranches) {
+			for (Synapse s : sb.synapses) {
+				if (s.wasFrequentlyActiveInLastWindow()) {
+					s.onPostSpike(now, now);
 				}
-			} else {
-				for (Synapse s : sb.synapses) {
-					long arrival = now + s.getTraversalTimeNanos(now);
-					s.addSpike(now, Spike.createWithJitter(isInhibitor(), arrival));
-					sb.active = true;
-				}
+			}
+		}	
+		for (SynapseBranch sb : outgoingBranches) {
+			for (Synapse s : sb.synapses) {
+				long arrival = now + s.getTraversalTimeNanos(now);
+				s.addSpike(now, Spike.createWithJitter(isInhibitor(), arrival));
+				sb.active = true;
 			}
 		}		
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
@@ -227,3 +193,62 @@ public abstract class AbstractNeuron implements IProcessable {
 		return outSynapsesCount;
 	}
 }
+
+/*
+public void attachSynapseBranch(List<SynapseBranch> sbList) {
+	for ( SynapseBranch sb : sbList ) {
+		if (sb.type!=BranchType.EXTERNAL)
+			throw new RuntimeException("Only external branches can be attached");
+		
+		this.synapsesBranches = attach(this.synapsesBranches, sb);
+		
+		if (sb.incoming) {
+			this.incomingBranches = attach(this.incomingBranches, sb);
+			this.inSynapsesCount += sb.synapses.length;
+		} else {
+			this.outgoingBranches = attach(this.outgoingBranches, sb);
+			this.outSynapsesCount+= sb.synapses.length;
+		}
+	}
+}
+
+
+private static final SynapseBranch[] append(SynapseBranch[] arr, SynapseBranch sb) {
+	SynapseBranch[] arrNew =  new SynapseBranch[arr.length+1];
+	System.arraycopy(arr, 0, arrNew, 0, arr.length);
+	arrNew[arr.length] = sb;
+	return arrNew;
+}
+
+public void fillSynapseBranches( List<SynapseBranch> sb ) {
+	this.synapsesBranches = new SynapseBranch[sb.size()];
+	System.arraycopy(sb.toArray(new SynapseBranch[sb.size()]), 0, synapsesBranches, 0, sb.size());
+	int inc = 0;
+	int out = 0;
+	for (int i=0; i<synapsesBranches.length; i++) {
+		if ( isIncoming(overrideIncoming,override)) {
+			inc++;
+			inSynapsesCount += synapsesBranches[i].synapses.length;
+		} else {
+			out++;
+			outSynapsesCount += synapsesBranches[i].synapses.length;
+		}
+	}
+	this.incomingBranches = new SynapseBranch[inc];
+	this.outgoingBranches = new SynapseBranch[out];
+	inc = 0;
+	out = 0;
+	for (int i=0; i<synapsesBranches.length; i++) {
+		if (isIncoming(synapsesBranches[i].incoming,overrideIncoming,override)) {
+			this.incomingBranches[inc++] = synapsesBranches[i];
+		} else {
+			this.outgoingBranches[out++] = synapsesBranches[i];
+		}
+	}
+}
+
+
+private boolean isIncoming( boolean value, boolean overrideIncoming, boolean override ) {
+	return (overrideIncoming)?override:value;
+}
+*/

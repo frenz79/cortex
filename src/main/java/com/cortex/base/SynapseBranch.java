@@ -10,14 +10,16 @@ public final class SynapseBranch {
 	    EXTERNAL // Sensors, actuators, classifiers..etc
 	}
 	
+	public enum Direction { INCOMING, OUTGOING }
+	
+	public final Direction direction;
 	public final Synapse[] synapses;
-	public final boolean incoming;
 	public final BranchType type;
 	
-	public SynapseBranch(Synapse[] synapses, boolean incoming, BranchType type) {
+	public SynapseBranch(Synapse[] synapses, BranchType type, Direction direction) {
 		super();
 		this.synapses = synapses;
-		this.incoming = incoming;
+		this.direction = direction;
 		this.type = type;
 	}
 
@@ -32,9 +34,28 @@ public final class SynapseBranch {
 		return active;
 	}
 	
+	public int size() {
+		return synapses.length;
+	}
+	
 	@Override
 	public String toString() {
-		return "SynapseBranch [incoming=" + incoming + ", type=" + type + ", branchPotential=" + branchPotential
-				+ ", branchActivity=" + branchActivity + ", inhibition=" + inhibition + ", gain=" + gain + "]";
+		StringBuilder builder = new StringBuilder();
+		builder.append("SynapseBranch [direction=");
+		builder.append(direction);
+		builder.append(", type=");
+		builder.append(type);
+		builder.append(", branchPotential=");
+		builder.append(branchPotential);
+		builder.append(", branchActivity=");
+		builder.append(branchActivity);
+		builder.append(", inhibition=");
+		builder.append(inhibition);
+		builder.append(", gain=");
+		builder.append(gain);
+		builder.append(", active=");
+		builder.append(active);
+		builder.append("]");
+		return builder.toString();
 	}
 }
