@@ -260,8 +260,8 @@ public final class SynapsesBuilder {
 				if (ds >= dd) continue;
 						
 				var s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, layer.getConfig().SYNAPSE_PLASTICITY_CONFIG);
-				add( neuronSynapses, s, src, target.near()?BranchType.NEAR:BranchType.FAR, true  );
-				add( neuronSynapses, s, dst, target.near()?BranchType.NEAR:BranchType.FAR, false );
+				add( neuronSynapses, s, src, target.near()?BranchType.NEAR:BranchType.FAR, false  );
+				add( neuronSynapses, s, dst, target.near()?BranchType.NEAR:BranchType.FAR, true );
 				connectionsCount++;
 			}
 		}
@@ -287,8 +287,8 @@ public final class SynapsesBuilder {
 					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, layer.getConfig().SYNAPSE_PLASTICITY_CONFIG);
 					
 					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
-						add( neuronSynapses, s, src, BranchType.FAR, true  );
-						add( neuronSynapses, s, dst, BranchType.FAR, false );
+						add( neuronSynapses, s, src, BranchType.FAR, false  );
+						add( neuronSynapses, s, dst, BranchType.FAR, true );
 						connectionsCount++;
 						break;
 					} else {
@@ -397,8 +397,8 @@ public final class SynapsesBuilder {
 					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
 					
 					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
-						add( neuronSynapses, s, src, bt, true  );
-						add( neuronSynapses, s, dst, bt, false );
+						add( neuronSynapses, s, src, bt, false  );
+						add( neuronSynapses, s, dst, bt, true );
 						connectionsCount++;
 						break;
 					} else {

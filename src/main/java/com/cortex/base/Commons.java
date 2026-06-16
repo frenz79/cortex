@@ -8,15 +8,16 @@ public interface Commons {
 	public static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
 	public static final Predicate<AbstractNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = AbstractNeuron::isInhibitor;
 
-	// baseSpeed = nanoseconds per unit distance
+	// baseSpeed = delay-per-unit (ns per unit length)
+	// delay = length * baseSpeed / (1 + myelinFactor)
 	// FAST  ≈ 2.5 ms per unit
 	// MID   ≈ 3.0 ms per unit
 	// SLOW  ≈ 4.0 ms per unit
 	// delay = length * baseSpeed / (1 + myelinFactor)
 	public static enum SYNAPSE_SPEED {
-		FAST(2_500_000l),
-		MID (3_000_000l),
-		SLOW(4_000_000l);
+		FAST(50_000l),
+		MID (75_000l),
+		SLOW(100_000l);
 
 		private final long baseSpeed;
 

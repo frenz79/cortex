@@ -111,12 +111,21 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public final void fire( long now ) throws InterruptedException {
 		state.pendingFire = true;
+		// log temporaneo
+	    //if (layer.getLayerId() == 0) { // L0
+	    //   logger.info("-->L0 neuron fired: {} at {}",index, now);
+	    //}
+	    
 		if (layer.getConfig().COMBINED_LATERAL_INHIBITION != null) {
 		    layer.getConfig().COMBINED_LATERAL_INHIBITION.updateInhibition(now, this, /*not used*/-0.0f);
 		}
 	}
 
-	public void delayedFire( long now ) {		
+	public void delayedFire( long now ) {	
+	//	if (layer!=null && layer.getLayerId() == 0) {
+	//	    logger.info("L0 {} fired, outgoing synapses count = {}", getIndex(), getOutSynapsesCount());
+	//	}
+		
 		for (SynapseBranch sb : synapsesBranches) {
 			if (sb.incoming) {
 				for (Synapse s : sb.synapses) {
@@ -127,7 +136,7 @@ public abstract class AbstractNeuron implements IProcessable {
 			} else {
 				for (Synapse s : sb.synapses) {
 					long arrival = now + s.getTraversalTimeNanos(now);
-					s.addSpike(Spike.createWithJitter(isInhibitor(), arrival));
+					s.addSpike(now, Spike.createWithJitter(isInhibitor(), arrival));
 					sb.active = true;
 				}
 			}

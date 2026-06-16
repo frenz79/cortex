@@ -91,7 +91,11 @@ public final class Synapse implements IPlasticSynapse {
 		return synapsesCount.get();
 	}
 	
-	public void addSpike(Spike spike) {
+	public void addSpike(long now, Spike spike) {
+//		if (pre.getLayer()!=null && post.getLayer()!=null && pre.getLayerId() == 0 && post.getLayerId() == 1) {
+//		    logger.info("--> Spike L0→L1 scheduled: pre={} post={}",pre.getIndex(), post.getIndex());
+//		}
+		
 		// fifo...
 		if (((state.writeIndex + 1) & (SynapseState.BUFFER_SIZE - 1)) == (state.readIndex & (SynapseState.BUFFER_SIZE - 1))) {
 			state.readIndex++;
@@ -99,6 +103,12 @@ public final class Synapse implements IPlasticSynapse {
 
 		state.buffer[state.writeIndex & (SynapseState.BUFFER_SIZE - 1)] = spike;
 		state.writeIndex++;
+		
+		long dt = spike.arrivalTime() - now;
+		if (dt > 1_000_000) {
+		    logger.warn("Spike delay too large: {} ns", dt);
+		}
+		
 		this.getTarget().setActive(true);
 	}
 
@@ -107,6 +117,7 @@ public final class Synapse implements IPlasticSynapse {
 			Spike s = state.buffer[state.readIndex & (SynapseState.BUFFER_SIZE - 1)];
 			// stop when a future spike is fetched
 			if (s.arrivalTime() > now) {
+				post.setActive(true);
 				break;
 			}
 			consumer.accept(s);
@@ -114,8 +125,14 @@ public final class Synapse implements IPlasticSynapse {
 		}
 	}
 
-	public boolean hasSpikes() {
-		return state.writeIndex != state.readIndex;
+	public boolean isEmpty() {
+		return state.writeIndex == state.readIndex;
+	}
+	
+	public boolean hasFutureSpikes(long now) {
+	    if (state.writeIndex == state.readIndex) return false;
+	    Spike s = state.buffer[state.readIndex & (SynapseState.BUFFER_SIZE - 1)];
+	    return s.arrivalTime() > now;
 	}
 
 	public final long getTraversalTimeNanos(long now) {

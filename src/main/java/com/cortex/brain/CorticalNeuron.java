@@ -63,7 +63,7 @@ public class CorticalNeuron extends AbstractNeuron {
 			{
 				boolean branchStayActive = false;
 				for (Synapse synapse : synapseBranch.synapses) {
-					if (!synapse.hasSpikes()) continue;
+					if (synapse.isEmpty()) continue;
 					stayActive = true;
 					branchStayActive = true;
 					synapse.forEachSpike(now, spike -> {

@@ -69,7 +69,7 @@ public class Retina extends ISensor {
 							for ( Synapse synapse : synapseBranch.synapses ) {
 								// No real delay, "ideal source"
 								synapse.addSpike(
-									Spike.createWithJitter(amplitude, (amplitude<0), now)
+									now, Spike.createWithJitter(amplitude, (amplitude<0), now)
 								);
 							}
 						}

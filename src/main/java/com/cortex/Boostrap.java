@@ -72,7 +72,7 @@ public class Boostrap {
 	}
 	*/
 	public static void main(String[] args) throws IOException, InterruptedException { 
-		int totalNeurons = 20_000;
+		int totalNeurons = 40_000;
 		int connScale = 50;
 
 		Retina retina = new Retina(
