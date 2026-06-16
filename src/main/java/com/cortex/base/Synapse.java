@@ -115,7 +115,7 @@ public final class Synapse implements IPlasticSynapse {
 	}
 
 	public boolean hasSpikes() {
-		return state.writeIndex == state.readIndex;
+		return state.writeIndex != state.readIndex;
 	}
 
 	public final long getTraversalTimeNanos(long now) {
