@@ -107,7 +107,7 @@ public class MultiLayersConfig {
 	    return LayerConfig.newBuilder(3)
 	        .enableInConn(true)
 	        .enableOutConn(true)
-	        .withInhibitorFreq(0.28f)
+	        .withInhibitorFreq(0.40f)
 	        .withCombinedLateralInhibition(new CombinedLateralInhibition(1.0f, 1.0f, 0.2f, 1.0f))
 	        .withDimension(0.55f)
 	        .withNeurons(neuronsCount)
@@ -127,9 +127,9 @@ public class MultiLayersConfig {
 	                .withHomeostaticRate(0.010f)
 	                .build(),
 	            InhibitorySynapticPlasticityConfig.newBuilder()
-	                .withWeights(1.50f, 3.20f, 0.45f) 
+	                .withWeights(1.80f, 3.50f, 0.50f) 
 	                .withLearningRate(0.0025f)
-	                .withTargetFiringRate(2.5f)
+	                .withTargetFiringRate(2.0f)
 	                .build()
 	        )).build();
 	}
