@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import org.apache.logging.log4j.LogManager;
@@ -356,15 +357,16 @@ public final class SynapsesBuilder {
 		CorticalNeuronsConfig neuronsConfig = targetLayer.getConfig().CORTICAL_NEURONS_CONFIG;
 
 		int N = srcs.length;
-		int connectionsCount = 0;
+		AtomicInteger connectionsCount = new AtomicInteger(0);
 
 		// Precalcolo vicini per ogni sorgente
-		Map<AbstractNeuron, List<Neighbor>> neighbors = new HashMap<>(N);
-		for (AbstractNeuron src : srcs) {
+		Map<AbstractNeuron, List<Neighbor>> neighbors = new ConcurrentHashMap<>(N*2);
+		Arrays.stream(srcs).parallel().forEach( src -> {
+		//for (AbstractNeuron src : srcs) {
 			neighbors.put(src, new ArrayList<>(
 				Functions.findNearestNeurons(dsts, src, maxConn, filter)
 			));
-		}
+		});
 
 		BranchType bt = (sourceLayer.getLayerId()<targetLayer.getLayerId())
 				?BranchType.LAYER_FEEDFORWARD
@@ -372,46 +374,48 @@ public final class SynapsesBuilder {
 		
 		// Round-robin
 		for (int round = 0; round < maxConn; round++) {
-			for (AbstractNeuron src : srcs) {
+			//for (AbstractNeuron src : srcs) {
+			Arrays.stream(srcs).parallel().forEach( src -> {
 				List<Neighbor> neigh = neighbors.get(src);
-				if (neigh.isEmpty()) continue;
+				if (!neigh.isEmpty()) {
 
-				int attempts = neigh.size();
-				for (int i = 0; i < attempts; i++) {
+					int attempts = neigh.size();
+					for (int i = 0; i < attempts; i++) {
 
-					Neighbor target = neigh.remove(0);
-					AbstractNeuron dst = target.neuron();
+						Neighbor target = neigh.remove(0);
+						AbstractNeuron dst = target.neuron();
 
-					if (src == dst) continue;
+						if (src == dst) continue;
 
-					Point3f ps = src.getPosition();
-					Point3f pd = dst.getPosition();
-					// Don't mind Z pos for inter-layers connections
-					float ds = ps.x()*ps.x() + ps.y()*ps.y();// + ps.z()*ps.z();
-					float dd = pd.x()*pd.x() + pd.y()*pd.y();// + pd.z()*pd.z();
+						Point3f ps = src.getPosition();
+						Point3f pd = dst.getPosition();
+						// Don't mind Z pos for inter-layers connections
+						float ds = ps.x()*ps.x() + ps.y()*ps.y();// + ps.z()*ps.z();
+						float dd = pd.x()*pd.x() + pd.y()*pd.y();// + pd.z()*pd.z();
 
-					if (ds >= dd) continue;
-					if ( getInSynapsesCount(neuronSynapses, dst)>=neuronsConfig.MAX_FAN_IN ) {
-						continue;
-					}
-					if ( getOutSynapsesCount(neuronSynapses, src)>=neuronsConfig.MAX_FAN_OUT ) {
-						continue;
-					}
-					
-					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
-					
-					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
-						add( neuronSynapses, s, src, bt, false  );
-						add( neuronSynapses, s, dst, bt, true );
-						connectionsCount++;
-						break;
-					} else {
-						Synapse.destroy(s);
+						if (ds >= dd) continue;
+						if ( getInSynapsesCount(neuronSynapses, dst)>=neuronsConfig.MAX_FAN_IN ) {
+							continue;
+						}
+						if ( getOutSynapsesCount(neuronSynapses, src)>=neuronsConfig.MAX_FAN_OUT ) {
+							continue;
+						}
+
+						Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
+
+						if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
+							add( neuronSynapses, s, src, bt, false  );
+							add( neuronSynapses, s, dst, bt, true );
+							connectionsCount.incrementAndGet();
+							break;
+						} else {
+							Synapse.destroy(s);
+						}
 					}
 				}
-			}
+			});
 		}
-		return connectionsCount;
+		return connectionsCount.get();
 	}
 
 	public int buildExternalSynapses( ExternalModule ext, Abstract3DLayer targetLayer ) {
@@ -447,7 +451,7 @@ public final class SynapsesBuilder {
 
 		Random rnd = ThreadLocalRandom.current();
 		IntList neighborsIdx = Functions.findKNearestApprox(
-				x,y,z, maxConn, 1.5f/*cellSize*/, 2.6f/*maxDistance*/,
+				x,y,z, maxConn, 25f/*cellSize*/, 26f/*maxDistance*/,
 				targetLayer.getNeurons(), targetLayer.getSpatialHash());
 
 		List<Neighbor> conns = toNeighbors(neighborsIdx, targetLayer.getNeurons(), x,y,z);

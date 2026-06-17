@@ -22,7 +22,6 @@ public abstract class ExternalModule implements IProcessable {
 
 	public abstract AbstractNeuron[][] getNeurons();
 
-	
 	public long getLastProcessTime() {
 		return lastProcessTime;
 	}
