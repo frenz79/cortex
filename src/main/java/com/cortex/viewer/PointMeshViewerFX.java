@@ -276,8 +276,8 @@ public class PointMeshViewerFX extends Application {
 		if (showInputSynapses) {
 			for (SynapseBranch sb : n.getInSynapseBranches()) {
 				for ( Synapse s : sb.synapses ) {
-					if (s.getTarget().getPosition()!=null) {
-						Point3D a = neuronToLocal(s.getTarget());
+					if (s.getSource().getPosition()!=null) {
+						Point3D a = neuronToLocal(s.getSource());
 						Node line = makeConnection(a, b, Color.YELLOW);
 						synapseLines.getChildren().add(line);
 					}
@@ -287,8 +287,8 @@ public class PointMeshViewerFX extends Application {
 		if (showOutputSynapses) {
 			for (SynapseBranch sb : n.getOutSynapseBranches()) {
 				for ( Synapse s : sb.synapses ) {
-					if ( s.getSource().getPosition()!=null) {
-						Point3D a = neuronToLocal(s.getSource());
+					if ( s.getTarget().getPosition()!=null) {
+						Point3D a = neuronToLocal(s.getTarget());
 						Node line = makeConnection(a, b, Color.BLUE);
 						synapseLines.getChildren().add(line);
 					}
