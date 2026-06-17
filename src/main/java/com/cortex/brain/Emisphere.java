@@ -126,7 +126,9 @@ public class Emisphere<L extends Abstract3DLayer> {
 		
 		logger.info("Generating external synapses to layer connections");
 		for ( ISensor s : sensors ) {
-			bld.buildExternalSynapses( s, layers.get(s.getExternalConnConfig().LIKED_LAYER_ID) );
+			int synapses = bld.buildExternalSynapses( s, layers.get(s.getExternalConnConfig().LINKED_LAYER_ID) );
+			logger.info("ISensor:{} -> L{} : created {} synapses", 
+				s.getId(), s.getExternalConnConfig().LINKED_LAYER_ID, synapses);
 		}		
 		
 		bld.build();

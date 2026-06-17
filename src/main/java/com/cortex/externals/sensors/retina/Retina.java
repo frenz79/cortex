@@ -212,9 +212,9 @@ public class Retina extends ISensor {
 	public ExternalConnConfig getExternalConnConfig() {
 		return ExternalConnConfig.newBuilder()
 			.withConnections(100)
-			.withMaxDistance(1.5f)
+			.withMaxDistance(20.0f)
 			.withNeuronFilter(Commons.SKIP_INHIBITOR_CONNECT_PREDICATE)
-			.withLikedLayerId(0)
+			.withLinkedLayerId(0)
 			.withPlasticity(
 				new SynapsePlasticityConfig(
 					ExcitatorySynapticPlasticityConfig.newBuilder()

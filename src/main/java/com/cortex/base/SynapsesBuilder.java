@@ -451,12 +451,12 @@ public final class SynapsesBuilder {
 
 		Random rnd = ThreadLocalRandom.current();
 		IntList neighborsIdx = Functions.findKNearestApprox(
-				x,y,z, maxConn, 25f/*cellSize*/, 26f/*maxDistance*/,
+				x,y,z, maxConn, maxDistance, maxDistance,
 				targetLayer.getNeurons(), targetLayer.getSpatialHash());
 
 		List<Neighbor> conns = toNeighbors(neighborsIdx, targetLayer.getNeurons(), x,y,z);
 		conns.removeIf(n -> !filter.test(n.neuron()));
-		//conns.removeIf(n -> n.getRealDistance() > maxDistance);
+		conns.removeIf(n -> n.getRealDistance() > maxDistance);
 		
 		NeuronSynapses[] extNs = extNeuronSynapses.get(external);
 		if (extNs==null) {
@@ -485,13 +485,14 @@ public final class SynapsesBuilder {
 					
 					int idx = to1DIndex(rx,ry,h);
 					var ns = extNs[idx];
-					if (ns==null || !ns.contains(s) /*!areAlreadyConnected(neuronSynapses, s, src, dst)*/) {
+					if (ns==null || (!ns.inExt.contains(s) && !ns.outExt.contains(s))  /*!areAlreadyConnected(neuronSynapses, s, src, dst)*/) {
 						if (ns==null) {
 							ns = new NeuronSynapses();
 							extNs[idx] = ns;
 						}
 						add(extNs, s, extNeuron, BranchType.EXTERNAL, !external.isProducer());
-						add(neuronSynapses, s, intNeuron.neuron(), BranchType.EXTERNAL, external.isProducer());						
+						add(neuronSynapses, s, intNeuron.neuron(), BranchType.EXTERNAL, external.isProducer());		
+				//		logger.info("SENSOR Synapse:{} -> {}", extNeuron, intNeuron.neuron());
 						connections++;
 					} else {
 						Synapse.destroy(s);

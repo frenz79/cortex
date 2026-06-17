@@ -11,7 +11,7 @@ public class ExternalConnConfig {
 	public float MAX_DISTANCE;
 	public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG;
 	public Predicate<AbstractNeuron> NEURON_FILTER_PREDICATE;
-	public int LIKED_LAYER_ID;
+	public int LINKED_LAYER_ID;
 	
     public static Builder newBuilder() {
         return new Builder();
@@ -27,7 +27,7 @@ public class ExternalConnConfig {
             cfg.CONNECTIONS = -1;
             cfg.MAX_DISTANCE = Float.MAX_VALUE;
             cfg.NEURON_FILTER_PREDICATE = n -> true;
-            cfg.LIKED_LAYER_ID = -1;
+            cfg.LINKED_LAYER_ID = -1;
         }
 
         public Builder withConnections(int connections) {
@@ -35,8 +35,8 @@ public class ExternalConnConfig {
             return this;
         }
 
-        public Builder withLikedLayerId(int layerId) {
-            cfg.LIKED_LAYER_ID = layerId;
+        public Builder withLinkedLayerId(int layerId) {
+            cfg.LINKED_LAYER_ID = layerId;
             return this;
         }
         
@@ -65,7 +65,7 @@ public class ExternalConnConfig {
             if (cfg.NEURON_FILTER_PREDICATE == null)
                 throw new IllegalArgumentException("NEURON_FILTER_PREDICATE cannot be null");
             
-            if (cfg.LIKED_LAYER_ID <0)
+            if (cfg.LINKED_LAYER_ID <0)
                 throw new IllegalArgumentException("LIKED_LAYER_ID not set or invalid");
         }
 

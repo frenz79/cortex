@@ -49,13 +49,18 @@ public abstract class AbstractNeuron implements IProcessable {
 	
 	private final void addSynapseBranches( SynapseBranch[] sb, boolean addToIncoming ) {
 		SynapseBranch[] newSb = sb;
+		int synCount = 0;
+		for (SynapseBranch b : sb) {
+			synCount += b.synapses.length;
+		}
+		    
 		this.synapsesBranches = append(this.synapsesBranches, sb);
 		if (addToIncoming) {
 			this.incomingBranches = append(this.incomingBranches, newSb);
-			this.inSynapsesCount += newSb.length;
+			this.inSynapsesCount += synCount;
 		} else {
 			this.outgoingBranches = append(this.outgoingBranches, newSb);
-			this.outSynapsesCount += newSb.length;
+			this.outSynapsesCount += synCount;
 		}		
 	}
 	
