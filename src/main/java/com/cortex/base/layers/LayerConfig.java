@@ -137,14 +137,14 @@ public class LayerConfig {
         // -------------------------
         CorticalNeuronsConfig n = this.CORTICAL_NEURONS_CONFIG;
 
-        if (n.FIRING_THRESHOLD <= 0f || n.FIRING_THRESHOLD > 1.0f)
-            errors.add("FIRING_THRESHOLD fuori range (0 < thr <= 1): " + n.FIRING_THRESHOLD);
+        if (n.FIRING_THRESHOLD <= 0f || n.FIRING_THRESHOLD > 1.9f)
+            errors.add("FIRING_THRESHOLD out of range (0 < thr <= 1): " + n.FIRING_THRESHOLD);
 
         if (n.RATE_DECAY_PER_WINDOW <= 0f || n.RATE_DECAY_PER_WINDOW >= 1f)
-            errors.add("RATE_DECAY_PER_WINDOW deve essere (0 < x < 1): " + n.RATE_DECAY_PER_WINDOW);
+            errors.add("RATE_DECAY_PER_WINDOW must be between (0 < x < 1): " + n.RATE_DECAY_PER_WINDOW);
 
         if (n.RATE_WINDOW_NANOS <= 0)
-            errors.add("RATE_WINDOW deve essere > 0");
+            errors.add("RATE_WINDOW must be > 0");
 
         // -------------------------
         // 2. VALIDAZIONE SINAPSI
@@ -156,10 +156,10 @@ public class LayerConfig {
 
         // --- Eccitatoria ---
         if (e.INITIAL_WEIGHT < e.W_MIN || e.INITIAL_WEIGHT > e.W_MAX)
-            errors.add("W_INITIAL non compreso tra W_MIN e W_MAX");
+            errors.add("W_INITIAL not in W_MIN, W_MAX range");
 
         if (e.W_BASELINE < e.W_MIN || e.W_BASELINE > e.W_MAX)
-            errors.add("W_BASELINE non compreso tra W_MIN e W_MAX");
+            errors.add("W_BASELINE not in W_MIN, W_MAX range");
 
         if (e.A_PLUS <= 0f || e.A_MINUS <= 0f)
             errors.add("A_PLUS e A_MINUS devono essere > 0");

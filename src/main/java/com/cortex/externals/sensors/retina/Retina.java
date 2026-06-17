@@ -219,7 +219,7 @@ public class Retina extends ISensor {
 				new SynapsePlasticityConfig(
 					ExcitatorySynapticPlasticityConfig.newBuilder()
 						.withSTDP(0.0015f, 0.0025f, 40_000_000L, 80_000_000L) // A_PLUS, A_MINUS, TAU_PLUS, TAU_MINUS
-						.withWeights(0.04f, 0.12f, 0.01f, 0.08f)// INITIAL, W_MAX, W_MIN, W_BASELINE
+						.withWeights(0.01f, 0.06f, 0.00f, 0.03f)// INITIAL, W_MAX, W_MIN, W_BASELINE
 						.withEligibilityDecaySeconds(0.997f) 	// ELIGIBILITY_DECAY
 						.withPlasticity(20f, 5f)				// PLASTIC_DELAY_MAX, PLASTIC_DELAY_MIN
 						.withHomeostaticRate(0.02f) 			// HOMEOSTATIC_RATE
