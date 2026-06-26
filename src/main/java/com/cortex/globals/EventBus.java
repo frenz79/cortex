@@ -54,7 +54,7 @@ public class EventBus {
 
 	public static void fire( EventType type, long time, Object source, Object data ) {
 		try {
-		var list = listeners.get(type);
+			var list = listeners.get(type);
 			if (list == null || list.isEmpty()) return;
 			if (list.size()==1) {
 				list.get(0).onEvent(type, time, source, data);

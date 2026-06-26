@@ -8,9 +8,9 @@ public class OCRCharacterNeuron extends AbstractExternalNeuron {
 	private final char character;
 	private float recentScore = 0f;
 	private long lastScoreTime = 0;
-
-	public OCRCharacterNeuron(int index, char character) {
-		super( index, true, false );
+	
+	public OCRCharacterNeuron(NeuronsStateBuff neuronsStates, int index, char character) {
+		super(neuronsStates, index, true, false );
 		this.character = character;
 	}
 

@@ -15,11 +15,19 @@ public abstract class AbstractNeuron implements IProcessable {
 	static final Logger logger = LogManager.getLogger(AbstractNeuron.class);
 
 	// Hot fields grouped together for better locality
-	public final class NeuronState {
-		public float firingRate = 0.0f;
-		public long lastRateUpdate = System.nanoTime();
-		public boolean isActive = false; // Phase 1
-		public boolean pendingFire = false; // Phase 2
+	public static final class NeuronsStateBuff {
+		
+		public NeuronsStateBuff(int totalNeurons) {
+			this.firingRate = new float[totalNeurons];
+			this.lastRateUpdate = new long[totalNeurons];
+			this.isActive = new boolean[totalNeurons];
+			this.pendingFire = new boolean[totalNeurons];
+		}
+		
+		public float[] firingRate;
+		public long[] lastRateUpdate;
+		public boolean[] isActive;
+		public boolean[] pendingFire;
 	}
 
 	// Immutable fields
@@ -28,8 +36,9 @@ public abstract class AbstractNeuron implements IProcessable {
 	private final Point3f position;	
 	private final boolean inhibitor;
 	private final int spikeSign;
-	protected final NeuronState state = new NeuronState();
-
+	//protected final NeuronState state = new NeuronState();
+	protected final NeuronsStateBuff neuronStateBuff;
+	
 	private SynapseBranch[] synapsesBranches = new SynapseBranch[0];
 	private SynapseBranch[] incomingBranches = new SynapseBranch[0];
 	private SynapseBranch[] outgoingBranches = new SynapseBranch[0];
@@ -73,7 +82,8 @@ public abstract class AbstractNeuron implements IProcessable {
 	    return arrNew;
 	}
 
-	public AbstractNeuron(Abstract3DLayer layer, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position ) {
+	public AbstractNeuron(NeuronsStateBuff neuronStateBuff, Abstract3DLayer layer, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position ) {
+		this.neuronStateBuff = neuronStateBuff;
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
 		this.position = position;
@@ -82,7 +92,7 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 
 	public final void fire( long now ) throws InterruptedException {
-		state.pendingFire = true;
+		this.neuronStateBuff.pendingFire[index] = true;
 		// Debug log
 	    // if (layer.getLayerId() == 0) { // L0
 	    //   logger.info("-->L0 neuron fired: {} at {}",index, now);
@@ -93,7 +103,9 @@ public abstract class AbstractNeuron implements IProcessable {
 		}
 	}
 
-	public void delayedFire( long now ) {	
+	public void delayedFire( long now ) {
+		
+		
 		// Debug log
 		//	if (layer!=null && layer.getLayerId() == 0) {
 		//	    logger.info("L0 {} fired, outgoing synapses count = {}", getIndex(), getOutSynapsesCount());
@@ -114,9 +126,9 @@ public abstract class AbstractNeuron implements IProcessable {
 		}		
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
-	    state.pendingFire = false;
-	    state.firingRate += 1.0f;
-	    state.lastRateUpdate = now;
+		this.neuronStateBuff.pendingFire[index] = false;
+		this.neuronStateBuff.firingRate[index] += 1.0f;
+		this.neuronStateBuff.lastRateUpdate[index] = now;
 		EventBus.fire(EventType.NEURON_FIRED, now, this, null);
 	}
 	
@@ -145,15 +157,15 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 	
 	public boolean isActive() {
-		return state.isActive;
+		return this.neuronStateBuff.isActive[index];
 	}
 
 	public boolean isPendingFire() {
-		return state.pendingFire;
+		return this.neuronStateBuff.pendingFire[index];
 	}
 
 	public void setActive(boolean isActive) {
-		state.isActive = isActive;
+		this.neuronStateBuff.isActive[index] = isActive;
 	}
 
 	public final SynapseBranch[] getAllSynapseBranches() {

@@ -20,8 +20,8 @@ public class RetinaNeuron extends AbstractExternalNeuron {
 	private float firingRate;
 	private long lastUpdate;
 	
-	public RetinaNeuron(int index, RetinaNeuronConfig retinaNeuronConfig) {
-		super( index, false, true);
+	public RetinaNeuron( NeuronsStateBuff neuronsStates, int index, RetinaNeuronConfig retinaNeuronConfig) {
+		super(neuronsStates, index, false, true);
 		this.retinaNeuronConfig = retinaNeuronConfig;
 	}
 	

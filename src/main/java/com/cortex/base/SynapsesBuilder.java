@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.Commons.SYNAPSE_SPEED;
+import com.cortex.base.Synapse.SynapseStateBuff;
 import com.cortex.base.SynapseBranch.BranchType;
 import com.cortex.base.SynapseBranch.Direction;
 import com.cortex.base.externals.ExternalModule;
@@ -36,12 +37,14 @@ public final class SynapsesBuilder {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 
+	private final SynapseStateBuff synapseStateBuff;
 	private final AbstractNeuron[] neurons;
 	private final NeuronSynapses[] neuronSynapses;
 	private final Map<ExternalModule,NeuronSynapses[]> extNeuronSynapses;
 	
 	public SynapsesBuilder( AbstractNeuron[] neurons ) {
 		this.neurons = neurons;
+		this.synapseStateBuff = new SynapseStateBuff();
 		this.neuronSynapses = new NeuronSynapses[neurons.length];
 		this.extNeuronSynapses = new HashMap<>();
 	}
@@ -74,7 +77,10 @@ public final class SynapsesBuilder {
 				    }
 				}
 			}
-		});		
+		});
+		
+		synapseStateBuff.allocate(Synapse.getSynapsesCount());
+		// TODO: call init for each synapse
 	}
 
 	private static final void add(NeuronSynapses[] syns, Synapse s, AbstractNeuron n, BranchType bt, boolean inc) {
@@ -264,7 +270,7 @@ public final class SynapsesBuilder {
 
 				if (ds >= dd) continue;
 						
-				var s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, layer.getConfig().SYNAPSE_PLASTICITY_CONFIG);
+				var s = Synapse.create(synapseStateBuff, src, dst, target.getRealDistance(), baseSpeed, layer.getConfig().SYNAPSE_PLASTICITY_CONFIG);
 				add( neuronSynapses, s, src, target.near()?BranchType.NEAR:BranchType.FAR, false  );
 				add( neuronSynapses, s, dst, target.near()?BranchType.NEAR:BranchType.FAR, true );
 				connectionsCount++;
@@ -289,7 +295,7 @@ public final class SynapsesBuilder {
 					float dd = pd.x()*pd.x() + pd.y()*pd.y() + pd.z()*pd.z();
 
 					if (ds >= dd) continue;
-					Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, layer.getConfig().SYNAPSE_PLASTICITY_CONFIG);
+					Synapse s = Synapse.create(synapseStateBuff, src, dst, target.getRealDistance(), baseSpeed, layer.getConfig().SYNAPSE_PLASTICITY_CONFIG);
 					
 					if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
 						add( neuronSynapses, s, src, BranchType.FAR, false  );
@@ -401,7 +407,7 @@ public final class SynapsesBuilder {
 							continue;
 						}
 
-						Synapse s = Synapse.create(src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
+						Synapse s = Synapse.create(synapseStateBuff, src, dst, target.getRealDistance(), baseSpeed, plasticityCfg);
 
 						if (!areAlreadyConnected(neuronSynapses, s, src, dst)) {
 							add( neuronSynapses, s, src, bt, false  );
@@ -478,9 +484,9 @@ public final class SynapsesBuilder {
 					Synapse s;
 					
 					if (external.isProducer()) {					
-						s = Synapse.create( extNeuron, intNeuron.neuron(), intNeuron.getRealDistance(), baseSpeed, synCfg );
+						s = Synapse.create( synapseStateBuff, extNeuron, intNeuron.neuron(), intNeuron.getRealDistance(), baseSpeed, synCfg );
 					} else {
-						s = Synapse.create( intNeuron.neuron(), extNeuron, intNeuron.getRealDistance(), baseSpeed, synCfg );
+						s = Synapse.create( synapseStateBuff, intNeuron.neuron(), extNeuron, intNeuron.getRealDistance(), baseSpeed, synCfg );
 					}
 					
 					int idx = to1DIndex(rx,ry,h);

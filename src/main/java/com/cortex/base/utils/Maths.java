@@ -36,7 +36,10 @@ public class Maths {
 	}
 
 	public static final float clamp(float v, float min, float max) {
-		return Math.max(min, Math.min(max, v));
+	//	return Math.max(min, Math.min(max, v));
+		if (v < min) return min;
+		if (v > max) return max;
+		return v;
 	}
 
 	public static final int clamp(int v, int min, int max) {

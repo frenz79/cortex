@@ -1,17 +1,18 @@
 package com.cortex.brain;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.AbstractNeuron.NeuronsStateBuff;
 import com.cortex.base.SynapsesBuilder;
 import com.cortex.base.externals.IActuator;
 import com.cortex.base.externals.IClassifier;
@@ -35,7 +36,8 @@ public class Emisphere<L extends Abstract3DLayer> {
 	
 	// Single Neurons storage
 	private volatile CorticalNeuron[] neurons;
-	
+	private volatile NeuronsStateBuff neuronsStatesBuff;
+		
 	private int totalNeurons = 0;
 	private CorticalNeuronFactory neuronFactory;
 	private MultiLayersConnConfig multiLayersConnConfig;
@@ -58,6 +60,7 @@ public class Emisphere<L extends Abstract3DLayer> {
 				Point3f position
 				) {
 			CorticalNeuron n = new CorticalNeuron(
+					neuronsStatesBuff,
 					counter, 
 					layer, 
 					configs.get(layer.getLayerId()).HAS_INCOMING, 
@@ -87,6 +90,8 @@ public class Emisphere<L extends Abstract3DLayer> {
 	public Emisphere<L> build() {
 		// Allocate neurons space
 		this.neurons = new CorticalNeuron[totalNeurons];
+		this.neuronsStatesBuff = new NeuronsStateBuff(totalNeurons);
+				    
 		this.neuronFactory = new CorticalNeuronFactory( this.layersConfigs );
 		// Generate and populate layers
 		generateLayers(layersConfigs);
@@ -138,6 +143,7 @@ public class Emisphere<L extends Abstract3DLayer> {
 		if (neurons == null) return;
 		CorticalNeuron[] snapshot = neurons;
 	    
+		/*
 	    // PHASE 1 — Spike propagation
 	    Arrays.stream(snapshot).parallel().forEach(n -> {
 	        if (n.isPendingFire()) {
@@ -157,6 +163,29 @@ public class Emisphere<L extends Abstract3DLayer> {
 	            n.setActive(stay);
 	        }
 	    });
+	    */
+		
+		// Faster iteration
+		int N = totalNeurons;
+		IntStream.range(0, N).parallel().forEach(i -> {
+		    CorticalNeuron n = neurons[i];
+		    if (neuronsStatesBuff.pendingFire[i]) {
+		        n.delayedFire(now);
+		    }
+		});
+
+		IntStream.range(0, N).parallel().forEach(i -> {
+		    CorticalNeuron n = neurons[i];
+		    if (neuronsStatesBuff.isActive[i]) {
+		        boolean stay = false;
+				try {
+					stay = n.process(now);
+				} catch (InterruptedException ex) {
+					logger.error("Handled Exception:", ex);
+				}
+		        neuronsStatesBuff.isActive[i] = stay;
+		    }
+		});
 	}
 	
 	public Abstract3DLayer getSensorsTargetLayer() {

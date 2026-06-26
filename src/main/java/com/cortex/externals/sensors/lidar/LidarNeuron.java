@@ -20,8 +20,8 @@ public class LidarNeuron extends AbstractExternalNeuron {
     private float firingRate;
     private long lastUpdate;
 
-    public LidarNeuron(int index, LidarNeuronConfig config) {
-        super( index, false, true );
+    public LidarNeuron(NeuronsStateBuff neuronsStates, int index, LidarNeuronConfig config) {
+        super( neuronsStates, index, false, true );
         this.config = config;
     }
 

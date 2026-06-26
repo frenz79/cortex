@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.AbstractNeuron.NeuronsStateBuff;
 import com.cortex.base.Commons;
 import com.cortex.base.Spike;
 import com.cortex.base.Synapse;
@@ -39,13 +40,17 @@ public class Retina extends ISensor {
 
 	private volatile long lastSaccadeTime = System.nanoTime();
 
+	private final NeuronsStateBuff neuronsStates;
+	
 	public Retina( RetinaConfig retinaConfig, RetinaNeuronConfig neuronsConfig ) {
 		this.retinaConfig = retinaConfig;
 		this.retinaNeurons = new RetinaNeuron[retinaConfig.RETINA_W][retinaConfig.RETINA_H];
 		int counter = 0;
+		this.neuronsStates = new NeuronsStateBuff(retinaConfig.RETINA_W*retinaConfig.RETINA_H);
+		
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {
-				retinaNeurons[x][y] = new RetinaNeuron(counter++, neuronsConfig );
+				retinaNeurons[x][y] = new RetinaNeuron(this.neuronsStates, counter++, neuronsConfig );
 			}
 		}
 	}

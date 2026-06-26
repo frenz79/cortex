@@ -1,6 +1,7 @@
 package com.cortex.externals.sensors.lidar;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.AbstractNeuron.NeuronsStateBuff;
 import com.cortex.base.externals.ExternalConnConfig;
 import com.cortex.base.externals.ISensor;
 import com.cortex.base.utils.Maths;
@@ -11,15 +12,17 @@ public class Lidar extends ISensor {
 
     private final LidarConfig config;
     private final LidarNeuron[] neurons;
-
+    private final NeuronsStateBuff neuronsStates;
+    
     private volatile float[] distances; // input dal world
 
     public Lidar(LidarConfig config, LidarNeuronConfig neuronConfig) {
         this.config = config;
         this.neurons = new LidarNeuron[config.RAYS];
-
+        this.neuronsStates = new NeuronsStateBuff(config.RAYS );
+        
         for (int i = 0; i < config.RAYS; i++) {
-            neurons[i] = new LidarNeuron(i, neuronConfig);
+            neurons[i] = new LidarNeuron(neuronsStates, i, neuronConfig);
         }
     }
 
