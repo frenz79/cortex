@@ -1,6 +1,7 @@
 package com.cortex.externals.classifiers.ocr;
 
 import com.cortex.base.externals.AbstractExternalNeuron;
+import com.cortex.base.soa.NeuronStateSoA;
 import com.google.common.util.concurrent.AtomicDouble;
 
 public class OCRCharacterNeuron extends AbstractExternalNeuron {
@@ -9,7 +10,7 @@ public class OCRCharacterNeuron extends AbstractExternalNeuron {
 	private float recentScore = 0f;
 	private long lastScoreTime = 0;
 	
-	public OCRCharacterNeuron(NeuronsStateBuff neuronsStates, int index, char character) {
+	public OCRCharacterNeuron(NeuronStateSoA neuronsStates, int index, char character) {
 		super(neuronsStates, index, true, false );
 		this.character = character;
 	}

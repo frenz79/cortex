@@ -8,7 +8,7 @@ import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.utils.Maths;
 import com.cortex.brain.CorticalNeuronsConfig;
-import com.cortex.brain.Emisphere;
+import com.cortex.brain.Hemisphere;
 import com.cortex.globals.EventBus.EventListener;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.metrics.LayerStats;
@@ -17,7 +17,7 @@ public class DiscreteAdaptiveStabilizer {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
 
-	private final Emisphere<?> emisphere;
+	private final Hemisphere<?> emisphere;
 	private final DiscreteAdaptiveStabilizerConfig config;
 	private final LayerStats[] layerStats;
 	private final StatsEMA[] ema;
@@ -63,7 +63,7 @@ public class DiscreteAdaptiveStabilizer {
 	    return alpha * value + (1f - alpha) * prev;
 	}
 
-	public DiscreteAdaptiveStabilizer( Emisphere<?> emisphere, DiscreteAdaptiveStabilizerConfig config ) {
+	public DiscreteAdaptiveStabilizer( Hemisphere<?> emisphere, DiscreteAdaptiveStabilizerConfig config ) {
 		this.config = config;
 		this.emisphere = emisphere;
 		this.layerStats = new LayerStats[ emisphere.getAllLayers().size() ];

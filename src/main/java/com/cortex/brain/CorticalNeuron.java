@@ -11,6 +11,7 @@ import com.cortex.base.SynapseBranch;
 import com.cortex.base.SynapseBranch.BranchType;
 import com.cortex.base.dendritic_competition.IDendriticCompetitionStrategy;
 import com.cortex.base.layers.Abstract3DLayer;
+import com.cortex.base.soa.NeuronStateSoA;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 
@@ -26,8 +27,8 @@ public class CorticalNeuron extends AbstractNeuron {
 	private final CorticalNeuronsConfig config;
 	private final Map<BranchType, List<SynapseBranch>> branchTypes = new EnumMap<>(BranchType.class);
 	
-	public CorticalNeuron(NeuronsStateBuff neuronStateBuff, int index, Abstract3DLayer layer, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position) {
-		super(neuronStateBuff, layer, index, hasIncoming, hasOutgoing,	inhibitor, position	);
+	public CorticalNeuron(int index, int hemisphereId, Abstract3DLayer layer, boolean hasIncoming, boolean hasOutgoing, CorticalNeuronsConfig neuronsConfig, boolean inhibitor, Point3f position) {
+		super(layer, index, hemisphereId, hasIncoming, hasOutgoing,	inhibitor, position	);
 		this.config = neuronsConfig;
 	}
 	
@@ -127,19 +128,21 @@ public class CorticalNeuron extends AbstractNeuron {
 
 	// continuous/exponential decay based on elapsed time 
 	public float getRecentFiringRate(long now) {
+		NeuronStateSoA neuronStateSoA = getHemisphereCtx().neuronState;
+		
 		int index = getIndex();
-		long dt = now - this.neuronStateBuff.lastRateUpdate[index];
-		if (dt <= 0) return neuronStateBuff.firingRate[index];
+		long dt = now - neuronStateSoA.lastRateUpdate[index];
+		if (dt <= 0) return neuronStateSoA.firingRate[index];
 
 		// Temporal normalization
 		double windows = (double) dt / config.RATE_WINDOW_NANOS;
-		neuronStateBuff.firingRate[index] *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
+		neuronStateSoA.firingRate[index] *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
 
 		// Avoid negative or too small values
-		if (neuronStateBuff.firingRate[index] < 0 || neuronStateBuff.firingRate[index] < 1e-6f) {
-			neuronStateBuff.firingRate[index] = 0;
+		if (neuronStateSoA.firingRate[index] < 0 || neuronStateSoA.firingRate[index] < 1e-6f) {
+			neuronStateSoA.firingRate[index] = 0;
 		}
-		neuronStateBuff.lastRateUpdate[index] = now;
-		return neuronStateBuff.firingRate[index];
+		neuronStateSoA.lastRateUpdate[index] = now;
+		return neuronStateSoA.firingRate[index];
 	}
 }

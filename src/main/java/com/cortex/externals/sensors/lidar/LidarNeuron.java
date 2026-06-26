@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.externals.AbstractExternalNeuron;
+import com.cortex.base.soa.NeuronStateSoA;
 import com.cortex.base.utils.Maths;
 
 public class LidarNeuron extends AbstractExternalNeuron {
@@ -20,7 +21,7 @@ public class LidarNeuron extends AbstractExternalNeuron {
     private float firingRate;
     private long lastUpdate;
 
-    public LidarNeuron(NeuronsStateBuff neuronsStates, int index, LidarNeuronConfig config) {
+    public LidarNeuron(NeuronStateSoA neuronsStates, int index, LidarNeuronConfig config) {
         super( neuronsStates, index, false, true );
         this.config = config;
     }

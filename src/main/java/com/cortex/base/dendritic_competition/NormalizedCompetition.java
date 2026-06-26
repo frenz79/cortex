@@ -1,6 +1,7 @@
 package com.cortex.base.dendritic_competition;
 
 import com.cortex.base.SynapseBranch;
+import com.cortex.base.utils.Maths;
 
 /**
  * Dendritic Softmax
@@ -22,7 +23,7 @@ public class NormalizedCompetition implements IDendriticCompetitionStrategy {
 
 	    float sum = 0f;
 	    for (SynapseBranch b : branches)
-	        sum += Math.max(0f, b.branchActivity);
+	        sum += Maths.max(0f, b.branchActivity);
 
 	    // stabilità numerica
 	    if (sum < 1e-4f) sum = 1e-4f;

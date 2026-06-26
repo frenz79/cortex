@@ -12,7 +12,7 @@ public class Brain {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
 	
-	private List<Emisphere<?>> emispheres = new ArrayList<>();
+	private List<Hemisphere<?>> emispheres = new ArrayList<>();
 	
 	public void process(long now) {
 		for ( var e : emispheres) {
@@ -36,13 +36,13 @@ public class Brain {
 			this.brain = new Brain();
 		}
 
-		public Builder addEmisphere(Emisphere<?> em) {
+		public Builder addEmisphere(Hemisphere<?> em) {
 			brain.emispheres.add(em);
 			return this;
 		} 
 		
-		public Builder addEmispheres(Emisphere<?>[] em) {
-			for (Emisphere<?>e : em) {
+		public Builder addEmispheres(Hemisphere<?>[] em) {
+			for (Hemisphere<?>e : em) {
 				brain.emispheres.add(e);
 			}
 			return this;
@@ -58,17 +58,17 @@ public class Brain {
 		}
 	}
 
-	public List<Emisphere<?>> getEmispheres() {
+	public List<Hemisphere<?>> getEmispheres() {
 		return emispheres;
 	}
 	
-	public Emisphere<?> getEmisphere(int id) {
+	public Hemisphere<?> getEmisphere(int id) {
 		return emispheres.get(id);
 	}
 
 	public int getNeuronsCount() {
 		int ret = 0;
-		for ( Emisphere<?> e : emispheres ) {
+		for ( Hemisphere<?> e : emispheres ) {
 			ret += e.getAllNeurons().length;
 		}
 		return ret;

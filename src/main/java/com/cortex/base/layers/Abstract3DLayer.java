@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.SpatialHash;
-import com.cortex.brain.Emisphere.CorticalNeuronFactory;
+import com.cortex.brain.Hemisphere.CorticalNeuronFactory;
 
 public abstract class Abstract3DLayer {
 

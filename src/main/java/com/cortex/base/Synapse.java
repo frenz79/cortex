@@ -11,8 +11,10 @@ import com.cortex.base.plasticity.IPlasticSynapse;
 import com.cortex.base.plasticity.IPlasticityRule;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityRule;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
+import com.cortex.base.soa.SynapseStateSoA;
 import com.cortex.base.utils.Maths;
 import com.cortex.brain.CorticalNeuron;
+import com.cortex.brain.HemisphereContext;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.globals.EventBus.SynapseSpikedData;
@@ -27,33 +29,6 @@ public final class Synapse implements IPlasticSynapse {
 	public static final int BUFFER_SIZE = 8;
 	final Spike[] buffer = new Spike[BUFFER_SIZE];
 		
-	// Hot fields SOA
-	public static final class SynapseStateBuff {
-	    public long[] lastDecayTime;
-	    public float[] myelinFactor;
-	    public int[] activityCounter;
-	    public int[] writeIndex;
-	    public int[] readIndex;
-
-	    public SynapseStateBuff(int totalSynapses) {
-	    	if (lastDecayTime!=null || myelinFactor!=null || activityCounter!=null || writeIndex!=null || readIndex!=null)
-	    		throw new RuntimeException("Buffer has already been allocated");
-	    	allocate(totalSynapses);
-	    }
-	    
-	    public SynapseStateBuff() {
-	    	// No allocation
-	    }
-	    
-	    public void allocate(int totalSynapses) {
-	        lastDecayTime = new long[totalSynapses];
-	        myelinFactor = new float[totalSynapses];
-	        activityCounter = new int[totalSynapses];
-	        writeIndex = new int[totalSynapses];
-	        readIndex = new int[totalSynapses];
-	    }
-	}
-
 	// Immutable fields
 	private final int index;	
 	private final long baseSpeed;
@@ -61,7 +36,7 @@ public final class Synapse implements IPlasticSynapse {
 	private final AbstractNeuron pre;
 	private final AbstractNeuron post;
 	private final IPlasticityRule plasticityRule;
-	private final SynapseStateBuff stateBuff;
+	private final int hemisphereId;
 
 	// Monitor synapse activity
 	private static final long DECAY_INTERVAL_NANOS = 50_000_000l;
@@ -71,18 +46,18 @@ public final class Synapse implements IPlasticSynapse {
 	private static final float ETA_MYELIN = 0.0001f;	
 	private static final float MAX_MYELIN = 1.0f;
 
-	private Synapse(SynapseStateBuff stateBuff, int index, AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
+	private Synapse(int index, int hemisphereId, AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, IPlasticityRule plasticityRule) {
 		this.index = index;
 		this.pre = pre;
 		this.post = post;
 		this.length = length;
 		this.baseSpeed = baseSpeed;
 		this.plasticityRule = plasticityRule;
-		this.stateBuff = stateBuff;
+		this.hemisphereId = hemisphereId;
 	}
 	
 	public void init() {
-		this.stateBuff.lastDecayTime[index] = System.nanoTime();
+		HemisphereContext.get(hemisphereId).synState.lastDecayTime[index] = System.nanoTime();
 	}
 	
 	public static void destroy(Synapse s) {
@@ -92,7 +67,7 @@ public final class Synapse implements IPlasticSynapse {
 		}
 	}
 	
-	public static Synapse create( SynapseStateBuff stateBuff, AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, SynapsePlasticityConfig synCfg) {
+	public static Synapse create( int hemisphereId, AbstractNeuron pre, AbstractNeuron post, float length, long baseSpeed, SynapsePlasticityConfig synCfg) {
 		if (pre==null || post==null) 
 			throw new RuntimeException("Invalid synapse: pre or post are null");
 		if (pre==post) 
@@ -108,7 +83,7 @@ public final class Synapse implements IPlasticSynapse {
 		
 		int index = synapsesCount.getAndIncrement();
 		return new Synapse(
-			stateBuff, index, pre, post, length, baseSpeed, synPlast	
+			index, hemisphereId, pre, post, length, baseSpeed, synPlast	
 		);
 	}
 	
@@ -121,13 +96,16 @@ public final class Synapse implements IPlasticSynapse {
 //		    logger.info("--> Spike L0→L1 scheduled: pre={} post={}",pre.getIndex(), post.getIndex());
 //		}
 		
+		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
+		
 		// fifo...
-		if (((stateBuff.writeIndex[index] + 1) & (BUFFER_SIZE - 1)) == (stateBuff.readIndex[index] & (BUFFER_SIZE - 1))) {
-			stateBuff.readIndex[index]++;
+		if (((wIdx[index] + 1) & (BUFFER_SIZE - 1)) == (rIdx[index] & (BUFFER_SIZE - 1))) {
+			rIdx[index]++;
 		}
 
-		buffer[stateBuff.writeIndex[index] & (BUFFER_SIZE - 1)] = spike;
-		stateBuff.writeIndex[index]++;
+		buffer[wIdx[index] & (BUFFER_SIZE - 1)] = spike;
+		wIdx[index]++;
 		
 		long dt = spike.arrivalTime() - now;
 		if (dt > 1_000_000) {
@@ -139,8 +117,12 @@ public final class Synapse implements IPlasticSynapse {
 	
 	public void accumulateSpikes(long now, SynapseBranch synapseBranch, CorticalNeuron corticalNeuron) {
 		post.setActive(false);
-	    while (stateBuff.readIndex[index] != stateBuff.writeIndex[index]) {
-	    	Spike s = buffer[stateBuff.readIndex[index] & (BUFFER_SIZE - 1)];
+		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
+		int branchIdx = HemisphereContext.get(hemisphereId).synState.branchIndex[index];
+		 
+		while (rIdx[index] != wIdx[index]) {
+	    	Spike s = buffer[rIdx[index] & (BUFFER_SIZE - 1)];
 			if (s == null) {
 			    break;
 			}
@@ -149,17 +131,17 @@ public final class Synapse implements IPlasticSynapse {
 				post.setActive(true);
 				break;
 			}
-	        synapseBranch.branchPotential += s.signedAmplitude();
+			HemisphereContext.get(hemisphereId).branchState.branchPotential[branchIdx] += s.signedAmplitude();
 	        onPreSpike(now);
 	        post.setActive(true);
-	        stateBuff.readIndex[index]++;
+	        rIdx[index]++;
 	    }
 	}
 	
 /*
 	public void forEachSpike(long now, Consumer<Spike> consumer) {	   
-		while (stateBuff.readIndex[index] != stateBuff.writeIndex[index]) {
-			Spike s = buffer[stateBuff.readIndex[index] & (BUFFER_SIZE - 1)];
+		while (rIdx[index] != wIdx[index]) {
+			Spike s = buffer[rIdx[index] & (BUFFER_SIZE - 1)];
 			if (s == null) {
 				post.setActive(false);
 			    break;
@@ -171,21 +153,28 @@ public final class Synapse implements IPlasticSynapse {
 				break;
 			}
 			consumer.accept(s);
-			stateBuff.readIndex[index]++;
+			rIdx[index]++;
 		}
 	}
 */
 	public boolean isEmpty() {
-		return stateBuff.writeIndex[index] == stateBuff.readIndex[index];
+		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
+		return wIdx[index] == rIdx[index];
 	}
 	
 	public boolean hasFutureSpikes(long now) {
-	    if (stateBuff.writeIndex[index] == stateBuff.readIndex[index]) return false;
-	    Spike s = buffer[stateBuff.readIndex[index] & (BUFFER_SIZE - 1)];
+		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
+
+	    if (wIdx[index] == rIdx[index]) return false;
+	    Spike s = buffer[rIdx[index] & (BUFFER_SIZE - 1)];
 	    return s.arrivalTime() > now;
 	}
 
 	public final long getTraversalTimeNanos(long now) {
+		SynapseStateSoA stateBuff = HemisphereContext.get(hemisphereId).synState;
+		
 		if (now - stateBuff.lastDecayTime[index] > DECAY_INTERVAL_NANOS) {
 			stateBuff.activityCounter[index] = (int)(stateBuff.activityCounter[index] * 0.5f);
 			stateBuff.lastDecayTime[index] = now;
@@ -200,7 +189,7 @@ public final class Synapse implements IPlasticSynapse {
 	// IPlasticSynapse
 	@Override
 	public final void onPreSpike(long now) {
-		stateBuff.activityCounter[index]++;
+		HemisphereContext.get(hemisphereId).synState.activityCounter[index]++;
 		if (this.plasticityRule.onPreSpike(now)) {
 			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.preSpikeData());
 		}
@@ -208,7 +197,7 @@ public final class Synapse implements IPlasticSynapse {
 
 	@Override
 	public final void onPostSpike(long postSpikeTime, long now) {
-		stateBuff.activityCounter[index]++;
+		HemisphereContext.get(hemisphereId).synState.activityCounter[index]++;
 		if ( this.plasticityRule.onPostSpike(this, postSpikeTime, now) ) {
 			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.postSpikeData());
 		}
@@ -226,15 +215,16 @@ public final class Synapse implements IPlasticSynapse {
 	@Override
 	public void applyReward(float deltaW, long now, float reward) {
 		this.plasticityRule.applyReward(deltaW, now, reward);
-
+		float[] myelinFactors = HemisphereContext.get(hemisphereId).synState.myelinFactor;
+		
 		if (reward > 0.0f && wasFrequentlyActiveInLastWindow() && plasticityRule.hadSignificantPairing()) {
-			stateBuff.myelinFactor[index] += ETA_MYELIN * reward;
-			stateBuff.myelinFactor[index] = Maths.clamp(stateBuff.myelinFactor[index], 0, MAX_MYELIN);
+			myelinFactors[index] += ETA_MYELIN * reward;
+			myelinFactors[index] = Maths.clamp(myelinFactors[index], 0, MAX_MYELIN);
 		}
 	}
 
 	public final boolean wasFrequentlyActiveInLastWindow() {
-		return stateBuff.activityCounter[index] > ACTIVITY_THRESHOLD;
+		return HemisphereContext.get(hemisphereId).synState.activityCounter[index] > ACTIVITY_THRESHOLD;
 	}
 
 	@Override
@@ -256,6 +246,10 @@ public final class Synapse implements IPlasticSynapse {
 	
 	public final float getLength() {
 		return length;
+	}
+	
+	public void setBranch(int branchIndex) {
+		HemisphereContext.get(hemisphereId).synState.branchIndex[index] = branchIndex;
 	}
 
 	@Override

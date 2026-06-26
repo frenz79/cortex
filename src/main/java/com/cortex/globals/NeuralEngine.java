@@ -18,7 +18,7 @@ import com.cortex.base.externals.ISensor;
 import com.cortex.base.externals.ISupervisor;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.brain.Brain;
-import com.cortex.brain.Emisphere;
+import com.cortex.brain.Hemisphere;
 import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {
@@ -90,7 +90,7 @@ public class NeuralEngine {
 		Runnable ioRunnable = () -> {
 			long now = now();
 			try {
-				 for (Emisphere<?> em : brain.getEmispheres()) {
+				 for (Hemisphere<?> em : brain.getEmispheres()) {
 					for (ISensor s : em.getSensors()) {
 						if (s.isActive() && (now - s.getLastProcessTime()) > s.getWaitTimeNanos()) {
 							s.process(now);
@@ -148,7 +148,7 @@ public class NeuralEngine {
 				        long avgTimeMicros = (runsWindow == 0)
 				                ? 0
 				                : TimeUnit.NANOSECONDS.toMicros(timeWindow / runsWindow);
-				        for (Emisphere<?> em : brain.getEmispheres()) {
+				        for (Hemisphere<?> em : brain.getEmispheres()) {
 							for (Abstract3DLayer layer : em.getAllLayers()) {
 								int layerId = layer.getLayerId();
 								metricsRecorder.pollLayerStats(

@@ -2,7 +2,7 @@ package com.cortex.base.layers;
 
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
-import com.cortex.brain.Emisphere.CorticalNeuronFactory;
+import com.cortex.brain.Hemisphere.CorticalNeuronFactory;
 
 public final class SphericalLayer extends Abstract3DLayer {
 	

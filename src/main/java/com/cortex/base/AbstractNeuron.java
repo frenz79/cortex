@@ -6,7 +6,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.layers.Abstract3DLayer;
+import com.cortex.base.soa.NeuronStateSoA;
+import com.cortex.base.soa.SynapseBranchStateSoA;
+import com.cortex.base.soa.SynapseTopologySoA;
 import com.cortex.base.utils.Point3f;
+import com.cortex.brain.HemisphereContext;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 
@@ -14,109 +18,108 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	static final Logger logger = LogManager.getLogger(AbstractNeuron.class);
 
-	// Hot fields grouped together for better locality
-	public static final class NeuronsStateBuff {
-		
-		public NeuronsStateBuff(int totalNeurons) {
-			this.firingRate = new float[totalNeurons];
-			this.lastRateUpdate = new long[totalNeurons];
-			this.isActive = new boolean[totalNeurons];
-			this.pendingFire = new boolean[totalNeurons];
-		}
-		
-		public float[] firingRate;
-		public long[] lastRateUpdate;
-		public boolean[] isActive;
-		public boolean[] pendingFire;
-	}
-
 	// Immutable fields
 	private final Abstract3DLayer layer;
 	private final int index;
+	private final int hemisphereId;
 	private final Point3f position;	
 	private final boolean inhibitor;
 	private final int spikeSign;
-	//protected final NeuronState state = new NeuronState();
-	protected final NeuronsStateBuff neuronStateBuff;
 	
-	private SynapseBranch[] synapsesBranches = new SynapseBranch[0];
-	private SynapseBranch[] incomingBranches = new SynapseBranch[0];
-	private SynapseBranch[] outgoingBranches = new SynapseBranch[0];
-	
+	//	private SynapseBranch[] synapsesBranches = new SynapseBranch[0];
+	//	private SynapseBranch[] incomingBranches = new SynapseBranch[0];
+	//	private SynapseBranch[] outgoingBranches = new SynapseBranch[0];
+
+	private int[] allBranchIndices      = new int[0];
+	private int[] incomingBranchIndices = new int[0];
+	private int[] outgoingBranchIndices = new int[0];
+
 	private int inSynapsesCount = 0;
 	private int outSynapsesCount = 0;
-	
+
 	// continuous/exponential decay based on elapsed time 
 	public abstract float getRecentFiringRate(long now);
-		
-	public synchronized void addIncomingBranch( SynapseBranch sb ) {
-		addSynapseBranches( new SynapseBranch[] {sb}, true );
-	}
-	public synchronized void addOutgoingBranch( SynapseBranch sb ) {
-		addSynapseBranches( new SynapseBranch[] {sb}, false );
-	}
-	
-	private final void addSynapseBranches( SynapseBranch[] sb, boolean addToIncoming ) {
-		SynapseBranch[] newSb = sb;
-		int synCount = 0;
-		for (SynapseBranch b : sb) {
-			synCount += b.synapses.length;
-		}
-		    
-		this.synapsesBranches = append(this.synapsesBranches, sb);
-		if (addToIncoming) {
-			this.incomingBranches = append(this.incomingBranches, newSb);
-			this.inSynapsesCount += synCount;
-		} else {
-			this.outgoingBranches = append(this.outgoingBranches, newSb);
-			this.outSynapsesCount += synCount;
-		}		
-	}
-	
-	private static final SynapseBranch[] append(SynapseBranch[] arr, SynapseBranch[] sb) {
-	    int len = sb.length;
-	    int arrLen = arr.length;
-	    SynapseBranch[] arrNew = new SynapseBranch[arrLen + len];
-	    System.arraycopy(arr, 0, arrNew, 0, arrLen);
-	    System.arraycopy(sb, 0, arrNew, arrLen, len);
-	    return arrNew;
+
+	public synchronized void addIncomingBranch(int branchIndex, SynapseBranchStateSoA branchStateBuff) {
+		addSynapseBranches(new int[]{branchIndex}, true, branchStateBuff);
 	}
 
-	public AbstractNeuron(NeuronsStateBuff neuronStateBuff, Abstract3DLayer layer, int index, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position ) {
-		this.neuronStateBuff = neuronStateBuff;
+	public synchronized void addOutgoingBranch(int branchIndex, SynapseBranchStateSoA branchStateBuff) {
+		addSynapseBranches(new int[]{branchIndex}, false, branchStateBuff);
+	}
+
+	private void addSynapseBranches(int[] branchIndices,
+			boolean addToIncoming,
+			SynapseBranchStateSoA branchStateBuff) {
+
+		int synCount = 0;
+		for (int b : branchIndices) {
+			synCount += branchStateBuff.synapseCount[b];
+		}
+
+		this.allBranchIndices = append(this.allBranchIndices, branchIndices);
+		if (addToIncoming) {
+			this.incomingBranchIndices = append(this.incomingBranchIndices, branchIndices);
+			this.inSynapsesCount += synCount;
+		} else {
+			this.outgoingBranchIndices = append(this.outgoingBranchIndices, branchIndices);
+			this.outSynapsesCount += synCount;
+		}
+	}
+
+	private static int[] append(int[] arr, int[] extra) {
+		int arrLen = arr.length;
+		int len = extra.length;
+		int[] out = new int[arrLen + len];
+		System.arraycopy(arr, 0, out, 0, arrLen);
+		System.arraycopy(extra, 0, out, arrLen, len);
+		return out;
+	}
+
+	public AbstractNeuron(Abstract3DLayer layer, int index, int hemisphereId, boolean hasIncoming, boolean hasOutgoing, boolean inhibitor, Point3f position ) {
+		this.index = index;
+		this.hemisphereId = hemisphereId;
 		this.inhibitor = inhibitor;
 		this.spikeSign = (inhibitor)?-1:1;
 		this.position = position;
-		this.index = index;
 		this.layer = layer;
 	}
 
 	public final void fire( long now ) throws InterruptedException {
-		this.neuronStateBuff.pendingFire[index] = true;
-		// Debug log
-	    // if (layer.getLayerId() == 0) { // L0
-	    //   logger.info("-->L0 neuron fired: {} at {}",index, now);
-	    //}
-	    
+		getHemisphereCtx().neuronState.pendingFire[index] = true;
 		if (layer.getConfig().COMBINED_LATERAL_INHIBITION != null) {
-		    layer.getConfig().COMBINED_LATERAL_INHIBITION.updateInhibition(now, this, /*not used*/-0.0f);
+			layer.getConfig().COMBINED_LATERAL_INHIBITION.updateInhibition(now, this, /*not used*/-0.0f);
 		}
 	}
 
 	public void delayedFire( long now ) {
-		
-		
 		// Debug log
 		//	if (layer!=null && layer.getLayerId() == 0) {
 		//	    logger.info("L0 {} fired, outgoing synapses count = {}", getIndex(), getOutSynapsesCount());
 		//	}
+		/*
 		for (SynapseBranch sb : incomingBranches) {
 			for (Synapse s : sb.synapses) {
 				if (s.wasFrequentlyActiveInLastWindow()) {
 					s.onPostSpike(now, now);
 				}
 			}
-		}	
+		}*/
+		
+		SynapseBranchStateSoA branchState = getHemisphereCtx().branchState;
+		NeuronStateSoA neuronState = getHemisphereCtx().neuronState;
+		
+		for (int b : incomingBranchIndices) {
+		    int start = branchState.synapseStart[b];
+		    int count = branchState.synapseCount[b];
+		    for (int i = start; i < start + count; i++) {
+		        int synId = synapseTopology.synapseIndex[i];
+		        if (synapseState.wasFrequentlyActiveInLastWindow[synId]) {
+		            synapseLogic.onPostSpike(synId, now);
+		        }
+		    }
+		}
+		
 		for (SynapseBranch sb : outgoingBranches) {
 			for (Synapse s : sb.synapses) {
 				long arrival = now + s.getTraversalTimeNanos(now);
@@ -126,12 +129,12 @@ public abstract class AbstractNeuron implements IProcessable {
 		}		
 		// Move out, otherwise firing rate would be affected by synapses count and not just by 
 		// real activity
-		this.neuronStateBuff.pendingFire[index] = false;
-		this.neuronStateBuff.firingRate[index] += 1.0f;
-		this.neuronStateBuff.lastRateUpdate[index] = now;
+		neuronState.pendingFire[index] = false;
+		neuronState.firingRate[index] += 1.0f;
+		neuronState.lastRateUpdate[index] = now;
 		EventBus.fire(EventType.NEURON_FIRED, now, this, null);
 	}
-	
+
 	public int getIndex() {
 		return index;
 	}
@@ -155,29 +158,29 @@ public abstract class AbstractNeuron implements IProcessable {
 	public Abstract3DLayer getLayer() {
 		return layer;
 	}
-	
+
 	public boolean isActive() {
-		return this.neuronStateBuff.isActive[index];
+		return getHemisphereCtx().neuronState.isActive[index];
 	}
 
 	public boolean isPendingFire() {
-		return this.neuronStateBuff.pendingFire[index];
+		return getHemisphereCtx().neuronState.pendingFire[index];
 	}
 
 	public void setActive(boolean isActive) {
-		this.neuronStateBuff.isActive[index] = isActive;
+		getHemisphereCtx().neuronState.isActive[index] = isActive;
 	}
 
-	public final SynapseBranch[] getAllSynapseBranches() {
-		return synapsesBranches;
+	public final int[] getAllSynapseBranchIndices() {
+	    return allBranchIndices;
 	}
 
-	public final SynapseBranch[] getInSynapseBranches() {
-		return incomingBranches;
+	public final int[] getInSynapseBranchIndices() {
+	    return incomingBranchIndices;
 	}
 
-	public final SynapseBranch[] getOutSynapseBranches() {
-		return outgoingBranches;
+	public final int[] getOutSynapseBranchIndices() {
+	    return outgoingBranchIndices;
 	}
 
 	@Override
@@ -208,5 +211,9 @@ public abstract class AbstractNeuron implements IProcessable {
 
 	public int getOutSynapsesCount() {
 		return outSynapsesCount;
+	}
+	
+	public HemisphereContext getHemisphereCtx() {
+		return HemisphereContext.get(hemisphereId);
 	}
 }

@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 import com.cortex.base.layers.MultiLayersConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.brain.Brain;
-import com.cortex.brain.Emisphere;
+import com.cortex.brain.Hemisphere;
 import com.cortex.externals.sensors.retina.Retina;
 import com.cortex.externals.sensors.retina.RetinaConfig;
 import com.cortex.externals.sensors.retina.RetinaNeuronConfig;
@@ -82,7 +82,7 @@ public class Boostrap {
 		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
 		
 		MultiLayersConfig layersCfg = new MultiLayersConfig();	
-		Emisphere<?> emisphere =  Emisphere.newBuilder()
+		Hemisphere<?> emisphere =  Hemisphere.newBuilder(0)
 			.addLayerConfig(layersCfg.l0_config((int)(totalNeurons*0.15f), 5*connScale,  7*connScale, 0.60f))
 			.addLayerConfig(layersCfg.l1_config((int)(totalNeurons*0.20f), 8*connScale, 12*connScale, 0.50f))
 			.addLayerConfig(layersCfg.l2_config((int)(totalNeurons*0.25f), 5*connScale,  8*connScale, 0.40f))

@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.cortex.base.externals.AbstractExternalNeuron;
+import com.cortex.base.soa.NeuronStateSoA;
 import com.cortex.base.utils.Maths;
 
 public class RetinaNeuron extends AbstractExternalNeuron {
@@ -20,7 +21,7 @@ public class RetinaNeuron extends AbstractExternalNeuron {
 	private float firingRate;
 	private long lastUpdate;
 	
-	public RetinaNeuron( NeuronsStateBuff neuronsStates, int index, RetinaNeuronConfig retinaNeuronConfig) {
+	public RetinaNeuron( NeuronStateSoA neuronsStates, int index, RetinaNeuronConfig retinaNeuronConfig) {
 		super(neuronsStates, index, false, true);
 		this.retinaNeuronConfig = retinaNeuronConfig;
 	}

@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.AbstractNeuron.NeuronsStateBuff;
 import com.cortex.base.SynapsesBuilder;
 import com.cortex.base.externals.IActuator;
 import com.cortex.base.externals.IClassifier;
@@ -23,9 +22,10 @@ import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.base.layers.SphericalLayer;
+import com.cortex.base.soa.NeuronStateSoA;
 import com.cortex.base.utils.Point3f;
 
-public class Emisphere<L extends Abstract3DLayer> {
+public class Hemisphere<L extends Abstract3DLayer> {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 	
@@ -36,8 +36,9 @@ public class Emisphere<L extends Abstract3DLayer> {
 	
 	// Single Neurons storage
 	private volatile CorticalNeuron[] neurons;
-	private volatile NeuronsStateBuff neuronsStatesBuff;
+	private volatile NeuronStateSoA neuronsStatesBuff;
 		
+	private final int hemisphereId;
 	private int totalNeurons = 0;
 	private CorticalNeuronFactory neuronFactory;
 	private MultiLayersConnConfig multiLayersConnConfig;
@@ -60,8 +61,8 @@ public class Emisphere<L extends Abstract3DLayer> {
 				Point3f position
 				) {
 			CorticalNeuron n = new CorticalNeuron(
-					neuronsStatesBuff,
 					counter, 
+					hemisphereId,
 					layer, 
 					configs.get(layer.getLayerId()).HAS_INCOMING, 
 					configs.get(layer.getLayerId()).HAS_OUTGOING, 
@@ -79,7 +80,8 @@ public class Emisphere<L extends Abstract3DLayer> {
 		}
 	}
 	
-	public Emisphere() {
+	public Hemisphere( int hemisphereId ) {
+		this.hemisphereId = hemisphereId;
 		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
 		this.sensors = new CopyOnWriteArrayList<>();
 		this.actuators = new CopyOnWriteArrayList<>();
@@ -87,10 +89,10 @@ public class Emisphere<L extends Abstract3DLayer> {
 		this.supervisors = new CopyOnWriteArrayList<>();
 	}
 	
-	public Emisphere<L> build() {
+	public Hemisphere<L> build() {
 		// Allocate neurons space
 		this.neurons = new CorticalNeuron[totalNeurons];
-		this.neuronsStatesBuff = new NeuronsStateBuff(totalNeurons);
+		this.neuronsStatesBuff = new NeuronStateSoA(totalNeurons);
 				    
 		this.neuronFactory = new CorticalNeuronFactory( this.layersConfigs );
 		// Generate and populate layers
@@ -224,16 +226,16 @@ public class Emisphere<L extends Abstract3DLayer> {
 		return layers.get(index);
 	}
 	
-	public static Builder newBuilder() {
-		return new Builder();
+	public static Builder newBuilder( int hemisphereId ) {
+		return new Builder( hemisphereId );
 	}   
 
 	public static class Builder<L extends Abstract3DLayer> {
 		final Logger logger = LogManager.getLogger(this.getClass());
-		private final Emisphere<L> emisphere;
+		private final Hemisphere<L> emisphere;
 
-		public Builder() {
-			this.emisphere = new Emisphere<>();
+		public Builder( int hemisphereId ) {
+			this.emisphere = new Hemisphere<>( hemisphereId );
 		}
 
 		public Builder<L> addLayerConfig(LayerConfig cfg) {
@@ -279,7 +281,7 @@ public class Emisphere<L extends Abstract3DLayer> {
 
 		}
 
-		public Emisphere<L> build() {
+		public Hemisphere<L> build() {
 			validate();
 			return emisphere.build();
 		}

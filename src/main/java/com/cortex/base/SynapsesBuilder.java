@@ -19,7 +19,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.Commons.SYNAPSE_SPEED;
-import com.cortex.base.Synapse.SynapseStateBuff;
 import com.cortex.base.SynapseBranch.BranchType;
 import com.cortex.base.SynapseBranch.Direction;
 import com.cortex.base.externals.ExternalModule;
@@ -28,6 +27,7 @@ import com.cortex.base.layers.Functions;
 import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.Neighbor;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
+import com.cortex.base.soa.SynapseStateSoA;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
@@ -37,14 +37,14 @@ public final class SynapsesBuilder {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 
-	private final SynapseStateBuff synapseStateBuff;
+	private final SynapseStateSoA synapseStateBuff;
 	private final AbstractNeuron[] neurons;
 	private final NeuronSynapses[] neuronSynapses;
 	private final Map<ExternalModule,NeuronSynapses[]> extNeuronSynapses;
 	
 	public SynapsesBuilder( AbstractNeuron[] neurons ) {
 		this.neurons = neurons;
-		this.synapseStateBuff = new SynapseStateBuff();
+		this.synapseStateBuff = new SynapseStateSoA();
 		this.neuronSynapses = new NeuronSynapses[neurons.length];
 		this.extNeuronSynapses = new HashMap<>();
 	}

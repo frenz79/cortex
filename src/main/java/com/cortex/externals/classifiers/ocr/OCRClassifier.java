@@ -1,8 +1,8 @@
 package com.cortex.externals.classifiers.ocr;
 
 import com.cortex.base.AbstractNeuron;
-import com.cortex.base.AbstractNeuron.NeuronsStateBuff;
 import com.cortex.base.externals.IClassifier;
+import com.cortex.base.soa.NeuronStateSoA;
 import com.cortex.base.utils.Point3f;
 
 public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
@@ -15,13 +15,13 @@ public class OCRClassifier implements IClassifier<OCRCharacterNeuron> {
     private float lastConfidence = 0f;
     private long lastClassificationTime = 0L;
 	private OCRCharacterNeuron result;
-	private final NeuronsStateBuff neuronsStates;
+	private final NeuronStateSoA neuronsStates;
 	
 	public OCRClassifier() {
 		this.neurons = new OCRCharacterNeuron[1][26];
 		int i=0;
 		int counter = 0;
-		this.neuronsStates = new NeuronsStateBuff(26 );
+		this.neuronsStates = new NeuronStateSoA(26 );
 		
 		for (char c = 'A'; c <= 'Z'; c++) {
 			this.neurons[0][i++] = new OCRCharacterNeuron(this.neuronsStates, counter++, c);
