@@ -25,7 +25,7 @@ public final class SpikeRingBufferSoA {
         this.headIndex = 0;
     }
     
-    public void addSpike(long arrival, int synId, float amp, byte f, long now) {
+    public void addSpike(long arrival, int synId, float amp, boolean inhibitory, long now) {
         long delta = arrival - now;
         if (delta < 0) delta = 0;
 
@@ -34,7 +34,7 @@ public final class SpikeRingBufferSoA {
         int bucketIndex = (headIndex + bucketOffset) % ringSize;
 
         // Thread-safe append
-        buckets[bucketIndex].addSpike(arrival, synId, amp, f);
+        buckets[bucketIndex].addSpike(arrival, synId, amp, inhibitory);
     }
     
     public int pollAndProcess(long now, SynapseSoA syn, SynapseBranchSoA branch) {

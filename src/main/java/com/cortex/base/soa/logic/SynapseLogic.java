@@ -95,8 +95,8 @@ public final class SynapseLogic {
         return synapseSoA.activityCounter[synId] > ACTIVITY_THRESHOLD;
     }
 
-    public float getWeight(int synId, PlasticitySoA plasticity) {
-        return plasticity.weight[synId];
+    public float getWeight(int synId) {
+        return plasticitySoA.weight[synId];
     }
 
     public boolean isEligible(long now, int synId, long window ) {

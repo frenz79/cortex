@@ -163,11 +163,11 @@ public abstract class AbstractNeuron implements IProcessable {
 	}
 
 	public boolean isActive() {
-		return getHemisphereCtx().neuronSoA.isActive[index];
+		return getHemisphereCtx().neuronSoA.isActive(index);
 	}
 
 	public boolean isPendingFire() {
-		return getHemisphereCtx().neuronSoA.pendingFire[index];
+		return getHemisphereCtx().neuronSoA.pendingFire(index);
 	}
 
 	public void setActive(boolean isActive) {

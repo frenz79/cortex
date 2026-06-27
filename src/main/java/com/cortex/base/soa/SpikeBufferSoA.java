@@ -20,7 +20,8 @@ public final class SpikeBufferSoA {
     // Spike amplitude (float, not double)
     public float[] amplitude;
 
-    // Optional flags (plasticity, type, etc.)
+    // Bitmask
+    private static final byte INHIBITORY_MASK  = 0b00000001;
     public byte[] flags;
 
     private static VarHandle sizeHandle;
@@ -44,11 +45,23 @@ public final class SpikeBufferSoA {
     	return (int) sizeHandle.getAndAdd(this, 1);
     }
     
-    public void addSpike(long arrival, int synId, float amp, byte f) {
+    public void addSpike(long arrival, int synId, float amp, boolean inhibitory) {
         int idx = addSpikeIndex();
         arrivalTimeNanos[idx] = arrival;
         synapseId[idx]        = synId;
         amplitude[idx]        = amp;
-        flags[idx]            = f;
+        flags[idx] = inhibitory ? INHIBITORY_MASK : 0;
+    }
+    
+    public void setInhibitory(int idx) {
+        flags[idx] |= INHIBITORY_MASK;
+    }
+
+    public void clearInhibitory(int idx) {
+        flags[idx] &= ~INHIBITORY_MASK;
+    }
+
+    public boolean isInhibitory(int idx) {
+        return (flags[idx] & INHIBITORY_MASK) != 0;
     }
 }

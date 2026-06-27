@@ -9,7 +9,7 @@ public final class NeuronSoA {
     public float[] posZ;
     
 	public float[] firingRate;
-	public long[] lastRateUpdate;
+	public long[]  lastRateUpdate;
 	
 	// bits 0..4  → layerId (0–31)
 	// bit  5     → isActive

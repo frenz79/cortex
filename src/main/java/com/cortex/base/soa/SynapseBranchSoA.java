@@ -59,6 +59,12 @@ public final class SynapseBranchSoA {
         return (topoFlags[bId] & 0b00000001) != 0;
     }
 
+    public void setActive(int bId, boolean active) {
+    	if (active)
+    		setActive(bId);
+    	else
+    		clearActive(bId);
+	}
 
     // --- BranchType (bits 1..3) ---
     // bits 1..3 = branchType
