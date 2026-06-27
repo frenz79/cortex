@@ -17,7 +17,7 @@ import com.cortex.base.externals.ISensor;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
-import com.cortex.base.soa.NeuronStateSoA;
+import com.cortex.base.soa.NeuronSoA;
 import com.cortex.base.utils.Maths;
 
 public class Retina extends ISensor {
@@ -40,13 +40,13 @@ public class Retina extends ISensor {
 
 	private volatile long lastSaccadeTime = System.nanoTime();
 
-	private final NeuronStateSoA neuronsStates;
+	private final NeuronSoA neuronsStates;
 	
 	public Retina( RetinaConfig retinaConfig, RetinaNeuronConfig neuronsConfig ) {
 		this.retinaConfig = retinaConfig;
 		this.retinaNeurons = new RetinaNeuron[retinaConfig.RETINA_W][retinaConfig.RETINA_H];
 		int counter = 0;
-		this.neuronsStates = new NeuronStateSoA(retinaConfig.RETINA_W*retinaConfig.RETINA_H);
+		this.neuronsStates = new NeuronSoA(retinaConfig.RETINA_W*retinaConfig.RETINA_H);
 		
 		for (int x = 0; x < retinaConfig.RETINA_W; x++) {
 			for (int y = 0; y < retinaConfig.RETINA_H; y++) {

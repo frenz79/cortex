@@ -27,7 +27,7 @@ import com.cortex.base.layers.Functions;
 import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.Neighbor;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
-import com.cortex.base.soa.SynapseStateSoA;
+import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
@@ -37,14 +37,14 @@ public final class SynapsesBuilder {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 
-	private final SynapseStateSoA synapseStateBuff;
+	private final SynapseSoA synapseStateBuff;
 	private final AbstractNeuron[] neurons;
 	private final NeuronSynapses[] neuronSynapses;
 	private final Map<ExternalModule,NeuronSynapses[]> extNeuronSynapses;
 	
 	public SynapsesBuilder( AbstractNeuron[] neurons ) {
 		this.neurons = neurons;
-		this.synapseStateBuff = new SynapseStateSoA();
+		this.synapseStateBuff = new SynapseSoA();
 		this.neuronSynapses = new NeuronSynapses[neurons.length];
 		this.extNeuronSynapses = new HashMap<>();
 	}

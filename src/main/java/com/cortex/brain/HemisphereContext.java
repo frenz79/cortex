@@ -1,24 +1,27 @@
 package com.cortex.brain;
 
-import com.cortex.base.soa.NeuronStateSoA;
-import com.cortex.base.soa.SynapseBranchStateSoA;
-import com.cortex.base.soa.SynapseStateSoA;
+import com.cortex.base.soa.NeuronSoA;
+import com.cortex.base.soa.PlasticitySoA;
+import com.cortex.base.soa.SynapseBranchSoA;
+import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.soa.SynapseTopologySoA;
 
 public class HemisphereContext {
-
+	public static final int MAX_HEMISPHERES = 8;
 	private static final HemisphereContext[] hemispheres = new HemisphereContext[MAX_HEMISPHERES];
 
-	public final NeuronStateSoA neuronState;
-	public final SynapseStateSoA synState;
-	public final SynapseBranchStateSoA branchState;
-	public final SynapseTopologySoA synTopology;
-
-	public HemisphereContext(int neurons, int synapses, int branches) {
-		neuronState = new NeuronStateSoA(neurons);
-		synState = new SynapseStateSoA(synapses);
-		branchState = new SynapseBranchStateSoA(branches);
-		synTopology = new SynapseTopologySoA(synapses);
+	public final NeuronSoA neuronSoA;
+	public final SynapseSoA synapseSoA;
+	public final SynapseBranchSoA synapseBranchSoA;
+	public final SynapseTopologySoA synapseTopologySoA;
+	public final PlasticitySoA plasticitySoA;
+	
+	public HemisphereContext(int neuronsCount, int synapsesCount, int branchesCount) {
+		neuronSoA = new NeuronSoA(neuronsCount);
+		synapseSoA = new SynapseSoA(synapsesCount);
+		synapseBranchSoA = new SynapseBranchSoA(branchesCount);
+		synapseTopologySoA = new SynapseTopologySoA(branchesCount, synapsesCount);
+		plasticitySoA = new PlasticitySoA();
 	}
 
 	public static HemisphereContext get(int hemisphereId) {

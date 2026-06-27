@@ -22,7 +22,7 @@ import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.base.layers.SphericalLayer;
-import com.cortex.base.soa.NeuronStateSoA;
+import com.cortex.base.soa.NeuronSoA;
 import com.cortex.base.utils.Point3f;
 
 public class Hemisphere<L extends Abstract3DLayer> {
@@ -36,7 +36,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	
 	// Single Neurons storage
 	private volatile CorticalNeuron[] neurons;
-	private volatile NeuronStateSoA neuronsStatesBuff;
+	private volatile NeuronSoA neuronsStatesBuff;
 		
 	private final int hemisphereId;
 	private int totalNeurons = 0;
@@ -92,7 +92,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	public Hemisphere<L> build() {
 		// Allocate neurons space
 		this.neurons = new CorticalNeuron[totalNeurons];
-		this.neuronsStatesBuff = new NeuronStateSoA(totalNeurons);
+		this.neuronsStatesBuff = new NeuronSoA(totalNeurons);
 				    
 		this.neuronFactory = new CorticalNeuronFactory( this.layersConfigs );
 		// Generate and populate layers

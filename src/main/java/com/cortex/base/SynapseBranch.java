@@ -1,7 +1,7 @@
 package com.cortex.base;
 
-import com.cortex.base.soa.SynapseBranchStateSoA;
-import com.cortex.base.soa.SynapseStateSoA;
+import com.cortex.base.soa.SynapseBranchSoA;
+import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.utils.Maths;
 import com.cortex.brain.CorticalNeuronsConfig;
 import com.cortex.brain.HemisphereContext;
@@ -24,7 +24,7 @@ public final class SynapseBranch {
 	public SynapseBranch(int index, int hemisphereId, int synapseStart, int synapseCount, BranchType type, Direction direction) {
 		this.index = index;
 		this.hemisphereId = hemisphereId;
-		SynapseBranchStateSoA branchStates = HemisphereContext.get(hemisphereId).branchState;
+		SynapseBranchSoA branchStates = HemisphereContext.get(hemisphereId).synapseBranchSoA;
 		branchStates.synapseStart[index] = synapseStart;
 		branchStates.synapseCount[index] = synapseCount;
 		branchStates.type[index] = type;
@@ -32,15 +32,15 @@ public final class SynapseBranch {
 	}
 
 	public boolean isActive() {
-		return HemisphereContext.get(hemisphereId).branchState.active[index];
+		return HemisphereContext.get(hemisphereId).synapseBranchSoA.active[index];
 	}
 
 	public int size() {
-		return HemisphereContext.get(hemisphereId).branchState.synapseCount[index];
+		return HemisphereContext.get(hemisphereId).synapseBranchSoA.synapseCount[index];
 	}
 
 	public void update(long now, CorticalNeuronsConfig config) {
-		SynapseBranchStateSoA states = HemisphereContext.get(hemisphereId).branchState;
+		SynapseBranchSoA states = HemisphereContext.get(hemisphereId).synapseBranchSoA;
 		
 		long dtBranch = now - states.lastProcessTime[index];
 		if ( dtBranch > 5_000_000l ) {
@@ -70,7 +70,7 @@ public final class SynapseBranch {
 
 	@Override
 	public String toString() {
-		SynapseBranchStateSoA states = HemisphereContext.get(hemisphereId).branchState;
+		SynapseBranchSoA states = HemisphereContext.get(hemisphereId).synapseBranchSoA;
 		
 		StringBuilder builder = new StringBuilder();
 		builder.append("SynapseBranch [direction=");

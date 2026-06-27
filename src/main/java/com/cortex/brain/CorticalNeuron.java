@@ -11,7 +11,7 @@ import com.cortex.base.SynapseBranch;
 import com.cortex.base.SynapseBranch.BranchType;
 import com.cortex.base.dendritic_competition.IDendriticCompetitionStrategy;
 import com.cortex.base.layers.Abstract3DLayer;
-import com.cortex.base.soa.NeuronStateSoA;
+import com.cortex.base.soa.NeuronSoA;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
 
@@ -128,7 +128,7 @@ public class CorticalNeuron extends AbstractNeuron {
 
 	// continuous/exponential decay based on elapsed time 
 	public float getRecentFiringRate(long now) {
-		NeuronStateSoA neuronStateSoA = getHemisphereCtx().neuronState;
+		NeuronSoA neuronStateSoA = getHemisphereCtx().neuronSoA;
 		
 		int index = getIndex();
 		long dt = now - neuronStateSoA.lastRateUpdate[index];

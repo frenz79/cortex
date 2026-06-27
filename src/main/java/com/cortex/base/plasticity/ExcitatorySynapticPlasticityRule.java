@@ -14,7 +14,7 @@ public final class ExcitatorySynapticPlasticityRule implements IPlasticityRule {
 	private long lastHomeostasisUpdateNanos = -1l;
 	private long lastPreSpike = -1l;
 	private long lastPostSpike = -1l;
-	private boolean enabled = true;	// To disble plasticity
+	private boolean enabled = true;	// To disable plasticity
 	private final float k;
 	
 	private final ExcitatorySynapticPlasticityConfig config;

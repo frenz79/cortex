@@ -11,7 +11,7 @@ import com.cortex.base.plasticity.IPlasticSynapse;
 import com.cortex.base.plasticity.IPlasticityRule;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityRule;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
-import com.cortex.base.soa.SynapseStateSoA;
+import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.utils.Maths;
 import com.cortex.brain.CorticalNeuron;
 import com.cortex.brain.HemisphereContext;
@@ -57,7 +57,7 @@ public final class Synapse implements IPlasticSynapse {
 	}
 	
 	public void init() {
-		HemisphereContext.get(hemisphereId).synState.lastDecayTime[index] = System.nanoTime();
+		HemisphereContext.get(hemisphereId).synapseSoA.lastDecayTime[index] = System.nanoTime();
 	}
 	
 	public static void destroy(Synapse s) {
@@ -96,8 +96,8 @@ public final class Synapse implements IPlasticSynapse {
 //		    logger.info("--> Spike L0→L1 scheduled: pre={} post={}",pre.getIndex(), post.getIndex());
 //		}
 		
-		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
-		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
+		int[] wIdx = HemisphereContext.get(hemisphereId).synapseSoA.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synapseSoA.readIndex;
 		
 		// fifo...
 		if (((wIdx[index] + 1) & (BUFFER_SIZE - 1)) == (rIdx[index] & (BUFFER_SIZE - 1))) {
@@ -115,11 +115,11 @@ public final class Synapse implements IPlasticSynapse {
 		post.setActive(true);
 	}
 	
-	public void accumulateSpikes(long now, SynapseBranch synapseBranch, CorticalNeuron corticalNeuron) {
+	public void accumulateSpikes(long now) {
 		post.setActive(false);
-		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
-		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
-		int branchIdx = HemisphereContext.get(hemisphereId).synState.branchIndex[index];
+		int[] wIdx = HemisphereContext.get(hemisphereId).synapseSoA.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synapseSoA.readIndex;
+		int branchIdx = HemisphereContext.get(hemisphereId).synapseSoA.branchIndex[index];
 		 
 		while (rIdx[index] != wIdx[index]) {
 	    	Spike s = buffer[rIdx[index] & (BUFFER_SIZE - 1)];
@@ -131,7 +131,7 @@ public final class Synapse implements IPlasticSynapse {
 				post.setActive(true);
 				break;
 			}
-			HemisphereContext.get(hemisphereId).branchState.branchPotential[branchIdx] += s.signedAmplitude();
+			HemisphereContext.get(hemisphereId).synapseBranchSoA.branchPotential[branchIdx] += s.signedAmplitude();
 	        onPreSpike(now);
 	        post.setActive(true);
 	        rIdx[index]++;
@@ -158,14 +158,14 @@ public final class Synapse implements IPlasticSynapse {
 	}
 */
 	public boolean isEmpty() {
-		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
-		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
+		int[] wIdx = HemisphereContext.get(hemisphereId).synapseSoA.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synapseSoA.readIndex;
 		return wIdx[index] == rIdx[index];
 	}
 	
 	public boolean hasFutureSpikes(long now) {
-		int[] wIdx = HemisphereContext.get(hemisphereId).synState.writeIndex;
-		int[] rIdx = HemisphereContext.get(hemisphereId).synState.readIndex;
+		int[] wIdx = HemisphereContext.get(hemisphereId).synapseSoA.writeIndex;
+		int[] rIdx = HemisphereContext.get(hemisphereId).synapseSoA.readIndex;
 
 	    if (wIdx[index] == rIdx[index]) return false;
 	    Spike s = buffer[rIdx[index] & (BUFFER_SIZE - 1)];
@@ -173,7 +173,7 @@ public final class Synapse implements IPlasticSynapse {
 	}
 
 	public final long getTraversalTimeNanos(long now) {
-		SynapseStateSoA stateBuff = HemisphereContext.get(hemisphereId).synState;
+		SynapseSoA stateBuff = HemisphereContext.get(hemisphereId).synapseSoA;
 		
 		if (now - stateBuff.lastDecayTime[index] > DECAY_INTERVAL_NANOS) {
 			stateBuff.activityCounter[index] = (int)(stateBuff.activityCounter[index] * 0.5f);
@@ -189,7 +189,7 @@ public final class Synapse implements IPlasticSynapse {
 	// IPlasticSynapse
 	@Override
 	public final void onPreSpike(long now) {
-		HemisphereContext.get(hemisphereId).synState.activityCounter[index]++;
+		HemisphereContext.get(hemisphereId).synapseSoA.activityCounter[index]++;
 		if (this.plasticityRule.onPreSpike(now)) {
 			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.preSpikeData());
 		}
@@ -197,7 +197,7 @@ public final class Synapse implements IPlasticSynapse {
 
 	@Override
 	public final void onPostSpike(long postSpikeTime, long now) {
-		HemisphereContext.get(hemisphereId).synState.activityCounter[index]++;
+		HemisphereContext.get(hemisphereId).synapseSoA.activityCounter[index]++;
 		if ( this.plasticityRule.onPostSpike(this, postSpikeTime, now) ) {
 			EventBus.fire(EventType.SYNAPSE_SPIKED, now, this, SynapseSpikedData.postSpikeData());
 		}
@@ -215,7 +215,7 @@ public final class Synapse implements IPlasticSynapse {
 	@Override
 	public void applyReward(float deltaW, long now, float reward) {
 		this.plasticityRule.applyReward(deltaW, now, reward);
-		float[] myelinFactors = HemisphereContext.get(hemisphereId).synState.myelinFactor;
+		float[] myelinFactors = HemisphereContext.get(hemisphereId).synapseSoA.myelinFactor;
 		
 		if (reward > 0.0f && wasFrequentlyActiveInLastWindow() && plasticityRule.hadSignificantPairing()) {
 			myelinFactors[index] += ETA_MYELIN * reward;
@@ -224,7 +224,7 @@ public final class Synapse implements IPlasticSynapse {
 	}
 
 	public final boolean wasFrequentlyActiveInLastWindow() {
-		return HemisphereContext.get(hemisphereId).synState.activityCounter[index] > ACTIVITY_THRESHOLD;
+		return HemisphereContext.get(hemisphereId).synapseSoA.activityCounter[index] > ACTIVITY_THRESHOLD;
 	}
 
 	@Override
@@ -249,7 +249,7 @@ public final class Synapse implements IPlasticSynapse {
 	}
 	
 	public void setBranch(int branchIndex) {
-		HemisphereContext.get(hemisphereId).synState.branchIndex[index] = branchIndex;
+		HemisphereContext.get(hemisphereId).synapseSoA.branchIndex[index] = branchIndex;
 	}
 
 	@Override
