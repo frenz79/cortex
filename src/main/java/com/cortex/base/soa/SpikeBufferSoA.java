@@ -12,28 +12,22 @@ public final class SpikeBufferSoA {
     long p7, p8, p9, p10, p11, p12, p13;
     
     // When the spike will arrive at the target synapse
-    public long[] arrivalTimeNanos;
+    public final long[] arrivalTimeNanos;
 
     // Which synapse this spike belongs to
-    public int[] synapseId;
+    public final int[] synapseId;
 
     // Spike amplitude (float, not double)
-    public float[] amplitude;
+    public final float[] amplitude;
 
     // Bitmask
     private static final byte INHIBITORY_MASK  = 0b00000001;
-    public byte[] flags;
+    public final byte[] flags;
 
-    private static VarHandle sizeHandle;
-    static {
-    	try {
-			sizeHandle = MethodHandles.lookup().findVarHandle(SpikeBufferSoA.class, "size", int.class);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-    }    
+    private final VarHandle sizeHandle;
     
-    public SpikeBufferSoA(int maxSpikes) {
+    public SpikeBufferSoA(int maxSpikes) throws NoSuchFieldException, IllegalAccessException {
+    	this.sizeHandle = MethodHandles.lookup().findVarHandle(SpikeBufferSoA.class, "size", int.class);
         arrivalTimeNanos = new long[maxSpikes];
         synapseId        = new int[maxSpikes];
         amplitude        = new float[maxSpikes];
@@ -41,7 +35,7 @@ public final class SpikeBufferSoA {
         size             = 0;
     }
 
-    public int addSpikeIndex() {
+    private int addSpikeIndex() {
     	return (int) sizeHandle.getAndAdd(this, 1);
     }
     

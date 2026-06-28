@@ -15,7 +15,7 @@ import com.cortex.brain.HemisphereContext;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 
-public abstract class AbstractNeuron implements IProcessable {
+public abstract class AbstractNeuron  {
 
 	static final Logger logger = LogManager.getLogger(AbstractNeuron.class);
 

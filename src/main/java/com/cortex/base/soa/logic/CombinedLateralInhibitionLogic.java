@@ -1,5 +1,7 @@
 package com.cortex.base.soa.logic;
 
+import java.util.Objects;
+
 import com.cortex.base.soa.LateralInhibitionLayerSoA;
 import com.cortex.base.soa.NeuronSoA;
 import com.cortex.base.soa.SpatialHashSoA;
@@ -19,6 +21,11 @@ public final class CombinedLateralInhibitionLogic {
         LateralInhibitionLayerSoA lateralInhibLayerSoA,
         SpatialHashSoA spatialHashSoA
     ) {
+        Objects.nonNull(neuronSoA);
+        Objects.nonNull(synBranchSoA);
+        Objects.nonNull(lateralInhibLayerSoA);
+        Objects.nonNull(spatialHashSoA);
+        
         this.neuronSoA = neuronSoA;
         this.synBranchSoA = synBranchSoA;
         this.lateralInhibLayerSoA = lateralInhibLayerSoA;

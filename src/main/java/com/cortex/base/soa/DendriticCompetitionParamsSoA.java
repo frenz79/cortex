@@ -3,16 +3,16 @@ package com.cortex.base.soa;
 public final class DendriticCompetitionParamsSoA {
 
     // WinnerTakeMost
-    public float[] wtm_inhibitionLevel;
-    public long[]  wtm_tauNanos;
+    public final float[] wtm_inhibitionLevel;
+    public final long[]  wtm_tauNanos;
 
     // Continuous
-    public long[]  cont_tauNanos;
-    public float[] cont_inhibitionMax;
+    public final long[]  cont_tauNanos;
+    public final float[] cont_inhibitionMax;
 
     // Normalized
-    public float[] norm_strength;
-    public float[] norm_stability;
+    public final float[] norm_strength;
+    public final float[] norm_stability;
 
     public DendriticCompetitionParamsSoA(int totalBranchTypes) {
         wtm_inhibitionLevel = new float[totalBranchTypes];

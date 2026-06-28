@@ -3,36 +3,38 @@ package com.cortex.base.soa;
 public final class SynapseSoA {
 
     // --- Topology ---
-    public int[] preNeuronId;      // source neuron
-    public int[] postNeuronId;     // target neuron
-    public int[] postBranchId;     // target branch (dendritic)
-    public float length[];
-    public float baseSpeed[];
+    public final int[] preNeuronId;      // source neuron
+    public final int[] postNeuronId;     // target neuron
+    public final int[] postBranchId;     // target branch (dendritic)
+    public final float length[];
+    public final float baseSpeed[];
     
     // --- Dynamics ---
-    public float[] weight;         // synaptic weight
-    public float[] eligibility;    // eligibility trace
-    public long[] lastPreSpikeTime;
-    public long[] lastPostSpikeTime;
+    public final float[] weight;         // synaptic weight
+    public final float[] eligibility;    // eligibility trace
+    public final long[] lastPreSpikeTime;
+    public final long[] lastPostSpikeTime;
 
     // --- Delay / conduction ---
-    public int[] delayNanos;       // conduction delay
-    public float[] myelinFactor;   // conduction speed modifier
+    public final int[] delayNanos;       // conduction delay
+    public final float[] myelinFactor;   // conduction speed modifier
 
     // --- Activity ---
-    public int[] activityCounter;
-    public long[] lastDecayTime;
+    public final int[] activityCounter;
+    public final long[] lastDecayTime;
 
     // --- Spike buffer indices (if using per-synapse ring buffer) ---
-    public int[] writeIndex;
-    public int[] readIndex;
+    public final int[] writeIndex;
+    public final int[] readIndex;
 
     // --- Routing ---
-    public int[] branchIndex;      // redundant with postBranchId, but useful for fast lookup
+    public final int[] branchIndex;      // redundant with postBranchId, but useful for fast lookup
 
     // --- Flags ---
-    public byte[] flags;
+    public final byte[] flags;
 
+    public final int totalSynapses;
+    
     public SynapseSoA(int totalSynapses) {
         preNeuronId      = new int[totalSynapses];
         postNeuronId     = new int[totalSynapses];
@@ -56,5 +58,7 @@ public final class SynapseSoA {
 
         branchIndex      = new int[totalSynapses];
         flags            = new byte[totalSynapses];
+        
+        this.totalSynapses = totalSynapses;
     }
 }

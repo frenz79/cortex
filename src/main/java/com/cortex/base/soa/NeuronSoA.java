@@ -4,22 +4,29 @@ package com.cortex.base.soa;
 public final class NeuronSoA {
 
     // 3D position
-    public float[] posX;
-    public float[] posY;
-    public float[] posZ;
+    public final float[] posX;
+    public final float[] posY;
+    public final float[] posZ;
     
-	public float[] firingRate;
-	public long[]  lastRateUpdate;
+	public final float[] firingRate;
+	public final long[]  lastRateUpdate;
+	public final long[]  lastSpikeTime;
+	public final long[]  lastProcessTime;
 	
 	// bits 0..4  → layerId (0–31)
 	// bit  5     → isActive
 	// bit  6     → pendingFire
 	// bit  7     → inhibitory
-	public byte[] flags;
+	public final byte[] flags;
 	
 	public NeuronSoA(int totalNeurons) {
+		this.posX = new float[totalNeurons];
+		this.posY = new float[totalNeurons];
+		this.posZ = new float[totalNeurons];
 		this.firingRate = new float[totalNeurons];
 		this.lastRateUpdate = new long[totalNeurons];
+		this.lastSpikeTime = new long[totalNeurons];
+		this.lastProcessTime = new long[totalNeurons];
 		this.flags = new byte[totalNeurons];
 	}
 

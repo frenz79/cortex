@@ -2,16 +2,16 @@ package com.cortex.base.soa;
 
 public class LateralInhibitionLayerSoA {
 	 // blending between strategies
-    public float[] topoWeight;   // per layer
-    public float[] synWeight;    // per layer
+    public final float[] topoWeight;   // per layer
+    public final float[] synWeight;    // per layer
 
     // strategies strength
-    public float[] topoStrength; // per layer
-    public float[] synStrength;  // per layer
+    public final float[] topoStrength; // per layer
+    public final float[] synStrength;  // per layer
 
     // parametri aggiuntivi
-    public float[] topoRadius;       // per layer
-    public float[] synActivityScale; // per layer
+    public final float[] topoRadius;       // per layer
+    public final float[] synActivityScale; // per layer
 
     public LateralInhibitionLayerSoA(int totalLayers) {
         topoWeight = new float[totalLayers];

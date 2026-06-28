@@ -1,9 +1,10 @@
 package com.cortex.base.soa.logic;
 
+import java.util.Objects;
+
 import com.cortex.base.soa.PlasticitySoA;
 import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.utils.Maths;
-import com.cortex.brain.HemisphereContext;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 import com.cortex.globals.EventBus.SynapseSpikedData;
@@ -24,10 +25,19 @@ public final class SynapseLogic {
     private final ExcitatoryPlasticityLogic excitatoryPlasticityLogic;
     private final InhibitoryPlasticityLogic inhibitoryPlasticityLogic;
     
-    public SynapseLogic(int hemisphereId, ExcitatoryPlasticityLogic excitatoryPlasticityLogic, InhibitoryPlasticityLogic inhibitoryPlasticityLogic) {
-        HemisphereContext ctx = HemisphereContext.get(hemisphereId);
-        this.synapseSoA = ctx.synapseSoA;
-        this.plasticitySoA = ctx.plasticitySoA;
+    public SynapseLogic(
+    	int hemisphereId, 
+    	ExcitatoryPlasticityLogic excitatoryPlasticityLogic, 
+    	InhibitoryPlasticityLogic inhibitoryPlasticityLogic,
+    	
+    	SynapseSoA synapseSoA,
+    	PlasticitySoA plasticitySoA
+    ) {
+    	Objects.nonNull(synapseSoA);
+    	Objects.nonNull(plasticitySoA);
+    	
+        this.synapseSoA = synapseSoA;
+        this.plasticitySoA = plasticitySoA;
         this.excitatoryPlasticityLogic = excitatoryPlasticityLogic;
         this.inhibitoryPlasticityLogic = inhibitoryPlasticityLogic;
     }

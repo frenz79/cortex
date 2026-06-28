@@ -3,13 +3,13 @@ package com.cortex.base.soa;
 public final class SynapseTopologySoA {
 
     // For each branch: where its synapses start in the global synapse arrays
-    public int[] synapseStart;
+    public final int[] synapseStart;
 
     // For each branch: how many synapses it has
-    public int[] synapseCount;
+    public final int[] synapseCount;
 
     // Optional: contiguous index list
-    public int[] synapseIndex;
+    public final int[] synapseIndex;
 
     public SynapseTopologySoA(int totalBranches, int totalSynapses) {
         synapseStart = new int[totalBranches];

@@ -1,31 +1,21 @@
 package com.cortex.base.soa;
 
+import com.cortex.base.soa.constants.BranchTypeCode;
+import com.cortex.base.soa.constants.DirectionCode;
+
 public final class SynapseBranchSoA {
 
-	public static final class BranchTypeCode {
-	    public static final int NEAR = 0;
-	    public static final int FAR = 1;
-	    public static final int FEEDFORWARD = 2;
-	    public static final int FEEDBACK = 3;
-	    public static final int EXTERNAL = 4;
-	}
-	
-	public static final class DirectionCode {
-	    public static final int INCOMING = 0;
-	    public static final int OUTGOING = 1;
-	}
-	
-    // dynamic state
-    public float[] branchPotential;
-    public float[] branchActivity;
-    public float[] inhibition;
-    public float[] gain;
-    public long[] lastProcessTime;
-    public int[] spikeCount;
+	// dynamic state
+    public final float[] branchPotential;
+    public final float[] branchActivity;
+    public final float[] inhibition;
+    public final float[] gain;
+    public final long[] lastProcessTime;
+    public final int[] spikeCount;
 
     // topology
-    public int[] synapseStart;     // full int
-    public byte[] synapseCount;    // 0–255
+    public final int[] synapseStart;     // full int
+    public final byte[] synapseCount;    // 0–255
     
     // bit 0      → active
     // bits 1..3  → branchType (0–7)   // 5 types → fits in 3 bits

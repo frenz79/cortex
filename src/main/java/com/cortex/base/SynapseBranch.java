@@ -7,7 +7,7 @@ import com.cortex.brain.CorticalNeuronsConfig;
 import com.cortex.brain.HemisphereContext;
 
 public final class SynapseBranch {
-
+/*
 	public static enum BranchType {
 		NEAR,
 		FAR,
@@ -15,7 +15,7 @@ public final class SynapseBranch {
 		LAYER_FEEDBACK,
 		EXTERNAL // Sensors, actuators, classifiers..etc
 	}
-
+*/
 	public enum Direction { INCOMING, OUTGOING }
 
 	private final int index;

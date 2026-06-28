@@ -1,23 +1,36 @@
 package com.cortex.base.soa.logic;
 
+import java.util.Objects;
+
 import com.cortex.base.soa.SynapseBranchSoA;
 import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.soa.SynapseTopologySoA;
 import com.cortex.base.utils.Maths;
 import com.cortex.brain.CorticalNeuronsConfig;
-import com.cortex.brain.HemisphereContext;
 
 public final class SynapseBranchLogic {
 
     private final SynapseBranchSoA branchSoA;
     private final SynapseSoA synapseSoA;
     private final SynapseTopologySoA synTopologySoA;
-
-    public SynapseBranchLogic(int hemisphereId) {
-        HemisphereContext ctx = HemisphereContext.get(hemisphereId);
-        this.branchSoA = ctx.synapseBranchSoA;
-        this.synapseSoA = ctx.synapseSoA;
-        this.synTopologySoA = ctx.synapseTopologySoA;
+    private final SpikeRingBufferLogic spikeBufferLogic;
+    
+    public SynapseBranchLogic(
+    	int hemisphereId,
+    	SynapseBranchSoA branchSoA,
+    	SynapseSoA synapseSoA,
+    	SynapseTopologySoA synTopologySoA,
+    	SpikeRingBufferLogic spikeBufferLogic
+     ) {
+    	Objects.nonNull(branchSoA);
+    	Objects.nonNull(synapseSoA);
+    	Objects.nonNull(synTopologySoA);
+    	Objects.nonNull(spikeBufferLogic);
+    	
+        this.branchSoA = branchSoA;
+        this.synapseSoA = synapseSoA;
+        this.synTopologySoA = synTopologySoA;
+        this.spikeBufferLogic = spikeBufferLogic;
     }
 
     // --- Update branch activity + gain (homeostasis) ---
@@ -58,16 +71,13 @@ public final class SynapseBranchLogic {
         boolean active = false;
 
         for (int i = start; i < start + count; i++) {
-
             int synId = synTopologySoA.synapseIndex[i];
 
-            if (!synapseSoA.hasSpikes[synId]) continue;
+            if (!spikeBufferLogic.hasSpikeForSynapse(synId)) continue;
 
             active = true;
-
             float w = synapseSoA.weight[synId];
-            float amp = synapseSoA.lastSpikeAmplitude[synId];
-
+            float amp = spikeBufferLogic.getLastSpikeAmplitudeForSynapse(synId);
             potential += w * amp;
         }
 

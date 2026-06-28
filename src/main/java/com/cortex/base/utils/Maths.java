@@ -128,4 +128,8 @@ public class Maths {
 	public static final double sqrt(double d) {
 		return FastMath.sqrt(d);
 	}
+	
+	public static final boolean isPowerOfTwo(int n) {
+	    return (n != 0) && ((n & (n - 1)) == 0);
+	}
 }

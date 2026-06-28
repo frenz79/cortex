@@ -1,128 +1,150 @@
 package com.cortex.base.soa.logic;
 
-import com.cortex.base.SynapseBranch.BranchType;
-import com.cortex.base.dendritic_competition.IDendriticCompetitionStrategy;
+import java.util.Objects;
+
+import com.cortex.base.soa.NeuronSoA;
+import com.cortex.base.soa.NeuronTopologySoA;
+import com.cortex.base.soa.SynapseBranchSoA;
+import com.cortex.base.soa.SynapseSoA;
+import com.cortex.base.soa.SynapseTopologySoA;
 import com.cortex.base.utils.Maths;
 import com.cortex.brain.CorticalNeuronsConfig;
 
 public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 
-    private final CorticalNeuronsConfig config;
+	private final CorticalNeuronsConfig config;
 
-    public CorticalNeuronLogic(int hemisphereId, CorticalNeuronsConfig config) {
-        super(hemisphereId);
-        this.config = config;
-    }
+	private final SynapseBranchLogic synapseBranchLogic;
+	private final DendriticCompetitionLogic dendriticCompetitionLogic;
+	private final NeuronTopologySoA neuronTopologySoA;
+	private final SynapseSoA synapseSoA;
 
-    @Override
-    public boolean process(long now, int neuronIndex) {
-        long lastProcess = neuronSoA.lastProcessTime[neuronIndex];
-        long deltaTimeNanos = now - lastProcess;
+	public CorticalNeuronLogic(
+			int hemisphereId, 
+			CorticalNeuronsConfig config,
+			SynapseBranchLogic synapseBranchLogic,
+			DendriticCompetitionLogic dendriticCompetitionLogic,
 
-        boolean stayActive = false;
-        float somaPotential = 0f;
+			// SoA dep
+			NeuronSoA neuronSoA,
+			SynapseSoA synapseSoA,
+			SynapseBranchSoA synBranchSoA,
+			SynapseTopologySoA synTopologySoA,
+			// Logic dep
+			SynapseLogic synapseLogic,
+			SpikeRingBufferLogic spikeBufferLogic,
+			CombinedLateralInhibitionLogic combinedLateralInhibitionLogic,
+			// Topology
+			NeuronTopologySoA neuronTopologySoA
+			) {
+		super(hemisphereId, neuronSoA, synBranchSoA, synTopologySoA, synapseLogic, spikeBufferLogic, combinedLateralInhibitionLogic );
+		this.config = config;
 
-        int[] incomingBranches = neuronSoA.incomingBranchIndices[neuronIndex];
+		Objects.nonNull(synapseBranchLogic);
+		Objects.nonNull(dendriticCompetitionLogic);
+		Objects.nonNull(neuronTopologySoA);
+		Objects.nonNull(synapseSoA);
 
-        // --- 1. Process incoming branches ---
-        for (int b : incomingBranches) {
+		this.synapseBranchLogic = synapseBranchLogic;
+		this.dendriticCompetitionLogic = dendriticCompetitionLogic;
+		this.neuronTopologySoA = neuronTopologySoA;
+		this.synapseSoA = synapseSoA;
+	}
 
-            int start = synBranchSoA.synapseStart[b];
-            int count = synBranchSoA.synapseCount[b];
+	@Override
+	public boolean process(long now, int neuronIndex) {
+		long lastProcess = neuronSoA.lastProcessTime[neuronIndex];
+		long deltaTimeNanos = now - lastProcess;
 
-            synBranchSoA.branchPotential[b] = 0f;
+		boolean stayActive = false;
+		float somaPotential = 0f;
 
-            boolean branchStayActive = false;
+		int[] incomingBranches = neuronTopologySoA.incomingBranchIndices[neuronIndex];
 
-            for (int i = start; i < start + count; i++) {
+		// --- 1. Process incoming branches ---
+		for (int b : incomingBranches) {
 
-                int synId = synTopologySoA.synapseIndex[i];
+			int start = synBranchSoA.synapseStart[b];
+			int count = synBranchSoA.synapseCount[b];
 
-                // Check if synapse has spikes in ring buffer
-                if (!synapseSoA.hasSpikes[synId]) continue;
+			synBranchSoA.branchPotential[b] = 0f;
 
-                stayActive = true;
-                branchStayActive = true;
+			boolean branchStayActive = false;
 
-                // Accumulate spikes into branch potential
-                float w = synapseSoA.weight[synId];
-                float amp = synapseSoA.lastSpikeAmplitude[synId];
+			for (int i = start; i < start + count; i++) {
 
-                synBranchSoA.branchPotential[b] += w * amp;
+				int synId = synTopologySoA.synapseIndex[i];
 
-                // Update synapse plasticity
-                synapseLogic.update(synId, now);
-            }
+				// Check if synapse has spikes in ring buffer
+				if (!spikeBufferLogic.hasSpikeForSynapse(synId)) continue;
 
-            if (branchStayActive)
-            	synBranchSoA.setActive(b);
-            else 
-            	synBranchSoA.clearActive(b);
+				stayActive = true;
+				branchStayActive = true;
 
-            // Low-pass filter branch activity
-            synBranchLogic.updateBranchActivity(b, now, config);
-        }
+				// Accumulate spikes into branch potential
+				float w = synapseSoA.weight[synId];
+				float amp = spikeBufferLogic.synapseLastAmplitude[synId];
 
-        // --- 2. Dendritic competition ---
-        if (now - neuronSoA.lastDendriticCompetitionTime[neuronIndex] >
-            config.DENDRITIC_COMPETITION_INTERVAL_NANOS) {
+				synBranchSoA.branchPotential[b] += w * amp;
 
-            for (BranchType type : config.DENDIRITIC_COMPETITION_STRATEGIES.keySet()) {
+				// Update synapse plasticity
+				synapseLogic.update(synId, now);
+			}
 
-                int[] group = neuronSoA.branchGroups[neuronIndex][type.ordinal()];
-                if (group.length < 2) continue;
+			if (branchStayActive)
+				synBranchSoA.setActive(b);
+			else 
+				synBranchSoA.clearActive(b);
 
-                IDendriticCompetitionStrategy strategy =
-                    config.DENDIRITIC_COMPETITION_STRATEGIES.get(type);
+			// Low-pass filter branch activity
+			synapseBranchLogic.updateBranch(b, now, config);
+		}
 
-                strategy.updateCompetition(group, synBranchSoA, deltaTimeNanos);
-            }
+		// --- 2. Dendritic competition ---
+		dendriticCompetitionLogic.applyCompetition(now, neuronIndex);
+		
+		// --- 3. Compute soma potential ---
+		for (int b : incomingBranches) {
 
-            neuronSoA.lastDendriticCompetitionTime[neuronIndex] = now;
-        }
+			double windows = (double) deltaTimeNanos / config.INHIBITION_TAU_NANOS;
+			synBranchSoA.inhibition[b] *= Maths.pow(config.INHIBITION_DECAY_PER_WINDOW, windows);
 
-        // --- 3. Compute soma potential ---
-        for (int b : incomingBranches) {
+			if (synBranchSoA.inhibition[b] < 1e-9f)
+				synBranchSoA.inhibition[b] = 0f;
 
-            double windows = (double) deltaTimeNanos / config.INHIBITION_TAU_NANOS;
-            synBranchSoA.inhibition[b] *= Maths.pow(config.INHIBITION_DECAY_PER_WINDOW, windows);
+			float modulated =
+					synBranchSoA.branchPotential[b] * synBranchSoA.gain[b]
+							- synBranchSoA.inhibition[b];
 
-            if (synBranchSoA.inhibition[b] < 1e-9f)
-                synBranchSoA.inhibition[b] = 0f;
+			somaPotential += modulated;
+		}
 
-            float modulated =
-                synBranchSoA.branchPotential[b] * synBranchSoA.gain[b]
-                - synBranchSoA.inhibition[b];
+		// --- 4. Firing decision ---
+		boolean inRefractory =
+				(now - neuronSoA.lastSpikeTime[neuronIndex]) < config.REFRACTORY_PERIOD_NANOS;
 
-            somaPotential += modulated;
-        }
+		if (!inRefractory && somaPotential > config.FIRING_THRESHOLD) {
+			fire(now, neuronIndex);
+		}
 
-        // --- 4. Firing decision ---
-        boolean inRefractory =
-            (now - neuronSoA.lastSpikeTime[neuronIndex]) < config.REFRACTORY_PERIOD_NANOS;
+		neuronSoA.lastProcessTime[neuronIndex] = now;
+		return stayActive;
+	}
 
-        if (!inRefractory && somaPotential > config.FIRING_THRESHOLD) {
-            fire(now, neuronIndex);
-        }
+	@Override
+	public float getRecentFiringRate(long now, int neuronIndex) {
 
-        neuronSoA.lastProcessTime[neuronIndex] = now;
-        return stayActive;
-    }
+		long dt = now - neuronSoA.lastRateUpdate[neuronIndex];
+		if (dt <= 0) return neuronSoA.firingRate[neuronIndex];
 
-    @Override
-    public float getRecentFiringRate(long now, int neuronIndex) {
+		double windows = (double) dt / config.RATE_WINDOW_NANOS;
+		neuronSoA.firingRate[neuronIndex] *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
 
-        long dt = now - neuronSoA.lastRateUpdate[neuronIndex];
-        if (dt <= 0) return neuronSoA.firingRate[neuronIndex];
+		if (neuronSoA.firingRate[neuronIndex] < 1e-6f)
+			neuronSoA.firingRate[neuronIndex] = 0f;
 
-        double windows = (double) dt / config.RATE_WINDOW_NANOS;
-        neuronSoA.firingRate[neuronIndex] *= Maths.pow(config.RATE_DECAY_PER_WINDOW, windows);
-
-        if (neuronSoA.firingRate[neuronIndex] < 1e-6f)
-            neuronSoA.firingRate[neuronIndex] = 0f;
-
-        neuronSoA.lastRateUpdate[neuronIndex] = now;
-        return neuronSoA.firingRate[neuronIndex];
-    }
+		neuronSoA.lastRateUpdate[neuronIndex] = now;
+		return neuronSoA.firingRate[neuronIndex];
+	}
 }
 

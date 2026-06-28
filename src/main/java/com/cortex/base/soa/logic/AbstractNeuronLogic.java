@@ -1,11 +1,10 @@
 package com.cortex.base.soa.logic;
 
+import java.util.Objects;
+
 import com.cortex.base.soa.NeuronSoA;
-import com.cortex.base.soa.SpikeRingBufferSoA;
 import com.cortex.base.soa.SynapseBranchSoA;
-import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.soa.SynapseTopologySoA;
-import com.cortex.brain.HemisphereContext;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventType;
 
@@ -13,21 +12,36 @@ public abstract class AbstractNeuronLogic {
 
     protected final NeuronSoA neuronSoA;
     protected final SynapseBranchSoA synBranchSoA;
-    protected final SynapseSoA synapseSoA;
     protected final SynapseTopologySoA synTopologySoA;
     protected final SynapseLogic synapseLogic;
-    protected final SpikeRingBufferSoA spikeBuffer;
+    protected final SpikeRingBufferLogic spikeBufferLogic;
     protected final CombinedLateralInhibitionLogic combinedLateralInhibitionLogic;
     
-    public AbstractNeuronLogic(int hemisphereId) {
-        HemisphereContext ctx = HemisphereContext.get(hemisphereId);
-        this.neuronSoA = ctx.neuronSoA;
-        this.synBranchSoA = ctx.synapseBranchSoA;
-        this.synapseSoA = ctx.synapseSoA;
-        this.synTopologySoA = ctx.synapseTopologySoA;
-        this.synapseLogic = ctx.synapseLogic;
-        this.spikeBuffer = ctx.spikeBuffer;
-        this.combinedLateralInhibitionLogic = ctx.combinedLateralInhibitionLogic;
+    public AbstractNeuronLogic(
+    	// Custom params
+    	int hemisphereId,
+    	// SoA dep
+    	NeuronSoA neuronSoA,
+    	SynapseBranchSoA synBranchSoA,
+    	SynapseTopologySoA synTopologySoA,
+    	// Logic dep
+    	SynapseLogic synapseLogic,
+    	SpikeRingBufferLogic spikeBufferLogic,
+    	CombinedLateralInhibitionLogic combinedLateralInhibitionLogic    		
+    ) {
+        Objects.nonNull(neuronSoA);
+        Objects.nonNull(synBranchSoA);
+        Objects.nonNull(synTopologySoA);
+        Objects.nonNull(synapseLogic);
+        Objects.nonNull(spikeBufferLogic);
+        Objects.nonNull(combinedLateralInhibitionLogic);
+        
+        this.neuronSoA = neuronSoA;
+        this.synBranchSoA = synBranchSoA;
+        this.synTopologySoA = synTopologySoA;
+        this.synapseLogic = synapseLogic;
+        this.spikeBufferLogic = spikeBufferLogic;
+        this.combinedLateralInhibitionLogic = combinedLateralInhibitionLogic;
     }
 
     public abstract boolean process(long now, int index);
@@ -65,7 +79,7 @@ public abstract class AbstractNeuronLogic {
                 int synId = synTopologySoA.synapseIndex[i];
                 long arrival = now + synapseLogic.getTraversalTimeNanos(now, synId);
                 float amplitude = 1.0f; //neuronSoA.spikeAmplitude[neuronIndex];
-                spikeBuffer.addSpike(
+                spikeBufferLogic.addSpike(
                     arrival,
                     synId,
                     amplitude,
