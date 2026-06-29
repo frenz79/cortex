@@ -1,5 +1,7 @@
 package com.cortex.base.soa;
 
+import com.cortex.base.annotations.SerializableAttribute;
+import com.cortex.base.annotations.SerializableClass;
 import com.cortex.base.utils.IntList;
 
 /**
@@ -7,19 +9,26 @@ import com.cortex.base.utils.IntList;
  * Stores only neuron indices, no objects.
  * Each layer has its own spatial grid.
  */
+@SerializableClass
 public final class SpatialHashSoA {
 
     // Grid parameters per layer
+	@SerializableAttribute
     public final float[] cellSize;
+	@SerializableAttribute
     public final int[] cellsX;
+	@SerializableAttribute
     public final int[] cellsY;
+	@SerializableAttribute
     public final int[] cellsZ;
 
     // For each layer, each cell stores a list of neuron indices
     // Flattened as: cellIndex = (z * cellsY + y) * cellsX + x
+	@SerializableAttribute
     public final IntList[][] cellNeurons;
 
     // Reference to neuron positions
+	@SerializableAttribute
     private final NeuronSoA neuronState;
 
     public SpatialHashSoA(int totalLayers, NeuronSoA neuronState) {

@@ -1,22 +1,33 @@
 package com.cortex.base.soa;
 
-// Hot fields grouped together for better locality
+import com.cortex.base.annotations.SerializableAttribute;
+import com.cortex.base.annotations.SerializableClass;
+
+@SerializableClass
 public final class NeuronSoA {
 
     // 3D position
+	@SerializableAttribute
     public final float[] posX;
+	@SerializableAttribute
     public final float[] posY;
+	@SerializableAttribute
     public final float[] posZ;
     
+	@SerializableAttribute
 	public final float[] firingRate;
+	@SerializableAttribute
 	public final long[]  lastRateUpdate;
+	@SerializableAttribute
 	public final long[]  lastSpikeTime;
+	@SerializableAttribute
 	public final long[]  lastProcessTime;
 	
 	// bits 0..4  → layerId (0–31)
 	// bit  5     → isActive
 	// bit  6     → pendingFire
 	// bit  7     → inhibitory
+	@SerializableAttribute
 	public final byte[] flags;
 	
 	public NeuronSoA(int totalNeurons) {

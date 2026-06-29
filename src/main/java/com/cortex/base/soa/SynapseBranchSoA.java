@@ -1,26 +1,38 @@
 package com.cortex.base.soa;
 
+import com.cortex.base.annotations.SerializableAttribute;
+import com.cortex.base.annotations.SerializableClass;
 import com.cortex.base.soa.constants.BranchTypeCode;
 import com.cortex.base.soa.constants.DirectionCode;
 
+@SerializableClass
 public final class SynapseBranchSoA {
 
 	// dynamic state
+	@SerializableAttribute
     public final float[] branchPotential;
+	@SerializableAttribute
     public final float[] branchActivity;
+	@SerializableAttribute
     public final float[] inhibition;
+	@SerializableAttribute
     public final float[] gain;
+	@SerializableAttribute
     public final long[] lastProcessTime;
+	@SerializableAttribute
     public final int[] spikeCount;
 
     // topology
+	@SerializableAttribute
     public final int[] synapseStart;     // full int
+	@SerializableAttribute
     public final byte[] synapseCount;    // 0–255
     
     // bit 0      → active
     // bits 1..3  → branchType (0–7)   // 5 types → fits in 3 bits
     // bit 4      → direction (0–1)    // INCOMING / OUTGOING
     // bits 5..7  → reserved
+	@SerializableAttribute
     public byte[] topoFlags;       
 
     public SynapseBranchSoA(int totalBranches) {

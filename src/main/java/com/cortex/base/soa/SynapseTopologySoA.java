@@ -1,14 +1,21 @@
 package com.cortex.base.soa;
 
+import com.cortex.base.annotations.SerializableAttribute;
+import com.cortex.base.annotations.SerializableClass;
+
+@SerializableClass
 public final class SynapseTopologySoA {
 
     // For each branch: where its synapses start in the global synapse arrays
-    public final int[] synapseStart;
+	@SerializableAttribute
+	public final int[] synapseStart;
 
     // For each branch: how many synapses it has
+	@SerializableAttribute
     public final int[] synapseCount;
 
     // Optional: contiguous index list
+	@SerializableAttribute
     public final int[] synapseIndex;
 
     public SynapseTopologySoA(int totalBranches, int totalSynapses) {
