@@ -19,7 +19,7 @@ public abstract class AbstractNeuronLogic {
     
     public AbstractNeuronLogic(
     	// Custom params
-    	int hemisphereId,
+    		
     	// SoA dep
     	NeuronSoA neuronSoA,
     	SynapseBranchSoA synBranchSoA,

@@ -16,7 +16,6 @@ public final class SynapseBranchLogic {
     private final SpikeRingBufferLogic spikeBufferLogic;
     
     public SynapseBranchLogic(
-    	int hemisphereId,
     	SynapseBranchSoA branchSoA,
     	SynapseSoA synapseSoA,
     	SynapseTopologySoA synTopologySoA,

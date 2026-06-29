@@ -25,6 +25,9 @@ public final class DendriticCompetitionParamsSoA {
     public final float[] norm_stability;
 
     public DendriticCompetitionParamsSoA(int totalBranchTypes) {
+    	if (totalBranchTypes==0)
+    		throw new IllegalArgumentException("totalBranchTypes must be > 0");
+    	
         wtm_inhibitionLevel = new float[totalBranchTypes];
         wtm_tauNanos        = new long[totalBranchTypes];
 

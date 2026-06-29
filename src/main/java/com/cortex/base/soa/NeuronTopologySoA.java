@@ -21,6 +21,6 @@ public class NeuronTopologySoA {
 		this.incomingBranchCount = new int[neurons];
 		this.incomingBranchIndices = new int[neurons][];
 		
-		 this.branchGroups = new int[neurons][BranchTypeCode.size()][];
+		this.branchGroups = new int[neurons][BranchTypeCode.size()][];
 	}
 }

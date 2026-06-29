@@ -27,7 +27,6 @@ public class SpikeRingBufferLogic {
     public int headIndex;
 
     public SpikeRingBufferLogic(
-    	int hemisphereId, 
     	int ringSize, 
     	int maxSpikesPerBucket, 
     	long tickDurationNanos,

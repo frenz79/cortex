@@ -20,7 +20,6 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 	private final SynapseSoA synapseSoA;
 
 	public CorticalNeuronLogic(
-			int hemisphereId, 
 			CorticalNeuronsConfig config,
 			SynapseBranchLogic synapseBranchLogic,
 			DendriticCompetitionLogic dendriticCompetitionLogic,
@@ -36,8 +35,8 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 			CombinedLateralInhibitionLogic combinedLateralInhibitionLogic,
 			// Topology
 			NeuronTopologySoA neuronTopologySoA
-			) {
-		super(hemisphereId, neuronSoA, synBranchSoA, synTopologySoA, synapseLogic, spikeBufferLogic, combinedLateralInhibitionLogic );
+	) {
+		super( neuronSoA, synBranchSoA, synTopologySoA, synapseLogic, spikeBufferLogic, combinedLateralInhibitionLogic );
 		this.config = config;
 
 		Objects.nonNull(synapseBranchLogic);

@@ -11,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.beans.NeuronBean;
+import com.cortex.base.builders.SoABuilder;
+import com.cortex.base.builders.SoABuilder.SoABuilderResult;
 import com.cortex.base.builders.SynapsesBuilder;
 import com.cortex.base.externals.IActuator;
 import com.cortex.base.externals.IClassifier;
@@ -21,6 +23,28 @@ import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.base.layers.SphericalLayer;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
+import com.cortex.base.soa.DendriticCompetitionParamsSoA;
+import com.cortex.base.soa.DendriticTreeSoA;
+import com.cortex.base.soa.LateralInhibitionLayerSoA;
+import com.cortex.base.soa.NeuronSoA;
+import com.cortex.base.soa.NeuronTopologySoA;
+import com.cortex.base.soa.PlasticitySoA;
+import com.cortex.base.soa.SpatialHashSoA;
+import com.cortex.base.soa.SpikeBufferSoA;
+import com.cortex.base.soa.SynapseBranchSoA;
+import com.cortex.base.soa.SynapseSoA;
+import com.cortex.base.soa.SynapseTopologySoA;
+import com.cortex.base.soa.constants.BranchTypeCode;
+import com.cortex.base.soa.logic.CombinedLateralInhibitionLogic;
+import com.cortex.base.soa.logic.CorticalNeuronLogic;
+import com.cortex.base.soa.logic.DendriticCompetitionLogic;
+import com.cortex.base.soa.logic.ExcitatoryPlasticityLogic;
+import com.cortex.base.soa.logic.InhibitoryPlasticityLogic;
+import com.cortex.base.soa.logic.SpikeRingBufferLogic;
+import com.cortex.base.soa.logic.SynapseBranchLogic;
+import com.cortex.base.soa.logic.SynapseLogic;
 
 public class Hemisphere<L extends Abstract3DLayer> {
 
@@ -53,16 +77,158 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	
 	private NeuronBean[] hemisphereNeurons;
 	
-	public Hemisphere<L> build() {
+	public Hemisphere<L> build(
+		LayerConfig[] layerConfigs,
+		CorticalNeuronsConfig corticalNeuronsConfig,
+		ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
+		InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 		
+	) throws Exception {
 		hemisphereNeurons = new NeuronBean[totalNeurons];
-		
 		// Generate and populate layers
 		generateLayers(layersConfigs);
-		
 		// Generate synapses
 		generateConnections();
+		// Generate SoA
+		
+		generateSoA(
+			layerConfigs, 
+			corticalNeuronsConfig, 
+			excitatorySynapticPlasticityConfig, 
+			inhibitorySynapticPlasticityConfig
+		);
 		return this;
 	}
+	
+	public NeuronSoA neuronSoA;
+	public SynapseSoA synapseSoA;
+	public SynapseBranchSoA synapseBranchSoA;
+	public SynapseTopologySoA synapseTopologySoA;
+	public DendriticTreeSoA dendriticTreeSoA;
+	public PlasticitySoA plasticitySoA;
+	public SpikeBufferSoA spikeBuffer;
+	public LateralInhibitionLayerSoA lateralInhibitionLayerSoA;
+	public DendriticCompetitionParamsSoA dendriticCompetitionParamsSoA;
+	
+	public ExcitatoryPlasticityLogic excitatoryPlasticityLogic;
+	public InhibitoryPlasticityLogic inhibitoryPlasticityLogic;
+	public NeuronTopologySoA neuronTopologySoA;
+	public CorticalNeuronLogic corticalNeuronLogic;
+	public SynapseLogic synapseLogic;
+	public SynapseBranchLogic synapseBranchLogic;
+	public CombinedLateralInhibitionLogic combinedLateralInhibitionLogic;
+	public DendriticCompetitionLogic dendriticCompetitionLogic;
+	public SpikeRingBufferLogic spikeBufferLogic;
+
+	private SpatialHashSoA spatialHashSoA;
+	
+	private void generateSoA( 
+		LayerConfig[] layerConfigs,
+		CorticalNeuronsConfig corticalNeuronsConfig,
+		ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
+		InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 
+	) throws Exception {
+		logger.info("Generating SOA Modules");
+		
+		SoABuilder bld = new SoABuilder( );
+		SoABuilderResult result = bld.buildAll(hemisphereNeurons);
+		this.neuronSoA = result.neuronSoA();
+		this.synapseSoA = result.synapseSoA();
+		this.synapseBranchSoA = result.synapseBranchSoA();
+		this.synapseTopologySoA = result.synapseTopologySoA();
+		this.dendriticTreeSoA = result.dendriticTreeSoA();
+		this.plasticitySoA = new PlasticitySoA(this.synapseSoA.totalSynapses);
+		this.dendriticCompetitionParamsSoA = new DendriticCompetitionParamsSoA(BranchTypeCode.size());
+		this.neuronTopologySoA = new NeuronTopologySoA( hemisphereNeurons.length );
+		
+		logger.info("Generating SOA Logic Modules");
+		
+		this.dendriticCompetitionLogic = new DendriticCompetitionLogic(
+			this.synapseBranchSoA,
+			this.dendriticTreeSoA,
+			this.dendriticCompetitionParamsSoA
+		);
+		
+		this.excitatoryPlasticityLogic = new ExcitatoryPlasticityLogic(
+			excitatorySynapticPlasticityConfig, this.plasticitySoA
+		);
+		
+		this.inhibitoryPlasticityLogic = new InhibitoryPlasticityLogic(
+			inhibitorySynapticPlasticityConfig, this.plasticitySoA
+		);
+		
+		this.spikeBufferLogic = new SpikeRingBufferLogic(
+			4096,
+			256,
+			10_000_000l,
+			this.synapseSoA,
+			this.synapseBranchSoA
+		);
+				
+		this.synapseLogic = new SynapseLogic(
+			this.excitatoryPlasticityLogic,
+			this.inhibitoryPlasticityLogic,	
+			this.synapseSoA,
+			this.plasticitySoA			
+		);
+		
+		this.synapseBranchLogic = new SynapseBranchLogic(
+			this.synapseBranchSoA,
+			this.synapseSoA,
+			this.synapseTopologySoA,
+			this.spikeBufferLogic
+		);
+		
+		this.corticalNeuronLogic = new CorticalNeuronLogic(
+			corticalNeuronsConfig,
+			this.synapseBranchLogic,
+			this.dendriticCompetitionLogic,
+			this.neuronSoA,
+			this.synapseSoA,
+			this.synapseBranchSoA,
+			this.synapseTopologySoA,
+			this.synapseLogic,
+			this.spikeBufferLogic,
+			this.combinedLateralInhibitionLogic,
+			neuronTopologySoA
+		); 
+		
+		this.spatialHashSoA = buildSpatialHashSoA(
+			hemisphereNeurons,
+			this.neuronSoA,
+			layerConfigs
+		);
+	}
+	
+	public SpatialHashSoA buildSpatialHashSoA(
+	        NeuronBean[] neurons,
+	        NeuronSoA neuronSoA,
+	        LayerConfig[] layerConfigs
+	) {
+
+	    int totalLayers = layerConfigs.length;
+
+	    // Crea struttura SoA
+	    SpatialHashSoA ret = new SpatialHashSoA(totalLayers, neuronSoA);
+
+	    // 1. Inizializza ogni layer
+	    for (int layer = 0; layer < totalLayers; layer++) {
+
+	        float cellSize = layerConfigs[layer].CELL_SIZE;
+	        int cx = layerConfigs[layer].CELLS_X;
+	        int cy = layerConfigs[layer].CELLS_Y;
+	        int cz = layerConfigs[layer].CELLS_Z;
+
+	        ret.initLayer(layer, cellSize, cx, cy, cz);
+	    }
+
+	    // 2. Inserisci ogni neurone nella sua cella
+	    for (int neuronId = 0; neuronId < neurons.length; neuronId++) {
+	        ret.insertNeuron(neuronId);
+	    }
+
+	    return ret;
+	}
+
 	
 	private void generateLayers( List<LayerConfig> configs ) {
 		Map<Integer,L> layersBld = new ConcurrentHashMap<Integer, L>();

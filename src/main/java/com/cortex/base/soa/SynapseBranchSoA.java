@@ -33,7 +33,9 @@ public final class SynapseBranchSoA {
     // bit 4      → direction (0–1)    // INCOMING / OUTGOING
     // bits 5..7  → reserved
 	@SerializableAttribute
-    public byte[] topoFlags;       
+    public byte[] topoFlags;
+	
+	public final int totalBranches;       
 
     public SynapseBranchSoA(int totalBranches) {
         branchPotential = new float[totalBranches];
@@ -46,6 +48,7 @@ public final class SynapseBranchSoA {
         synapseStart    = new int[totalBranches];
         synapseCount    = new byte[totalBranches];
         topoFlags       = new byte[totalBranches];
+        this.totalBranches = totalBranches;
     }
 
     // --- active flag (bit 0) ---

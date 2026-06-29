@@ -26,7 +26,6 @@ public final class SynapseLogic {
     private final InhibitoryPlasticityLogic inhibitoryPlasticityLogic;
     
     public SynapseLogic(
-    	int hemisphereId, 
     	ExcitatoryPlasticityLogic excitatoryPlasticityLogic, 
     	InhibitoryPlasticityLogic inhibitoryPlasticityLogic,
     	
