@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.lateral_inhibition.CombinedLateralInhibition;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
@@ -85,7 +84,7 @@ public class LayerConfig {
             return this;
         }
         
-        public Builder withConnectionFilter(Predicate<AbstractNeuron> connectionFilter) {
+        public Builder withConnectionFilter(Predicate<NeuronBean> connectionFilter) {
             cfg.CONNECTION_FILTER = connectionFilter;
             return this;
         }

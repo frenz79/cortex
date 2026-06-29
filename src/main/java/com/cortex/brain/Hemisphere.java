@@ -10,8 +10,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.SynapsesBuilder;
 import com.cortex.base.beans.NeuronBean;
+import com.cortex.base.builders.SynapsesBuilder;
 import com.cortex.base.externals.IActuator;
 import com.cortex.base.externals.IClassifier;
 import com.cortex.base.externals.ISensor;
