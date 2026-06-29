@@ -1,7 +1,9 @@
 package com.cortex.base.serialization;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Parameter;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -60,7 +62,7 @@ public class SoASerializer {
 		for (Class<?> clazz : findAllClassesUsingClassLoader(".")) {
 
 			if ( clazz.getAnnotation(SerializableClass.class)==null ) continue;
-			SoAClassModel classModel = new SoAClassModel(clazz.getSimpleName());
+			SoAClassModel classModel = new SoAClassModel(clazz);
 			
 			for ( Field field : clazz.getDeclaredFields() ) {
 				SerializableAttribute attr = field.getAnnotation(SerializableAttribute.class);
@@ -101,11 +103,16 @@ public class SoASerializer {
 	public static class SoAClassModel {
 		private final String name;
 		private final List<AttributeModel> attributeModels = new ArrayList<>();
-		
-		public SoAClassModel(String name) {
-			super();
-			this.name = name;
-		}
+	    private final List<String> constructorParams = new ArrayList<>();
+	    
+	    public SoAClassModel(Class<?> clazz) {
+	        this.name = clazz.getSimpleName();
+
+	        Constructor<?> ctor = clazz.getConstructors()[0];
+	        for (Parameter p : ctor.getParameters()) {
+	            constructorParams.add(p.getName());
+	        }
+	    }
 
 		public void add(AttributeModel attributeModel) {
 			this.attributeModels.add(attributeModel);
