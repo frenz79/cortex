@@ -4,6 +4,7 @@ import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Commons;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
 
 public class LayerConnConfig {
@@ -11,7 +12,7 @@ public class LayerConnConfig {
 	public int MAX_CONNECTIONS;
 	public float MAX_DISTANCE;
 	public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG;
-	public Predicate<AbstractNeuron> NEURON_FILTER_PREDICATE = Commons.ALWAYS_CONNECT_PREDICATE;
+	public Predicate<NeuronBean> NEURON_FILTER_PREDICATE = Commons.ALWAYS_CONNECT_PREDICATE;
 	public Abstract3DLayer SOURCE_LAYER;
 	public Abstract3DLayer TARGET_LAYER;
 	public long BASE_SPEED;
@@ -54,7 +55,7 @@ public class LayerConnConfig {
             return this;
         }
         
-        public Builder withNeuronFilter(Predicate<AbstractNeuron>  NEURON_FILTER_PREDICATE) {
+        public Builder withNeuronFilter(Predicate<NeuronBean>  NEURON_FILTER_PREDICATE) {
             cfg.NEURON_FILTER_PREDICATE = NEURON_FILTER_PREDICATE;
             return this;
         }

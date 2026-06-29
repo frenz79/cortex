@@ -7,16 +7,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.utils.IntList;
+import com.cortex.base.utils.Point3f;
 import com.cortex.base.utils.SpatialHash;
-import com.cortex.brain.Hemisphere.CorticalNeuronFactory;
 
 public abstract class Abstract3DLayer {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
 
 	protected final LayerConfig config;
-	protected AbstractNeuron[] neurons;
+	private NeuronBean[] neurons;
+	private int neuronsStart;
+	private int neuronsLen;
 	private int synapsesCount = 0;
 	private SpatialHash spatialHash;
 	
@@ -25,14 +28,22 @@ public abstract class Abstract3DLayer {
 		this.config = config;
 	}
 	
-	protected abstract Abstract3DLayer internalPopulate(CorticalNeuronFactory neuronFactory );
+	protected abstract Point3f getPosition( int i );
 
-	public Abstract3DLayer populate( CorticalNeuronFactory neuronFactory ) {
+	public void populate( NeuronBean[] neurons, int start, int len ) {
 		long startTime = System.nanoTime();
-		this.neurons = new AbstractNeuron[getNeuronsCount()];
+		this.neuronsStart = start;
+		this.neuronsLen = len;
 		
-		internalPopulate(neuronFactory);
-		this.spatialHash = new SpatialHash(getNeurons(), config.DIMENSION / 2.0f );
+		for(int i=0 ;i<len; i++) {
+			neurons[i+start] = new NeuronBean(
+				i+start,
+				getLayerId(), 
+				getHemisphereId(), 
+				isInhibitor(), 
+				getPosition(i));
+		}
+		this.spatialHash = new SpatialHash(neurons, config.DIMENSION / 2.0f );
 		
 		long endTime = System.nanoTime();
 		logger.info("L{} generated {} neurons in {} micros",
@@ -40,8 +51,6 @@ public abstract class Abstract3DLayer {
 			getNeuronsCount(),
 			TimeUnit.NANOSECONDS.toMicros(endTime-startTime)
 		);
-		
-		return this;
 	}
 
 	public IntList getSpatialHashCell( AbstractNeuron n ) {
@@ -55,6 +64,10 @@ public abstract class Abstract3DLayer {
 	public int getLayerId() {
 		return config.getLayerId();
 	} 
+	
+	public int getHemisphereId() {
+		return config.getHemisphereId();
+	} 
 
 	protected boolean randomBoolean( float trueProbability ) {
 		return ThreadLocalRandom.current().nextFloat(0.0f, 1.0f)<=trueProbability;
@@ -62,10 +75,6 @@ public abstract class Abstract3DLayer {
 
 	protected boolean isInhibitor( ) {
 		return randomBoolean( config.INHIBITOR_FREQ );
-	}
-
-	public AbstractNeuron[] getNeurons() {
-		return neurons;
 	}
 
 	public int getNeuronsCount() {
@@ -82,5 +91,17 @@ public abstract class Abstract3DLayer {
 
 	public void setSynapsesCount(int synapsesCount) {
 		this.synapsesCount = synapsesCount;
+	}
+
+	public NeuronBean[] getNeurons() {
+		return neurons;
+	}
+
+	public int getNeuronsStart() {
+		return neuronsStart;
+	}
+
+	public int getNeuronsLen() {
+		return neuronsLen;
 	}
 }

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.layers.Functions;
 
 public class SpatialHash {
@@ -11,7 +12,7 @@ public class SpatialHash {
 	private final float cellSize;
 	private final Map<Long, IntList> spatialHash;
 	
-	public SpatialHash(AbstractNeuron[] neurons, float cellSize) {
+	public SpatialHash(NeuronBean[] neurons, float cellSize) {
 		this.cellSize = cellSize;
 		this.spatialHash = new HashMap<>( (Maths.floor(neurons.length*1.5)) );
 		int n = neurons.length;

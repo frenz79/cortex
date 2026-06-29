@@ -1,15 +1,28 @@
 package com.cortex.base.beans;
 
-public final class BranchBean {
-    public final int id;
-    public final int type;	// BranchTypeCode
-    public final float attenuation;   // 0..1
-    public final float plasticityGain;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-    public BranchBean(int id, int type, float attenuation, float plasticityGain) {
-        this.id = id;
+public final class BranchBean {
+
+    public final int type; // BranchTypeCode
+
+    // thread-safe
+    private final CopyOnWriteArrayList<SynapseBean> synapses = new CopyOnWriteArrayList<>();
+
+    public BranchBean(int type) {
         this.type = type;
-        this.attenuation = attenuation;
-        this.plasticityGain = plasticityGain;
+    }
+
+    public void addSynapse(SynapseBean s) {
+        synapses.add(s); // thread-safe append
+    }
+
+    public int size() {
+        return synapses.size(); // thread-safe read
+    }
+
+    public List<SynapseBean> getSynapses() {
+        return synapses; // safe to expose (immutable snapshot semantics)
     }
 }

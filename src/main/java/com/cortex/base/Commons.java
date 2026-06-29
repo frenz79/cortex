@@ -2,11 +2,13 @@ package com.cortex.base;
 
 import java.util.function.Predicate;
 
+import com.cortex.base.beans.NeuronBean;
+
 public interface Commons {
 
-	public static final Predicate<AbstractNeuron> ALWAYS_CONNECT_PREDICATE = n -> true;
-	public static final Predicate<AbstractNeuron> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
-	public static final Predicate<AbstractNeuron> ONLY_INHIBITOR_CONNECT_PREDICATE = AbstractNeuron::isInhibitor;
+	public static final Predicate<NeuronBean> ALWAYS_CONNECT_PREDICATE = n -> true;
+	public static final Predicate<NeuronBean> SKIP_INHIBITOR_CONNECT_PREDICATE = n -> !n.isInhibitor();
+	public static final Predicate<NeuronBean> ONLY_INHIBITOR_CONNECT_PREDICATE = NeuronBean::isInhibitor;
 
 	// baseSpeed = delay-per-unit (ns per unit length)
 	// delay = length * baseSpeed / (1 + myelinFactor)

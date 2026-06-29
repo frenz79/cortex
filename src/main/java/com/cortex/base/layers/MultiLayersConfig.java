@@ -11,7 +11,7 @@ import com.cortex.brain.CorticalNeuronsConfig;;
 public class MultiLayersConfig {
 
 	public LayerConfig l0_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
-	    return LayerConfig.newBuilder(0)
+	    return LayerConfig.newBuilder(0,0)
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.30f)
@@ -42,7 +42,7 @@ public class MultiLayersConfig {
 	}
 
 	public LayerConfig l1_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
-	    return LayerConfig.newBuilder(1)
+	    return LayerConfig.newBuilder(1,0)
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.25f)
@@ -73,7 +73,7 @@ public class MultiLayersConfig {
 	}
 
 	public LayerConfig l2_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
-	    return LayerConfig.newBuilder(2)
+	    return LayerConfig.newBuilder(2,0)
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.18f)
@@ -104,7 +104,7 @@ public class MultiLayersConfig {
 	}
 
 	public LayerConfig l3_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
-	    return LayerConfig.newBuilder(3)
+	    return LayerConfig.newBuilder(3,0)
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.40f)
@@ -135,7 +135,7 @@ public class MultiLayersConfig {
 	}
 
 	public LayerConfig l4_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
-	    return LayerConfig.newBuilder(4)
+	    return LayerConfig.newBuilder(4,0)
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.22f)
@@ -166,7 +166,7 @@ public class MultiLayersConfig {
 	}
 
 	public LayerConfig l5_config(int neuronsCount, int minConnections, int maxConnections, float maxConnDistance) {
-	    return LayerConfig.newBuilder(5)
+	    return LayerConfig.newBuilder(5,0)
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.15f)

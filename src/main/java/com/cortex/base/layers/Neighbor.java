@@ -2,22 +2,22 @@ package com.cortex.base.layers;
 
 import java.util.Objects;
 
-import com.cortex.base.AbstractNeuron;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.utils.Maths;
 
-public record Neighbor(AbstractNeuron neuron, float distance, boolean near) { 
+public record Neighbor(NeuronBean neuron, float distance, boolean near) { 
 
 	public float getRealDistance() {
 		return (float)Maths.sqrt(distance);
 	}
 
-	public AbstractNeuron neuron() {
+	public NeuronBean neuron() {
 		return neuron;
 	}
 
 	@Override
 	public int hashCode() {
-		return neuron.getIndex();
+		return neuron.id;
 	}
 
 	@Override

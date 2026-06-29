@@ -86,7 +86,7 @@ public class SpikeRingBufferLogic {
             if (arrival > now) continue;
 
             int synId = bucket.synapseId[i];
-            int bId   = synapseSoA.postBranchId[synId];
+            int bId   = synapseSoA.targetBranchId[synId];
 
             synapseBranchSoA.branchPotential[bId] += bucket.getAmplitude(i) * synapseSoA.weight[synId];
             processed++;

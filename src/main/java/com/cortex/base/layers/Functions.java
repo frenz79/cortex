@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.utils.IntFloatPair;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
@@ -74,13 +75,13 @@ public class Functions {
 		return Maths.floor(v / cellSize);
 	}
 	
-	public static final List<Neighbor> findRandomNeurons(AbstractNeuron[] all, AbstractNeuron src, int count) {
+	public static final List<Neighbor> findRandomNeurons(NeuronBean[] all, int start, int len, NeuronBean src, int count) {
 		List<Neighbor> far = new ArrayList<>(count);
 
 		for (int i = 0; i < count; i++) {
-			AbstractNeuron candidate;
+			NeuronBean candidate;
 			do {
-				candidate = all[ThreadLocalRandom.current().nextInt(all.length)];
+				candidate = all[start + ThreadLocalRandom.current().nextInt(len)];
 			} while (candidate == src);
 
 			float dx = candidate.getPosition().x() - src.getPosition().x();
@@ -94,12 +95,12 @@ public class Functions {
 		return far;
 	}
 	
-	public static final Collection<Neighbor> findNearestNeurons( AbstractNeuron[] neurons, AbstractNeuron from, int N, Predicate<AbstractNeuron> filter ) {
+	public static final Collection<Neighbor> findNearestNeurons( NeuronBean[] neurons, int start, int len, NeuronBean from, int N, Predicate<NeuronBean> filter ) {
 		PriorityQueue<Neighbor> pq =
 				new PriorityQueue<>((a,b) -> Float.compare(b.distance(), a.distance()));
 
-		for (int i = 0; i < neurons.length; i++) {
-			AbstractNeuron n = neurons[i];
+		for (int i = 0; i < len; i++) {
+			NeuronBean n = neurons[i+start];
 			// Avoid self connections and loops
 			if (n!=from && filter.test(n)) {			
 				float dx = n.getPosition().x() - from.getPosition().x();

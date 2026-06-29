@@ -8,11 +8,11 @@ public final class SynapseSoA {
 
     // --- Topology ---
 	@SerializableAttribute
-    public final int[] preNeuronId;      // source neuron
+    public final int[] sourceNeuronId;      // source neuron
 	@SerializableAttribute
-    public final int[] postNeuronId;     // target neuron
+    public final int[] targetNeuronId;     // target neuron
 	@SerializableAttribute
-    public final int[] postBranchId;     // target branch (dendritic)
+    public final int[] targetBranchId;     // target branch (dendritic)
 	@SerializableAttribute
     public final float length[];
 	@SerializableAttribute
@@ -58,9 +58,9 @@ public final class SynapseSoA {
     public final int totalSynapses;
     
     public SynapseSoA(int totalSynapses) {
-        preNeuronId      = new int[totalSynapses];
-        postNeuronId     = new int[totalSynapses];
-        postBranchId     = new int[totalSynapses];
+        sourceNeuronId      = new int[totalSynapses];
+        targetNeuronId     = new int[totalSynapses];
+        targetBranchId     = new int[totalSynapses];
         length           = new float[totalSynapses];
         baseSpeed        = new float[totalSynapses];
         

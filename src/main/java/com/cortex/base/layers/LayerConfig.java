@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.cortex.base.AbstractNeuron;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.lateral_inhibition.CombinedLateralInhibition;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
@@ -14,8 +15,9 @@ import com.cortex.brain.CorticalNeuronsConfig;
 
 public class LayerConfig {
         
-    private final int LAYER_ID;
-
+    private final int layerId;
+    private final int hemisphereId;
+    
     // CONFIG PARAMETERS (UPPERCASE + PUBLIC)
     public int NEURONS_COUNT = 0;
     public float INHIBITOR_FREQ = 0;
@@ -24,25 +26,26 @@ public class LayerConfig {
     public boolean HAS_INCOMING = false;
     public boolean HAS_OUTGOING = false;
     public float MAX_CONN_DISTANCE = 0;
-    public Predicate<AbstractNeuron> CONNECTION_FILTER = null;
+    public Predicate<NeuronBean> CONNECTION_FILTER = null;
     public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG = null;
     public CorticalNeuronsConfig CORTICAL_NEURONS_CONFIG = null;
     public CombinedLateralInhibition COMBINED_LATERAL_INHIBITION = null;
     public float DIMENSION = 0;
     
-    LayerConfig(int layerId) {
-        this.LAYER_ID = layerId;
+    LayerConfig(int layerId, int hemisphereId) {
+        this.layerId = layerId;
+        this.hemisphereId = hemisphereId;
     }
 
-    public static Builder newBuilder(int layerId) {
-        return new Builder(layerId);
+    public static Builder newBuilder(int layerId, int hemisphereId) {
+        return new Builder(layerId, hemisphereId);
     }   
     
     public static class Builder {
         private final LayerConfig cfg;
         
-        public Builder(int layerId) {
-            this.cfg = new LayerConfig(layerId);
+        public Builder(int layerId, int hemisphereId) {
+            this.cfg = new LayerConfig(layerId, hemisphereId);
         }
         
         public Builder enableInConn(boolean hasIncoming) {
@@ -125,7 +128,11 @@ public class LayerConfig {
     }
     
     public int getLayerId() {
-        return LAYER_ID;
+        return layerId;
+    }
+    
+    public int getHemisphereId() {
+        return hemisphereId;
     }
     
     public LayerConfig validate() {
@@ -212,10 +219,10 @@ public class LayerConfig {
         // 5. VALIDAZIONE CROSS-LAYER (se vuoi)
         // -------------------------
         // Esempio: layer più profondi devono essere più selettivi
-        if (this.LAYER_ID > 0) {
-        	if (this.LAYER_ID > 3) {
+        if (this.layerId > 0) {
+        	if (this.layerId > 3) {
         		if (n.FIRING_THRESHOLD < 0.030f)
-        			errors.add("Layer " + LAYER_ID + ": FIRING_THRESHOLD troppo basso per un layer profondo");
+        			errors.add("Layer " + layerId + ": FIRING_THRESHOLD troppo basso per un layer profondo");
         	 }
         }
 
@@ -224,7 +231,7 @@ public class LayerConfig {
         // -------------------------
         if (!errors.isEmpty()) {
             throw new IllegalStateException(
-                "LayerConfig " + LAYER_ID + " non valido:\n" +
+                "LayerConfig " + layerId + " non valido:\n" +
                 errors.stream().map(s -> " - " + s).collect(Collectors.joining("\n"))
             );
         }

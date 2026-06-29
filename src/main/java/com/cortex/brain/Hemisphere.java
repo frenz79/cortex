@@ -6,13 +6,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.SynapsesBuilder;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.externals.IActuator;
 import com.cortex.base.externals.IClassifier;
 import com.cortex.base.externals.ISensor;
@@ -22,8 +21,6 @@ import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.layers.LayerConnConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.base.layers.SphericalLayer;
-import com.cortex.base.soa.NeuronSoA;
-import com.cortex.base.utils.Point3f;
 
 public class Hemisphere<L extends Abstract3DLayer> {
 
@@ -33,14 +30,9 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	private static final int SENSORS_TARGET_LAYER = 0;
 	
 	protected List<L> layers = new ArrayList<>();
-	
-	// Single Neurons storage
-	private volatile CorticalNeuron[] neurons;
-	private volatile NeuronSoA neuronsStatesBuff;
 		
 	private final int hemisphereId;
 	private int totalNeurons = 0;
-	private CorticalNeuronFactory neuronFactory;
 	private MultiLayersConnConfig multiLayersConnConfig;
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnConfig> layersConnConfigs = new ArrayList<>();
@@ -49,37 +41,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	private final List<IActuator> actuators;
 	private final List<IClassifier<?>> classifiers;
 	private final List<ISupervisor<?>> supervisors;
-	
-	public class CorticalNeuronFactory {
-
-		private final List<LayerConfig> configs;
-		private int counter = 0;
-
-		public synchronized CorticalNeuron buildNeuron( 
-				Abstract3DLayer layer, 
-				boolean inhibitor, 
-				Point3f position
-				) {
-			CorticalNeuron n = new CorticalNeuron(
-					counter, 
-					hemisphereId,
-					layer, 
-					configs.get(layer.getLayerId()).HAS_INCOMING, 
-					configs.get(layer.getLayerId()).HAS_OUTGOING, 
-					configs.get(layer.getLayerId()).CORTICAL_NEURONS_CONFIG,
-					inhibitor, 
-					position
-					);
-			neurons[counter++] = n;
-			return n;
-		}
-
-		public CorticalNeuronFactory(List<LayerConfig> configs) {
-			super();
-			this.configs = configs;
-		}
-	}
-	
+		
 	public Hemisphere( int hemisphereId ) {
 		this.hemisphereId = hemisphereId;
 		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
@@ -89,14 +51,14 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		this.supervisors = new CopyOnWriteArrayList<>();
 	}
 	
+	private NeuronBean[] hemisphereNeurons;
+	
 	public Hemisphere<L> build() {
-		// Allocate neurons space
-		this.neurons = new CorticalNeuron[totalNeurons];
-		this.neuronsStatesBuff = new NeuronSoA(totalNeurons);
-				    
-		this.neuronFactory = new CorticalNeuronFactory( this.layersConfigs );
+		hemisphereNeurons = new NeuronBean[totalNeurons];
+		
 		// Generate and populate layers
 		generateLayers(layersConfigs);
+		
 		// Generate synapses
 		generateConnections();
 		return this;
@@ -115,13 +77,25 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	}
 	
 	private L buildLayer( LayerConfig cfg ) {
-		SphericalLayer l = (SphericalLayer) new SphericalLayer(cfg)
-				.populate( this.neuronFactory );
-		return (L) l;
+		SphericalLayer l = new SphericalLayer(cfg);
+		l.populate(
+			hemisphereNeurons,
+			getStartNeuronsIndex(l.getLayerId()),
+			l.getNeuronsCount()
+		);
+		return (L)l;
 	}
 	
+	private int getStartNeuronsIndex(int layerId) {
+		int offset = 0;
+		for(int i=0; i<layerId; i++) {
+			offset += getLayer(i).getNeuronsCount();
+		}
+		return offset;
+	}
+
 	private void generateConnections() {
-		SynapsesBuilder bld = new SynapsesBuilder( this.neurons );
+		SynapsesBuilder bld = new SynapsesBuilder( this.hemisphereNeurons );
 		logger.info("Generating internal layer connections");
 		layers.parallelStream().forEach( l -> {
 			bld.buildInternalSynapses( l );
@@ -130,22 +104,23 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		logger.info("Generating layer to layer connections");
 		var layersConnConfig = this.multiLayersConnConfig.getLayersConnectionsConfig(layers);
 		bld.buildLayersSynapses(layersConnConfig);
-		
+		/*
 		logger.info("Generating external synapses to layer connections");
 		for ( ISensor s : sensors ) {
 			int synapses = bld.buildExternalSynapses( s, layers.get(s.getExternalConnConfig().LINKED_LAYER_ID) );
 			logger.info("ISensor:{} -> L{} : created {} synapses", 
 				s.getId(), s.getExternalConnConfig().LINKED_LAYER_ID, synapses);
 		}		
-		
+		*/
 		bld.build();
 	}
 	
+	/*
 	public void process(long now) {
 		if (neurons == null) return;
 		CorticalNeuron[] snapshot = neurons;
 	    
-		/*
+		
 	    // PHASE 1 — Spike propagation
 	    Arrays.stream(snapshot).parallel().forEach(n -> {
 	        if (n.isPendingFire()) {
@@ -165,7 +140,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	            n.setActive(stay);
 	        }
 	    });
-	    */
+	   
 		
 		// Faster iteration
 		int N = totalNeurons;
@@ -189,7 +164,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		    }
 		});
 	}
-	
+	*/
 	public Abstract3DLayer getSensorsTargetLayer() {
 		return getLayer(SENSORS_TARGET_LAYER);
 	}
@@ -197,11 +172,11 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	public Abstract3DLayer getClassifiersSourceLayer() {
 		return getLayer(CLASSIFIERS_TARGET_LAYER);
 	}
-
+/*
 	public AbstractNeuron[] getAllNeurons() {
 		return neurons;
 	}
-
+*/
 	public List<ISensor> getSensors() {
 		return sensors;
 	}
