@@ -12,7 +12,7 @@ import com.cortex.brain.CorticalNeuronsConfig;
 
 public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 
-	private final CorticalNeuronsConfig config;
+	private final CorticalNeuronsConfig[] corticalNeuronsConfigs;
 
 	private final SynapseBranchLogic synapseBranchLogic;
 	private final DendriticCompetitionLogic dendriticCompetitionLogic;
@@ -20,7 +20,7 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 	private final SynapseSoA synapseSoA;
 
 	public CorticalNeuronLogic(
-			CorticalNeuronsConfig config,
+			CorticalNeuronsConfig[] corticalNeuronsConfigs,
 			SynapseBranchLogic synapseBranchLogic,
 			DendriticCompetitionLogic dendriticCompetitionLogic,
 
@@ -37,7 +37,7 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 			NeuronTopologySoA neuronTopologySoA
 	) {
 		super( neuronSoA, synBranchSoA, synTopologySoA, synapseLogic, spikeBufferLogic, combinedLateralInhibitionLogic );
-		this.config = config;
+		this.corticalNeuronsConfigs = corticalNeuronsConfigs;
 
 		Objects.nonNull(synapseBranchLogic);
 		Objects.nonNull(dendriticCompetitionLogic);
@@ -59,7 +59,8 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 		float somaPotential = 0f;
 
 		int[] incomingBranches = neuronTopologySoA.incomingBranchIndices[neuronIndex];
-
+		CorticalNeuronsConfig config = corticalNeuronsConfigs[neuronSoA.getLayerId(neuronIndex)];
+				
 		// --- 1. Process incoming branches ---
 		for (int b : incomingBranches) {
 
@@ -132,6 +133,7 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 
 	@Override
 	public float getRecentFiringRate(long now, int neuronIndex) {
+		CorticalNeuronsConfig config = corticalNeuronsConfigs[neuronSoA.getLayerId(neuronIndex)];
 
 		long dt = now - neuronSoA.lastRateUpdate[neuronIndex];
 		if (dt <= 0) return neuronSoA.firingRate[neuronIndex];

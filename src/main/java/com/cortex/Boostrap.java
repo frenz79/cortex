@@ -12,7 +12,10 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.layers.MultiLayersConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
+import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
+import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.brain.Brain;
+import com.cortex.brain.CorticalNeuronsConfig;
 import com.cortex.brain.Hemisphere;
 import com.cortex.externals.sensors.retina.Retina;
 import com.cortex.externals.sensors.retina.RetinaConfig;
@@ -92,7 +95,7 @@ public class Boostrap {
 			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
 			.withTotalNeurons(totalNeurons)
 			.attachSensor(retina)
-			.build();
+			.build(	layersCfg );
 				
 		// Create Brain
 		Brain brain = Brain.newBuilder()

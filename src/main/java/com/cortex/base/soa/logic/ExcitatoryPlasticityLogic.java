@@ -12,17 +12,17 @@ public final class ExcitatoryPlasticityLogic implements IPlasticityLogic {
 	private static final long MIN_HOMEOSTASIS_STEP_NANOS = 5_000_000l;
 
 	private final PlasticitySoA plasticitySoA;
-	private final ExcitatorySynapticPlasticityConfig config;
+	private final ExcitatorySynapticPlasticityConfig[] configs;
 	private final float k;
 
 	public ExcitatoryPlasticityLogic( 
-		ExcitatorySynapticPlasticityConfig config, 
+		ExcitatorySynapticPlasticityConfig[] configs, 
 		PlasticitySoA plasticitySoA
 	) {
 		Objects.nonNull(plasticitySoA);
 		
 		this.plasticitySoA = plasticitySoA;
-		this.config = config;
+		this.configs = configs;
 		this.k = 1.0f / config.ELIGIBILITY_DECAY_NANOS;
 	}
 
@@ -104,6 +104,8 @@ public final class ExcitatoryPlasticityLogic implements IPlasticityLogic {
 		long dt = now - last;
 
 		if (dt > MIN_ELIGIBILITY_UPDATE_STEP_NANOS) {
+			config = configs[]
+					
 			plasticitySoA.eligibility[synId] *= fastEligibilityDecay(dt);
 			if (now - plasticitySoA.lastHomeostasisUpdate[synId] > MIN_HOMEOSTASIS_STEP_NANOS) {
 				float w = plasticitySoA.weight[synId];

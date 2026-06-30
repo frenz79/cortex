@@ -21,6 +21,7 @@ import com.cortex.base.externals.ISupervisor;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.layers.LayerConnConfig;
+import com.cortex.base.layers.MultiLayersConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
 import com.cortex.base.layers.SphericalLayer;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
@@ -77,22 +78,19 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	
 	private NeuronBean[] hemisphereNeurons;
 	
-	public Hemisphere<L> build(
-		LayerConfig[] layerConfigs,
-		CorticalNeuronsConfig corticalNeuronsConfig,
-		ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
-		InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 		
-	) throws Exception {
+	public Hemisphere<L> build(	MultiLayersConfig layersCfg	) throws Exception {
 		hemisphereNeurons = new NeuronBean[totalNeurons];
 		// Generate and populate layers
 		generateLayers(layersConfigs);
 		// Generate synapses
 		generateConnections();
-		// Generate SoA
+		
+		// Generate SoA		
+		//CorticalNeuronsConfig corticalNeuronsConfig = layersCfg.
+		//ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
+		//InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 
 		
 		generateSoA(
-			layerConfigs, 
-			corticalNeuronsConfig, 
 			excitatorySynapticPlasticityConfig, 
 			inhibitorySynapticPlasticityConfig
 		);
@@ -122,10 +120,9 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	private SpatialHashSoA spatialHashSoA;
 	
 	private void generateSoA( 
-		LayerConfig[] layerConfigs,
-		CorticalNeuronsConfig corticalNeuronsConfig,
-		ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
-		InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 
+	//	CorticalNeuronsConfig corticalNeuronsConfig,
+	//	ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
+	//	InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 
 	) throws Exception {
 		logger.info("Generating SOA Modules");
 		
@@ -149,11 +146,11 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		);
 		
 		this.excitatoryPlasticityLogic = new ExcitatoryPlasticityLogic(
-			excitatorySynapticPlasticityConfig, this.plasticitySoA
+			getExcitatorySynapticPlasticityConfigs(layersConfigs), this.plasticitySoA
 		);
 		
 		this.inhibitoryPlasticityLogic = new InhibitoryPlasticityLogic(
-			inhibitorySynapticPlasticityConfig, this.plasticitySoA
+			getInhibitorySynapticPlasticityConfigs(layersConfigs), this.plasticitySoA
 		);
 		
 		this.spikeBufferLogic = new SpikeRingBufferLogic(
@@ -179,7 +176,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		);
 		
 		this.corticalNeuronLogic = new CorticalNeuronLogic(
-			corticalNeuronsConfig,
+			getCorticalNeuronsConfigs(layersConfigs),
 			this.synapseBranchLogic,
 			this.dendriticCompetitionLogic,
 			this.neuronSoA,
@@ -195,40 +192,66 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		this.spatialHashSoA = buildSpatialHashSoA(
 			hemisphereNeurons,
 			this.neuronSoA,
-			layerConfigs
+			layersConfigs
 		);
 	}
 	
+	private static final InhibitorySynapticPlasticityConfig[] getInhibitorySynapticPlasticityConfigs(List<LayerConfig> cfg) {
+		InhibitorySynapticPlasticityConfig[] ret = new InhibitorySynapticPlasticityConfig[cfg.size()];
+		for (int i=0; i<cfg.size(); i++) {
+			ret[i] = cfg.get(i).SYNAPSE_PLASTICITY_CONFIG.inhibitory();
+		}
+		return ret;
+	}
+
+	private static final ExcitatorySynapticPlasticityConfig[] getExcitatorySynapticPlasticityConfigs(List<LayerConfig> cfg) {
+		ExcitatorySynapticPlasticityConfig[] ret = new ExcitatorySynapticPlasticityConfig[cfg.size()];
+		for (int i=0; i<cfg.size(); i++) {
+			ret[i] = cfg.get(i).SYNAPSE_PLASTICITY_CONFIG.excitatory();
+		}
+		return ret;
+	}
+
+	private static final CorticalNeuronsConfig[] getCorticalNeuronsConfigs(List<LayerConfig> cfg) {
+		CorticalNeuronsConfig[] ret = new CorticalNeuronsConfig[cfg.size()];
+		for (int i=0; i<cfg.size(); i++) {
+			ret[i] = cfg.get(i).CORTICAL_NEURONS_CONFIG;
+		}
+		return ret;
+	}
+
 	public SpatialHashSoA buildSpatialHashSoA(
 	        NeuronBean[] neurons,
 	        NeuronSoA neuronSoA,
-	        LayerConfig[] layerConfigs
+	        List<LayerConfig> layerConfigs
 	) {
-
-	    int totalLayers = layerConfigs.length;
-
-	    // Crea struttura SoA
+	    int totalLayers = layerConfigs.size();
 	    SpatialHashSoA ret = new SpatialHashSoA(totalLayers, neuronSoA);
 
-	    // 1. Inizializza ogni layer
 	    for (int layer = 0; layer < totalLayers; layer++) {
-
-	        float cellSize = layerConfigs[layer].CELL_SIZE;
-	        int cx = layerConfigs[layer].CELLS_X;
-	        int cy = layerConfigs[layer].CELLS_Y;
-	        int cz = layerConfigs[layer].CELLS_Z;
-
-	        ret.initLayer(layer, cellSize, cx, cy, cz);
+	        LayerConfig cfg = layerConfigs.get(layer);
+	        int N = cfg.NEURONS_COUNT;
+	        float R = cfg.DIMENSION / 2.0f;
+	        // Volume della sfera
+	        float V = (float)((4.0 / 3.0) * Math.PI * R * R * R);
+	        // densità neuroni/m^3
+	        float rho = N / V;
+	        // densità target: 8 neuroni per cella
+	        float target = 8.0f;
+	        // dimensione cella
+	        float cellSize = (float)Math.cbrt(target / rho);
+	        // celle per asse
+	        int cells = (int)Math.ceil(cfg.DIMENSION / cellSize);
+	        ret.initLayer(layer, cellSize, cells, cells, cells);
 	    }
 
-	    // 2. Inserisci ogni neurone nella sua cella
+	    // Inserisci neuroni
 	    for (int neuronId = 0; neuronId < neurons.length; neuronId++) {
 	        ret.insertNeuron(neuronId);
 	    }
 
 	    return ret;
 	}
-
 	
 	private void generateLayers( List<LayerConfig> configs ) {
 		Map<Integer,L> layersBld = new ConcurrentHashMap<Integer, L>();
@@ -422,9 +445,9 @@ public class Hemisphere<L extends Abstract3DLayer> {
 
 		}
 
-		public Hemisphere<L> build() {
+		public Hemisphere<L> build( MultiLayersConfig layersCfg ) throws Exception {
 			validate();
-			return emisphere.build();
+			return emisphere.build(layersCfg);
 		}
 	}
 }
