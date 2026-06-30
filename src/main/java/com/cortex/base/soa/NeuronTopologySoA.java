@@ -5,22 +5,47 @@ import com.cortex.base.annotations.SerializableClass;
 import com.cortex.base.soa.constants.BranchTypeCode;
 
 @SerializableClass
-public class NeuronTopologySoA {
-	@SerializableAttribute
-	public final int[] incomingBranchStart;   // per neurone
-	@SerializableAttribute
-	public final int[] incomingBranchCount;   // per neurone
-	@SerializableAttribute
-	public final int[][] incomingBranchIndices; // array contiguo
-    // Branch groups per neurone per tipo
-	@SerializableAttribute
-    public final int[][][] branchGroups;
+public final class NeuronTopologySoA {
+
+    @SerializableAttribute
+    public final int[] incomingBranchStart;
+
+    @SerializableAttribute
+    public final int[] incomingBranchCount;
+
+    @SerializableAttribute
+    public final int[] incomingBranches;   // flattened
+
+    @SerializableAttribute
+    public final int[] outgoingBranchStart;
+
+    @SerializableAttribute
+    public final int[] outgoingBranchCount;
+
+    @SerializableAttribute
+    public final int[] outgoingBranches;   // flattened
+
+    @SerializableAttribute
+    public final int[] branchGroupStart;   // per neurone per tipo (flattened index)
     
-	public NeuronTopologySoA(int neurons) {
-		this.incomingBranchStart = new int[neurons];
-		this.incomingBranchCount = new int[neurons];
-		this.incomingBranchIndices = new int[neurons][];
-		
-		this.branchGroups = new int[neurons][BranchTypeCode.size()][];
-	}
+    @SerializableAttribute
+    public final int[] branchGroupCount;   // per neurone per tipo
+
+    @SerializableAttribute
+    public final int[] branchGroupIndices; // flattened
+
+    public NeuronTopologySoA(int neurons, int totalBranches, int totalGroups) {
+        incomingBranchStart = new int[neurons];
+        incomingBranchCount = new int[neurons];
+        incomingBranches = new int[totalBranches];
+
+        outgoingBranchStart = new int[neurons];
+        outgoingBranchCount = new int[neurons];
+        outgoingBranches = new int[totalBranches];
+
+        branchGroupStart = new int[neurons * BranchTypeCode.size()];
+        branchGroupCount = new int[neurons * BranchTypeCode.size()];
+        branchGroupIndices = new int[totalGroups];
+    }
 }
+

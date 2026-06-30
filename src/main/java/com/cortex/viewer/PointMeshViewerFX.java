@@ -5,13 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Synapse;
-import com.cortex.base.SynapseBranch;
+import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.externals.ISensor;
-import com.cortex.base.layers.Abstract3DLayer;
-import com.cortex.base.layers.SphericalLayer;
-import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Point3f;
 import com.cortex.brain.Brain;
 
@@ -159,7 +154,7 @@ public class PointMeshViewerFX extends Application {
 				return;
 			}
 
-			AbstractNeuron n = findClosestNeuron(hitPoint);
+			NeuronBean n = findClosestNeuron(hitPoint);
 
 			if (n == null) {
 				dynamicTooltip.hide();
@@ -167,11 +162,11 @@ public class PointMeshViewerFX extends Application {
 			}
 
 			dynamicTooltip.setText(
-					"Neuron " + n.getIndex() +
+					"Neuron " + n.getId() +
 					"\nLayer: " + n.getLayerId() +
 					"\nType: " + n.getClass().getSimpleName() +
-					"\nInSyn: " + n.getInSynapsesCount() +
-					"\nOutSyn: " + n.getOutSynapsesCount()
+					"\nInSyn: " + n.getIncomingSynapses() +
+					"\nOutSyn: " + n.getOutgoingSynapses()
 					);
 
 			dynamicTooltip.show(
@@ -218,7 +213,7 @@ public class PointMeshViewerFX extends Application {
 				if (hitPoint == null) return;
 
 				// trova neurone più vicino
-				AbstractNeuron hit = findClosestNeuron(hitPoint);
+				NeuronBean hit = findClosestNeuron(hitPoint);
 
 				if (hit != null) {
 					highlightNeuron(hit);
@@ -234,15 +229,15 @@ public class PointMeshViewerFX extends Application {
 	}
 
 	// Picking with Neuron meshes
-	private AbstractNeuron findClosestNeuron(Point3D hitPoint) {
-		AbstractNeuron best = null;
+	private NeuronBean findClosestNeuron(Point3D hitPoint) {
+		NeuronBean best = null;
 		double bestDist = Double.MAX_VALUE;
 
 		// tolleranza selezione (adattiva)
 		double camDist = Math.abs(translate.getZ());
 		double tolerance = 0.2; //0.02 * camDist;
 		// double tolerance = 0.08;
-		for (AbstractNeuron n : brain.getEmisphere(0).getAllNeurons()) {
+		for (NeuronBean n : brain.getEmisphere(0).getHemisphereNeurons()) {
 			Point3D p = neuronToLocal(n);
 			double dist = p.distance(hitPoint);
 			// Click on empty space
@@ -255,7 +250,7 @@ public class PointMeshViewerFX extends Application {
 		return best;
 	}
 
-	private void highlightNeuron(AbstractNeuron n) {
+	private void highlightNeuron(NeuronBean n) {
 		Point3D p = neuronToLocal(n);
 		selectedSphere.setTranslateX(p.getX());
 		selectedSphere.setTranslateY(p.getY());
@@ -263,16 +258,17 @@ public class PointMeshViewerFX extends Application {
 		selectedSphere.setVisible(true);
 	}
 
-	private Point3D neuronToLocal(AbstractNeuron n) {
+	private Point3D neuronToLocal(NeuronBean n) {
 		Point3f p = n.getPosition();
 		Point3D meshSpace = new Point3D(-p.x(), p.y(), p.z());
 		Point3D sceneSpace = root3d.localToScene(meshSpace);
 		return root3d.sceneToLocal(sceneSpace);
 	}
 
-	private void highlightSynapses(AbstractNeuron n) {
+	private void highlightSynapses(NeuronBean n) {
 		synapseLines.getChildren().clear();
 		Point3D b = neuronToLocal(n);
+		/*
 		if (showInputSynapses) {
 			for (SynapseBranch sb : n.getInSynapseBranches()) {
 				for ( Synapse s : sb.synapses ) {
@@ -295,11 +291,12 @@ public class PointMeshViewerFX extends Application {
 				}
 			}
 		}
+		*/
 	}
 
-	private void highlightSpatialCell(AbstractNeuron hit) {
+	private void highlightSpatialCell(NeuronBean hit) {
 		if (!showNeuronSpatialCell) return;
-
+/*
 		Abstract3DLayer layer = brain.getEmisphere(0).getLayer(hit.getLayerId());
 		IntList cell = ((SphericalLayer)layer).getSpatialHashCell(hit);
 
@@ -318,13 +315,14 @@ public class PointMeshViewerFX extends Application {
 
 			//neuronSpheres.add(sphere);
 			root3d.getChildren().add(sphere);	
-		}		
+		}	
+		*/	
 	}
 
 	private void buildNeuronMesh() {
 		Map<Integer, TriangleMesh> map = new HashMap<>();
 
-		for (AbstractNeuron n : brain.getEmisphere(0).getAllNeurons()) {
+		for (NeuronBean n : brain.getEmisphere(0).getHemisphereNeurons()) {
 			int layer = n.getLayerId();
 			map.putIfAbsent(layer, new TriangleMesh());
 			TriangleMesh mesh = map.get(layer);
@@ -400,6 +398,7 @@ public class PointMeshViewerFX extends Application {
 	}
 
 	private void buildSensorNeuronSpheres() {
+		/*
 		for (AbstractNeuron[] nn : retina.getNeurons()) {
 			for (AbstractNeuron n : nn) {
 				for (SynapseBranch sb : n.getOutSynapseBranches()) {
@@ -417,5 +416,6 @@ public class PointMeshViewerFX extends Application {
 				}	
 			}			
 		}
+		*/
 	}
 }

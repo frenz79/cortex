@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +32,7 @@ import com.cortex.base.soa.DendriticTreeSoA;
 import com.cortex.base.soa.LateralInhibitionLayerSoA;
 import com.cortex.base.soa.NeuronSoA;
 import com.cortex.base.soa.NeuronTopologySoA;
+import com.cortex.base.soa.PlasticityParamsSoA;
 import com.cortex.base.soa.PlasticitySoA;
 import com.cortex.base.soa.SpatialHashSoA;
 import com.cortex.base.soa.SpikeBufferSoA;
@@ -91,31 +93,30 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		//InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 
 		
 		generateSoA(
-			excitatorySynapticPlasticityConfig, 
-			inhibitorySynapticPlasticityConfig
 		);
 		return this;
 	}
 	
-	public NeuronSoA neuronSoA;
-	public SynapseSoA synapseSoA;
-	public SynapseBranchSoA synapseBranchSoA;
-	public SynapseTopologySoA synapseTopologySoA;
-	public DendriticTreeSoA dendriticTreeSoA;
-	public PlasticitySoA plasticitySoA;
-	public SpikeBufferSoA spikeBuffer;
-	public LateralInhibitionLayerSoA lateralInhibitionLayerSoA;
-	public DendriticCompetitionParamsSoA dendriticCompetitionParamsSoA;
+	private NeuronSoA neuronSoA;
+	private SynapseSoA synapseSoA;
+	private SynapseBranchSoA synapseBranchSoA;
+	private SynapseTopologySoA synapseTopologySoA;
+	private DendriticTreeSoA dendriticTreeSoA;
+	private PlasticitySoA plasticitySoA;
+	private SpikeBufferSoA spikeBuffer;
+	private LateralInhibitionLayerSoA lateralInhibitionLayerSoA;
+	private DendriticCompetitionParamsSoA dendriticCompetitionParamsSoA;
+	private PlasticityParamsSoA plasticityParamsSoA;
 	
-	public ExcitatoryPlasticityLogic excitatoryPlasticityLogic;
-	public InhibitoryPlasticityLogic inhibitoryPlasticityLogic;
-	public NeuronTopologySoA neuronTopologySoA;
-	public CorticalNeuronLogic corticalNeuronLogic;
-	public SynapseLogic synapseLogic;
-	public SynapseBranchLogic synapseBranchLogic;
-	public CombinedLateralInhibitionLogic combinedLateralInhibitionLogic;
-	public DendriticCompetitionLogic dendriticCompetitionLogic;
-	public SpikeRingBufferLogic spikeBufferLogic;
+	private ExcitatoryPlasticityLogic excitatoryPlasticityLogic;
+	private InhibitoryPlasticityLogic inhibitoryPlasticityLogic;
+	private NeuronTopologySoA neuronTopologySoA;
+	private CorticalNeuronLogic corticalNeuronLogic;
+	private SynapseLogic synapseLogic;
+	private SynapseBranchLogic synapseBranchLogic;
+	private CombinedLateralInhibitionLogic combinedLateralInhibitionLogic;
+	private DendriticCompetitionLogic dendriticCompetitionLogic;
+	private SpikeRingBufferLogic spikeBufferLogic;
 
 	private SpatialHashSoA spatialHashSoA;
 	
@@ -133,9 +134,15 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		this.synapseBranchSoA = result.synapseBranchSoA();
 		this.synapseTopologySoA = result.synapseTopologySoA();
 		this.dendriticTreeSoA = result.dendriticTreeSoA();
+		this.neuronTopologySoA = result.neuronTopologySoA();
+		
 		this.plasticitySoA = new PlasticitySoA(this.synapseSoA.totalSynapses);
+		this.plasticityParamsSoA = buildPlasticityParamsSoA( this.synapseSoA );
+		
 		this.dendriticCompetitionParamsSoA = new DendriticCompetitionParamsSoA(BranchTypeCode.size());
-		this.neuronTopologySoA = new NeuronTopologySoA( hemisphereNeurons.length );
+		this.spatialHashSoA = buildSpatialHashSoA(hemisphereNeurons, neuronSoA, layersConfigs);
+		
+		// TODO: fill SOA!
 		
 		logger.info("Generating SOA Logic Modules");
 		
@@ -145,13 +152,9 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			this.dendriticCompetitionParamsSoA
 		);
 		
-		this.excitatoryPlasticityLogic = new ExcitatoryPlasticityLogic(
-			getExcitatorySynapticPlasticityConfigs(layersConfigs), this.plasticitySoA
-		);
+		this.excitatoryPlasticityLogic = new ExcitatoryPlasticityLogic( this.plasticitySoA );
 		
-		this.inhibitoryPlasticityLogic = new InhibitoryPlasticityLogic(
-			getInhibitorySynapticPlasticityConfigs(layersConfigs), this.plasticitySoA
-		);
+		this.inhibitoryPlasticityLogic = new InhibitoryPlasticityLogic( this.plasticitySoA );
 		
 		this.spikeBufferLogic = new SpikeRingBufferLogic(
 			4096,
@@ -160,12 +163,13 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			this.synapseSoA,
 			this.synapseBranchSoA
 		);
-				
+		
 		this.synapseLogic = new SynapseLogic(
 			this.excitatoryPlasticityLogic,
 			this.inhibitoryPlasticityLogic,	
 			this.synapseSoA,
-			this.plasticitySoA			
+			this.plasticitySoA,
+			this.plasticityParamsSoA
 		);
 		
 		this.synapseBranchLogic = new SynapseBranchLogic(
@@ -179,14 +183,15 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			getCorticalNeuronsConfigs(layersConfigs),
 			this.synapseBranchLogic,
 			this.dendriticCompetitionLogic,
+			
 			this.neuronSoA,
+			this.neuronTopologySoA,
 			this.synapseSoA,
 			this.synapseBranchSoA,
 			this.synapseTopologySoA,
 			this.synapseLogic,
 			this.spikeBufferLogic,
-			this.combinedLateralInhibitionLogic,
-			neuronTopologySoA
+			this.combinedLateralInhibitionLogic			
 		); 
 		
 		this.spatialHashSoA = buildSpatialHashSoA(
@@ -195,6 +200,48 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			layersConfigs
 		);
 	}
+	
+	private PlasticityParamsSoA buildPlasticityParamsSoA( SynapseSoA synapseSoA ) {
+		PlasticityParamsSoA ret = new PlasticityParamsSoA(synapseSoA.totalSynapses);
+		InhibitorySynapticPlasticityConfig[] inhCfg = getInhibitorySynapticPlasticityConfigs(layersConfigs);
+		ExcitatorySynapticPlasticityConfig[] excCfg = getExcitatorySynapticPlasticityConfigs(layersConfigs);
+		
+		for (int synId = 0; synId < synapseSoA.totalSynapses; synId++) {
+		    int layerId = neuronSoA.getLayerId( synapseSoA.sourceNeuronId[synId] );
+		    boolean excitatory = plasticitySoA.isExcitatory(synId);
+
+		    if (excitatory) {
+		        ExcitatorySynapticPlasticityConfig cfg = excCfg[layerId];
+
+		        ret.tauPlusOrLearningRate[synId]        = cfg.TAU_PLUS;
+		        ret.tauMinusOrTargetFiringRate[synId]   = cfg.TAU_MINUS;
+		        ret.aPlusOrWMin[synId]                  = cfg.A_PLUS;
+		        ret.aMinusOrWMax[synId]                 = cfg.A_MINUS;
+
+		        ret.homeostaticRateOrLearningRate[synId] = cfg.HOMEOSTATIC_RATE;
+		        ret.wBaselineOrTargetRate[synId]   		 = cfg.W_BASELINE;
+		        ret.wMin[synId]                          = cfg.W_MIN;
+		        ret.wMax[synId]                          = cfg.W_MAX;
+		        ret.eligibilityDecayNanos[synId]         = cfg.ELIGIBILITY_DECAY_NANOS;
+
+		    } else {
+		        InhibitorySynapticPlasticityConfig cfg = inhCfg[layerId];
+
+		        ret.tauPlusOrLearningRate[synId]        = cfg.LEARNING_RATE;
+		        ret.tauMinusOrTargetFiringRate[synId]   = cfg.TARGET_FIRING_RATE;
+		        ret.aPlusOrWMin[synId]                  = cfg.W_MIN;
+		        ret.aMinusOrWMax[synId]                 = cfg.W_MAX;
+
+		        ret.homeostaticRateOrLearningRate[synId] = cfg.LEARNING_RATE;
+		        ret.wBaselineOrTargetRate[synId]   		 = cfg.TARGET_FIRING_RATE;
+		        ret.wMin[synId]                          = cfg.W_MIN;
+		        ret.wMax[synId]                          = cfg.W_MAX;
+		        ret.eligibilityDecayNanos[synId]         = 0L;
+		    }
+		}		
+		return ret;
+	}
+	
 	
 	private static final InhibitorySynapticPlasticityConfig[] getInhibitorySynapticPlasticityConfigs(List<LayerConfig> cfg) {
 		InhibitorySynapticPlasticityConfig[] ret = new InhibitorySynapticPlasticityConfig[cfg.size()];
@@ -302,6 +349,24 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		}		
 		*/
 		bld.build();
+	}
+	
+	public void process(long now) {
+		// 1. PROCESS NEURONS (soma + dendriti + plasticità pre-spike)
+		IntStream.range(0, neuronSoA.totalNeurons)
+			.parallel()
+			.forEach(i -> corticalNeuronLogic.process(now, i));
+		
+		// 2. PROCESS DELAYED FIRES (propagazione spike + plasticità post-spike)
+		IntStream.range(0, neuronSoA.totalNeurons)
+			.parallel()
+			.forEach(i -> {
+				if (neuronSoA.hasPendingFire(i)) {
+					corticalNeuronLogic.delayedFire(now, i);
+			}});
+		
+	    // 3. PROCESS SPIKE BUFFER (rimuove spike scaduti, avanza finestra temporale)
+	    spikeBufferLogic.pollAndProcess(now);
 	}
 	
 	/*
@@ -449,5 +514,9 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			validate();
 			return emisphere.build(layersCfg);
 		}
+	}
+
+	public NeuronBean[] getHemisphereNeurons() {
+		return hemisphereNeurons;
 	}
 }

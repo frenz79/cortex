@@ -27,7 +27,7 @@ public final class DendriticCompetitionLogic {
         this.dendriticCompetitionParamsSoA = dendriticCompetitionParamsSoA;
     }
 
-    public void applyCompetition( long now, int neuronId ) {
+    public void process( long now, int neuronId ) {
         int first = dendriticTreeSoA.firstBranchIndex[neuronId];
         int count = dendriticTreeSoA.branchCount[neuronId];
 

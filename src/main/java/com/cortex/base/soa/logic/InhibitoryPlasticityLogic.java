@@ -2,64 +2,69 @@ package com.cortex.base.soa.logic;
 
 import java.util.Objects;
 
-import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.soa.PlasticitySoA;
 import com.cortex.base.utils.Maths;
 
 public final class InhibitoryPlasticityLogic implements IPlasticityLogic {
 
-    private final PlasticitySoA plasticitySoA;
-    private final InhibitorySynapticPlasticityConfig config;
+	private final PlasticitySoA plasticitySoA;
 
-    public InhibitoryPlasticityLogic(
-    	InhibitorySynapticPlasticityConfig config, 
-    	PlasticitySoA plasticitySoA
-	) {
+	public InhibitoryPlasticityLogic( PlasticitySoA plasticitySoA ) {
 		Objects.nonNull(plasticitySoA);
-		
+
 		this.plasticitySoA = plasticitySoA;
-        this.config = config;
+	}
+
+	@Override
+	public float getWeight(int synId) {
+		return plasticitySoA.weight[synId];
+	}
+	
+	 /**
+     * Homeostasis pura:
+     * w += homeostaticRate * (postRate - wBaseline)
+     */
+    @Override
+    public float update(long now, 
+    					int synId,
+                        float postRate,
+                        float homeostaticRateOrLearningRate,
+                        float wBaselineOrTargetFiringRate,
+                        float wMin,
+                        float wMax,
+                        long eligibilityDecayNanos) {
+		float error = postRate - wBaselineOrTargetFiringRate;
+		float dw = homeostaticRateOrLearningRate * error;
+		float w = plasticitySoA.weight[synId] + dw;
+		plasticitySoA.weight[synId] = Maths.clamp(w, wMin, wMax);
+		return w;
     }
     
-    @Override
-    public boolean onPostSpike(long now, int synId, long postTime, float postRate) {
-        float error = postRate - config.TARGET_FIRING_RATE;
-        float dw = config.LEARNING_RATE * error;
-        float w = plasticitySoA.weight[synId] + dw;
-        plasticitySoA.weight[synId] = Maths.clamp(w, config.W_MIN, config.W_MAX);
-        return false;
-    }
+	@Override
+	public boolean onPostSpike(long now, int synId, long postTime, float postRate, float tauPlusOrLearningRate, float tauMinsOrTargetFiringRate, float aPlusOrWMin, float aMinusOrWMax) {
+		update(
+			now, synId, postRate, tauPlusOrLearningRate, tauMinsOrTargetFiringRate, aPlusOrWMin, aMinusOrWMax, 0l
+		);
+		return false;
+	}
 
-    @Override
-    public float update(long now, int synId, float postRate) {
-        float error = postRate - config.TARGET_FIRING_RATE;
-        float dw = config.LEARNING_RATE * error;
-        float w = plasticitySoA.weight[synId] + dw;
-        plasticitySoA.weight[synId] = Maths.clamp(w, config.W_MIN, config.W_MAX);
-        return w;
-    }
-    
-    @Override
-    public float getWeight(int synId) {
-        return plasticitySoA.weight[synId];
-    }
+	@Override
+	public void applyReward(long now, int synId, float reward, float neuromodulator, float wMin, float wMax) {
+		// no-op
+	}
 
-    @Override
-    public boolean onPreSpike(long now, int synId ) {
-        return false;
-    }
+	@Override
+	public boolean isEligible(long now, int synId, long window) {
+		return false;
+	}
 
-    @Override
-    public boolean hadSignificantPairing(int synId) {
-        return false;
-    }
+	@Override
+	public boolean hadSignificantPairing(int synId, float tauPlus, float tauMins, float aPlus, float aMinus) {
+		return false;
+	}
 
-    public boolean isEligible(long now, int synId, long window) {
-        return false;
-    }
-
-    @Override
-    public void applyReward(long now, int synId, float r, float neuromodulator) {
-        // no-op
-    }
+	@Override
+	public boolean onPreSpike(long now, int synId, float tauPlus, float tauMins, float aPlus, float aMinus) {
+		return false;
+	}
 }

@@ -74,7 +74,7 @@ public class Boostrap {
 		return ocrSupervisor;
 	}
 	*/
-	public static void main(String[] args) throws IOException, InterruptedException { 
+	public static void main(String[] args) throws Exception { 
 		int totalNeurons = 40_000;
 		int connScale = 50;
 

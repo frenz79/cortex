@@ -162,81 +162,99 @@ public class SoABuilder {
 	            topo.synapseIndex[idx++] = start + i;
 	        }
 	    }
-
 	    return topo;
 	}
 	
-	public NeuronTopologySoA buildNeuronTopologySoA(NeuronBean[] neurons, SynapseBranchSoA branchSoA) {
-
+	public NeuronTopologySoA buildNeuronTopologySoA(
+	        NeuronBean[] neurons,
+	        SynapseBranchSoA branchSoA
+	) {
 	    int N = neurons.length;
-	    NeuronTopologySoA topo = new NeuronTopologySoA(N);
+	    int totalBranches = branchSoA.synapseStart.length;
 
-	    int branchIdx = 0; // indice globale dei branch
+	    // Conta totale dei gruppi (branch per tipo)
+	    int totalGroups = 0;
+	    for (NeuronBean nb : neurons) {
+	        for (List<BranchBean> list : nb.incomingBranches.values()) {
+	            totalGroups += list.size();
+	        }
+	    }
+
+	    NeuronTopologySoA topo = new NeuronTopologySoA(N, totalBranches, totalGroups);
+
+	    int incomingWrite = 0;
+	    int outgoingWrite = 0;
+	    int groupWrite = 0;
+
+	    int branchIndex = 0; // <-- questo è il branchIndex corretto
 
 	    for (int n = 0; n < N; n++) {
 
 	        NeuronBean nb = neurons[n];
 
-	        // Conta quanti branch incoming ha il neurone
+	        // --- INCOMING BRANCHES ---
 	        int incomingCount = 0;
 	        for (List<BranchBean> list : nb.incomingBranches.values()) {
 	            incomingCount += list.size();
 	        }
 
+	        topo.incomingBranchStart[n] = incomingWrite;
 	        topo.incomingBranchCount[n] = incomingCount;
 
-	        // Se non ha incoming → array vuoto
-	        if (incomingCount == 0) {
-	            topo.incomingBranchIndices[n] = new int[0];
-	            for (int t = 0; t < BranchTypeCode.size(); t++) {
-	                topo.branchGroups[n][t] = new int[0];
-	            }
-	            continue;
-	        }
-
-	        // Allocazione array contiguo degli indici incoming
-	        int[] incomingIdx = new int[incomingCount];
-	        topo.incomingBranchIndices[n] = incomingIdx;
-
-	        // Allocazione gruppi per tipo
-	        int[][] groups = topo.branchGroups[n];
-
-	        // Prima passata: conta quanti branch per tipo
-	        int[] typeCount = new int[BranchTypeCode.size()];
 	        for (List<BranchBean> list : nb.incomingBranches.values()) {
 	            for (BranchBean b : list) {
-	                typeCount[b.type]++;
+	                topo.incomingBranches[incomingWrite++] = branchIndex;
+	                branchIndex++;
 	            }
 	        }
 
-	        // Alloca gli array per tipo
+	        // --- OUTGOING BRANCHES ---
+	        int outgoingCount = 0;
+	        for (List<BranchBean> list : nb.outgoingBranches.values()) {
+	            outgoingCount += list.size();
+	        }
+
+	        topo.outgoingBranchStart[n] = outgoingWrite;
+	        topo.outgoingBranchCount[n] = outgoingCount;
+
+	        for (List<BranchBean> list : nb.outgoingBranches.values()) {
+	            for (BranchBean b : list) {
+	                topo.outgoingBranches[outgoingWrite++] = branchIndex;
+	                branchIndex++;
+	            }
+	        }
+
+	        // --- GROUPS PER TIPO (flatten) ---
 	        for (int t = 0; t < BranchTypeCode.size(); t++) {
-	            groups[t] = new int[typeCount[t]];
-	        }
 
-	        // Indici di scrittura per ogni tipo
-	        int[] typeWriteIdx = new int[BranchTypeCode.size()];
+	            int groupStartIndex = n * BranchTypeCode.size() + t;
 
-	        // incomingBranchStart = primo branch incoming
-	        topo.incomingBranchStart[n] = branchIdx;
+	            topo.branchGroupStart[groupStartIndex] = groupWrite;
 
-	        // Seconda passata: riempi incomingIdx e gruppi per tipo
-	        int write = 0;
-	        for (List<BranchBean> list : nb.incomingBranches.values()) {
-	            for (BranchBean b : list) {
+	            int countT = 0;
+	            for (List<BranchBean> list : nb.incomingBranches.values()) {
+	                for (BranchBean b : list) {
+	                    if (b.type == t) countT++;
+	                }
+	            }
 
-	                incomingIdx[write++] = branchIdx;
+	            topo.branchGroupCount[groupStartIndex] = countT;
 
-	                int t = b.type;
-	                groups[t][typeWriteIdx[t]++] = branchIdx;
-
-	                branchIdx++;
+	            for (List<BranchBean> list : nb.incomingBranches.values()) {
+	                for (BranchBean b : list) {
+	                    if (b.type == t) {
+	                        topo.branchGroupIndices[groupWrite++] = branchIndex;
+	                        branchIndex++;
+	                    }
+	                }
 	            }
 	        }
 	    }
 
 	    return topo;
 	}
+
+
 	
 	public DendriticTreeSoA buildDendriticTreeSoA(NeuronBean[] neurons) {
 	    int N = neurons.length;

@@ -11,11 +11,7 @@ import java.util.concurrent.atomic.LongAdder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.AbstractNeuron;
-import com.cortex.base.externals.IActuator;
-import com.cortex.base.externals.IClassifier;
 import com.cortex.base.externals.ISensor;
-import com.cortex.base.externals.ISupervisor;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.brain.Brain;
 import com.cortex.brain.Hemisphere;

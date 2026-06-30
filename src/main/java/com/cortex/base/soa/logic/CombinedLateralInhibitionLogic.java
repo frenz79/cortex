@@ -36,7 +36,7 @@ public final class CombinedLateralInhibitionLogic {
      * Apply both topographic and synaptical lateral inhibition
      * to all branches of neurons influenced by neuronId.
      */
-    public void applyLateralInhibition(long now, int neuronId) {
+    public void process(long now, int neuronId) {
 
         // Layer-specific parameters
         int layer = neuronSoA.getLayerId(neuronId);

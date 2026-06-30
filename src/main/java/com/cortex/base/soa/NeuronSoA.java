@@ -30,6 +30,8 @@ public final class NeuronSoA {
 	@SerializableAttribute
 	public final byte[] flags;
 	
+	public final int totalNeurons;
+	
 	public NeuronSoA(int totalNeurons) {
 		this.posX = new float[totalNeurons];
 		this.posY = new float[totalNeurons];
@@ -39,6 +41,7 @@ public final class NeuronSoA {
 		this.lastSpikeTime = new long[totalNeurons];
 		this.lastProcessTime = new long[totalNeurons];
 		this.flags = new byte[totalNeurons];
+		this.totalNeurons = totalNeurons;
 	}
 
 	public void setLayerId(int neuronId, int layer) {
@@ -69,7 +72,7 @@ public final class NeuronSoA {
         flags[neuronId] &= 0b10111111;
     }
 
-    public boolean isPendingFire(int neuronId) {
+    public boolean hasPendingFire(int neuronId) {
         return (flags[neuronId] & 0b01000000) != 0;
     }
     

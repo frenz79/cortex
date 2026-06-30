@@ -2,6 +2,7 @@ package com.cortex.base.soa.logic;
 
 import java.util.Objects;
 
+import com.cortex.base.soa.PlasticityParamsSoA;
 import com.cortex.base.soa.PlasticitySoA;
 import com.cortex.base.soa.SynapseSoA;
 import com.cortex.base.utils.Maths;
@@ -22,6 +23,7 @@ public final class SynapseLogic {
 	
     private final SynapseSoA synapseSoA;
     private final PlasticitySoA plasticitySoA;
+    private final PlasticityParamsSoA plasticityParamsSoA;
     private final ExcitatoryPlasticityLogic excitatoryPlasticityLogic;
     private final InhibitoryPlasticityLogic inhibitoryPlasticityLogic;
     
@@ -30,13 +32,15 @@ public final class SynapseLogic {
     	InhibitoryPlasticityLogic inhibitoryPlasticityLogic,
     	
     	SynapseSoA synapseSoA,
-    	PlasticitySoA plasticitySoA
+    	PlasticitySoA plasticitySoA,
+    	PlasticityParamsSoA plasticityParamsSoA
     ) {
     	Objects.nonNull(synapseSoA);
     	Objects.nonNull(plasticitySoA);
     	
         this.synapseSoA = synapseSoA;
         this.plasticitySoA = plasticitySoA;
+        this.plasticityParamsSoA = plasticityParamsSoA;
         this.excitatoryPlasticityLogic = excitatoryPlasticityLogic;
         this.inhibitoryPlasticityLogic = inhibitoryPlasticityLogic;
     }
@@ -66,34 +70,72 @@ public final class SynapseLogic {
     // --- Plasticità pre-spike ---
     public void onPreSpike(int synId, long now ) {
         synapseSoA.activityCounter[synId]++;
-        if (getPlasticityLogic(synId).onPreSpike(now, synId)) {
+        
+        if (getPlasticityLogic(synId).onPreSpike(
+        		now, 
+        		synId,
+        		plasticityParamsSoA.tauPlusOrLearningRate[synId],
+        		plasticityParamsSoA.tauMinusOrTargetFiringRate[synId],
+        		plasticityParamsSoA.aPlusOrWMin[synId],
+        		plasticityParamsSoA.aMinusOrWMax[synId]
+        	)) {
             EventBus.fire(EventType.SYNAPSE_SPIKED, now, synId, SynapseSpikedData.preSpikeData());
-        }
+        }        
     }
 
     public void onPostSpike(int synId, long postSpikeTime, long now ) {
         synapseSoA.activityCounter[synId]++; 
-        if (getPlasticityLogic(synId).onPostSpike(now, synId, postSpikeTime, 0.0f)) {
+        if (getPlasticityLogic(synId).onPostSpike(
+        	now, 
+        	synId, 
+        	postSpikeTime, 
+        	0.0f,	// postRate
+        	plasticityParamsSoA.tauPlusOrLearningRate[synId],
+        	plasticityParamsSoA.tauMinusOrTargetFiringRate[synId],
+        	plasticityParamsSoA.aPlusOrWMin[synId],
+        	plasticityParamsSoA.aMinusOrWMax[synId]
+        )) {
         	EventBus.fire(EventType.SYNAPSE_SPIKED, now, synId, SynapseSpikedData.postSpikeData());
         }
     }
 
     public void update(int synId, long now) {
         float oldValue = plasticitySoA.weight[synId];
-        float newValue = getPlasticityLogic(synId).update(now, synId, 0.0f);
+        float newValue = getPlasticityLogic(synId).update(
+        	now, 
+        	synId, 
+        	0.0f, // postRate
+        	plasticityParamsSoA.homeostaticRateOrLearningRate[synId],
+        	plasticityParamsSoA.tauMinusOrTargetFiringRate[synId],
+        	plasticityParamsSoA.aPlusOrWMin[synId],
+        	plasticityParamsSoA.aMinusOrWMax[synId],
+        	plasticityParamsSoA.eligibilityDecayNanos[synId]
+        );        
+        
         if (oldValue != newValue) {
             EventBus.fire(EventType.SYNAPSE_UPDATED, now, synId, new SynapseUpdatedData(oldValue, newValue));
         }
     }
-    
+	
     public void applyReward(int synId, float deltaW, long now, float reward) {
     	IPlasticityLogic plast = getPlasticityLogic(synId);
-    	plast.applyReward(now, synId, deltaW, reward);
+    	plast.applyReward(
+    		now, 
+    		synId, 
+    		deltaW, 
+    		reward,
+    		plasticityParamsSoA.aPlusOrWMin[synId],
+    		plasticityParamsSoA.aMinusOrWMax[synId]);
 
         if (reward > 0.0f &&
             wasFrequentlyActiveInLastWindow(synId) &&
-            plast.hadSignificantPairing(synId)) {
-
+            plast.hadSignificantPairing(
+            	synId,
+            	plasticityParamsSoA.tauPlusOrLearningRate[synId],
+            	plasticityParamsSoA.tauMinusOrTargetFiringRate[synId],
+            	plasticityParamsSoA.aPlusOrWMin[synId],
+            	plasticityParamsSoA.aMinusOrWMax[synId]
+            )) {
             float mf = synapseSoA.myelinFactor[synId];
             mf += ETA_MYELIN * reward;
             synapseSoA.myelinFactor[synId] = Maths.clamp(mf, 0, MAX_MYELIN);
