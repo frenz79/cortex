@@ -2,7 +2,6 @@ package com.cortex.base.layers;
 
 import static com.cortex.base.Commons.ALWAYS_CONNECT_PREDICATE;
 
-import com.cortex.base.lateral_inhibition.CombinedLateralInhibition;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
@@ -15,7 +14,7 @@ public class MultiLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.30f)
-	        .withCombinedLateralInhibition(new CombinedLateralInhibition(1.0f, 1.0f, 1.0f, 0.2f))
+	        .withCombinedLateralInhibition(1.0f, 1.0f, 1.0f, 0.2f)
 	        .withDimension(1.00f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
@@ -46,7 +45,7 @@ public class MultiLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.25f)
-	        .withCombinedLateralInhibition(new CombinedLateralInhibition(1.0f, 1.0f, 0.7f, 0.5f))
+	        .withCombinedLateralInhibition(1.0f, 1.0f, 0.7f, 0.5f)
 	        .withDimension(0.85f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
@@ -77,7 +76,7 @@ public class MultiLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.18f)
-	        .withCombinedLateralInhibition(new CombinedLateralInhibition(1.0f, 1.0f, 0.4f, 0.8f))
+	        .withCombinedLateralInhibition(1.0f, 1.0f, 0.4f, 0.8f)
 	        .withDimension(0.70f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
@@ -108,7 +107,7 @@ public class MultiLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.40f)
-	        .withCombinedLateralInhibition(new CombinedLateralInhibition(1.0f, 1.0f, 0.2f, 1.0f))
+	        .withCombinedLateralInhibition(1.0f, 1.0f, 0.2f, 1.0f)
 	        .withDimension(0.55f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
@@ -139,7 +138,7 @@ public class MultiLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.22f)
-	        .withCombinedLateralInhibition(new CombinedLateralInhibition(1.0f, 1.0f, 0.1f, 1.0f))
+	        .withCombinedLateralInhibition(1.0f, 1.0f, 0.1f, 1.0f)
 	        .withDimension(0.40f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)
@@ -170,7 +169,7 @@ public class MultiLayersConfig {
 	        .enableInConn(true)
 	        .enableOutConn(true)
 	        .withInhibitorFreq(0.15f)
-	        .withCombinedLateralInhibition(new CombinedLateralInhibition(1.0f, 1.0f, 0.0f, 1.0f))
+	        .withCombinedLateralInhibition(1.0f, 1.0f, 0.0f, 1.0f)
 	        .withDimension(0.20f)
 	        .withNeurons(neuronsCount)
 	        .withConnection(minConnections, maxConnections, maxConnDistance)

@@ -1,26 +1,12 @@
 package com.cortex.globals;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Synapse;
-import com.cortex.brain.CorticalNeuron;
-import com.cortex.globals.EventBus.EventListener;
-import com.cortex.globals.EventBus.EventType;
-import com.cortex.globals.EventBus.SynapseSpikedData;
 
 public class BrainNeuromodulator {
 
 	final Logger logger = LogManager.getLogger(this.getClass());
-	
+	/*
 	private final Queue<Synapse> recentlyActiveSynapses = new ConcurrentLinkedQueue<>();
 	
 	public BrainNeuromodulator() {
@@ -104,4 +90,5 @@ public class BrainNeuromodulator {
 			return 0.1f;
 		}
 	}
+	*/
 }

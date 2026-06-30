@@ -4,13 +4,6 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.cortex.base.SynapseBranch.BranchType;
-import com.cortex.base.dendritic_competition.ContinuousCompetition;
-import com.cortex.base.dendritic_competition.DendriticCompetitionStrategiesConfig;
-import com.cortex.base.dendritic_competition.IDendriticCompetitionStrategy;
-import com.cortex.base.dendritic_competition.NormalizedCompetition;
-import com.cortex.base.dendritic_competition.WinnerTakeMostCompetition;
-
 public class CorticalNeuronsConfig {
 
 	public int MAX_FAN_IN = 250;

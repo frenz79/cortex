@@ -7,7 +7,6 @@ import java.util.PriorityQueue;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.utils.IntFloatPair;
 import com.cortex.base.utils.IntList;
@@ -17,11 +16,11 @@ import com.cortex.base.utils.SpatialHash;
 
 public class Functions {
 	
-	public static final IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance, AbstractNeuron[] neurons, SpatialHash spatialHash ) {
+	public static final IntList findKNearestApprox(Point3f p, int k, float cellSize, float maxDistance, NeuronBean[] neurons, SpatialHash spatialHash ) {
 		return findKNearestApprox(p.x(), p.y(), p.z(), k, cellSize, maxDistance, neurons, spatialHash);
 	}
 
-	public static final IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance, AbstractNeuron[] neurons, SpatialHash spatialHash ) {
+	public static final IntList findKNearestApprox(float x, float y, float z, int k, float cellSize, float maxDistance, NeuronBean[] neurons, SpatialHash spatialHash ) {
 		// buffer ordinato di dimensione k (distanze quadratiche)
 		IntFloatPair[] best = new IntFloatPair[k];
 		for (int i = 0; i < k; i++) best[i] = new IntFloatPair(-1, Float.POSITIVE_INFINITY);

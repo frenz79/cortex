@@ -11,10 +11,6 @@ public abstract class AbstractExternalNeuron extends AbstractNeuron {
 		super(null, index, -1, hasIncoming, hasOutgoing, false, null);
 	}
 	
-    @Override
-    public boolean process(long currTimeNanos) {
-        return true;
-    }
     
     @Override
     public int getLayerId() {

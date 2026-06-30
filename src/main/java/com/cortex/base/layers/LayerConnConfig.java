@@ -2,7 +2,6 @@ package com.cortex.base.layers;
 
 import java.util.function.Predicate;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.Commons;
 import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;

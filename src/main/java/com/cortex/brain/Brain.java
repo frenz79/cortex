@@ -6,9 +6,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.Synapse;
-import com.cortex.base.layers.Abstract3DLayer;
-
 public class Brain {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
@@ -70,14 +67,16 @@ public class Brain {
 	public int getNeuronsCount() {
 		int ret = 0;
 		for ( Hemisphere<?> e : emispheres ) {
-			for ( Abstract3DLayer l : e.getAllLayers() ) {
-				ret += l.getNeuronsCount();
-			}			
+			ret += e.getTotalNeurons();		
 		}
 		return ret;
 	}
 
 	public int getSynapsesCount() {
-		return Synapse.getSynapsesCount();
+		int ret = 0;
+		for ( Hemisphere<?> e : emispheres ) {
+			ret += e.getTotalSynapses();		
+		}
+		return ret;
 	}
 }

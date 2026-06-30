@@ -6,7 +6,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.cortex.base.beans.NeuronBean;
-import com.cortex.base.lateral_inhibition.CombinedLateralInhibition;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.base.plasticity.SynapsePlasticityConfig;
@@ -28,7 +27,13 @@ public class LayerConfig {
     public Predicate<NeuronBean> CONNECTION_FILTER = null;
     public SynapsePlasticityConfig SYNAPSE_PLASTICITY_CONFIG = null;
     public CorticalNeuronsConfig CORTICAL_NEURONS_CONFIG = null;
-    public CombinedLateralInhibition COMBINED_LATERAL_INHIBITION = null;
+
+    // LATERAL INHIBITION
+    public float LI_TOPO_STRENGTH;
+    public float LI_SYN_STRENGTH;
+    public float LI_TOPO_WEIGHT;
+    public float LI_SYN_WEIGHT;
+        
     public float DIMENSION = 0;
     
     LayerConfig(int layerId, int hemisphereId) {
@@ -72,8 +77,16 @@ public class LayerConfig {
             return this;
         }
         
-        public Builder withCombinedLateralInhibition(CombinedLateralInhibition COMBINED_LATERAL_INHIBITION) {
-            cfg.COMBINED_LATERAL_INHIBITION = COMBINED_LATERAL_INHIBITION;
+        public float LI_TOPO_STRENGTH;
+        public float LI_SYN_STRENGTH;
+        public float LI_TOPO_WEIGHT;
+        public float LI_SYN_WEIGHT;
+        
+        public Builder withCombinedLateralInhibition(float LI_TOPO_STRENGTH, float LI_SYN_STRENGTH, float LI_TOPO_WEIGHT, float LI_SYN_WEIGHT) {
+            cfg.LI_TOPO_STRENGTH = LI_TOPO_STRENGTH;
+            cfg.LI_SYN_STRENGTH = LI_SYN_STRENGTH;
+            cfg.LI_TOPO_WEIGHT = LI_TOPO_WEIGHT;
+            cfg.LI_SYN_WEIGHT = LI_SYN_WEIGHT;
             return this;
         }
         

@@ -60,6 +60,8 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		
 	private final int hemisphereId;
 	private int totalNeurons = 0;
+	private int totalSynapses = 0;
+	
 	private MultiLayersConnConfig multiLayersConnConfig;
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnConfig> layersConnConfigs = new ArrayList<>();
@@ -131,6 +133,9 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		SoABuilderResult result = bld.buildAll(hemisphereNeurons);
 		this.neuronSoA = result.neuronSoA();
 		this.synapseSoA = result.synapseSoA();
+		
+		this.totalSynapses = this.synapseSoA.totalSynapses;
+		
 		this.synapseBranchSoA = result.synapseBranchSoA();
 		this.synapseTopologySoA = result.synapseTopologySoA();
 		this.dendriticTreeSoA = result.dendriticTreeSoA();
@@ -518,5 +523,21 @@ public class Hemisphere<L extends Abstract3DLayer> {
 
 	public NeuronBean[] getHemisphereNeurons() {
 		return hemisphereNeurons;
+	}
+
+	public int getTotalNeurons() {
+		return totalNeurons;
+	}
+
+	public void setTotalNeurons(int totalNeurons) {
+		this.totalNeurons = totalNeurons;
+	}
+
+	public int getTotalSynapses() {
+		return totalSynapses;
+	}
+
+	public int getHemisphereId() {
+		return hemisphereId;
 	}
 }

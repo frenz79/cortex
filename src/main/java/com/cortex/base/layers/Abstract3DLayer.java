@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.AbstractNeuron;
 import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Point3f;
@@ -53,7 +52,7 @@ public abstract class Abstract3DLayer {
 		);
 	}
 
-	public IntList getSpatialHashCell( AbstractNeuron n ) {
+	public IntList getSpatialHashCell( NeuronBean n ) {
 		return this.spatialHash.getSpatialHashCell(n);
 	}
 	
