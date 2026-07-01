@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.beans.NeuronBean;
-import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Point3f;
 
 public abstract class Abstract3DLayer {
@@ -15,7 +14,7 @@ public abstract class Abstract3DLayer {
 	final Logger logger = LogManager.getLogger(this.getClass());
 
 	protected final LayerConfig config;
-	private NeuronBean[] neurons;
+	private volatile NeuronBean[] neurons;
 	private int neuronsStart;
 	private int neuronsLen;
 	private int synapsesCount = 0;
@@ -32,6 +31,7 @@ public abstract class Abstract3DLayer {
 		long startTime = System.nanoTime();
 		this.neuronsStart = start;
 		this.neuronsLen = len;
+		this.neurons = neurons;
 		
 		for(int i=0 ;i<len; i++) {
 			neurons[i+start] = new NeuronBean(

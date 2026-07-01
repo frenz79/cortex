@@ -78,7 +78,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		*/
 	}
 	
-	private NeuronBean[] hemisphereNeurons;
+	private volatile NeuronBean[] hemisphereNeurons;
 	
 	public Hemisphere<L> build(	MultiLayersConfig layersCfg	) throws Exception {
 		hemisphereNeurons = new NeuronBean[totalNeurons];
@@ -327,8 +327,10 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	
 	private int getStartNeuronsIndex(int layerId) {
 		int offset = 0;
-		for(int i=0; i<layerId; i++) {
-			offset += getLayer(i).getNeuronsCount();
+		if (layerId>0) {
+			for(int i=0; i<layerId; i++) {
+				offset += layersConfigs.get(i).NEURONS_COUNT;
+			}
 		}
 		return offset;
 	}
