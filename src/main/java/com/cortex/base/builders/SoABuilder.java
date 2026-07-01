@@ -61,7 +61,52 @@ public class SoABuilder {
 		}		
 		return ret;
 	}
+	
+	public SynapseBranchSoA buildSynapseBranchSoA(NeuronBean[] neurons) {
+	    // Numero reale di branch creati in parallelo
+	    int totBranches = BranchBean.idGen.get();
 
+	    SynapseBranchSoA ret = new SynapseBranchSoA(totBranches);
+
+	    // Mappa ID → BranchBean
+	    BranchBean[] byId = new BranchBean[totBranches];
+
+	    // Raccogliamo tutti i branch
+	    for (NeuronBean n : neurons) {
+
+	        for (List<BranchBean> list : n.outgoingBranches.values()) {
+	            for (BranchBean b : list) {
+	                byId[b.id] = b;
+	            }
+	        }
+	        for (List<BranchBean> list : n.incomingBranches.values()) {
+	            for (BranchBean b : list) {
+	                byId[b.id] = b;
+	            }
+	        }
+	    }
+
+	    // Costruiamo il SoA in ordine di ID
+	    for (int id = 0; id < totBranches; id++) {
+	        BranchBean b = byId[id];
+	        // ID del branch = indice nel SoA
+	        ret.branchId[id] = id;
+	        // Tipo del branch
+	        ret.setBranchType(id, b.type);
+	        // Direzione del branch
+	        // (puoi aggiungere un flag in BranchBean per incoming/outgoing)
+	        ret.setDirection(id, b.incoming ? DirectionCode.INCOMING : DirectionCode.OUTGOING);
+
+	        // Numero di sinapsi nel branch
+	        ret.synapseCount[id] = (byte)b.size();
+
+	        // synapseStart verrà riempito dal SynapseSoABuilder
+	    }
+
+	    return ret;
+	}
+	
+/*
 	public SynapseBranchSoA buildSynapseBranchSoA(NeuronBean[] neurons) {
 		int totBranches = countBranches(neurons);		
 		
@@ -71,6 +116,7 @@ public class SoABuilder {
 		for (NeuronBean n : neurons) {
 			for (List<BranchBean> branches : n.outgoingBranches.values()) {
 				for ( BranchBean b : branches ) {
+					ret.branchId[idx] = b.id;
 					ret.setBranchType(idx, b.type);
 					ret.setDirection(idx, DirectionCode.OUTGOING);
 					ret.synapseCount[idx] = (byte)b.size();
@@ -80,6 +126,7 @@ public class SoABuilder {
 			}
 			for (List<BranchBean> branches : n.incomingBranches.values()) {
 				for ( BranchBean b : branches ) {
+					ret.branchId[idx] = b.id;
 					ret.setBranchType(idx, b.type);
 					ret.setDirection(idx, DirectionCode.INCOMING);
 					ret.synapseCount[idx] = (byte)b.size();
@@ -90,7 +137,7 @@ public class SoABuilder {
 		}
 		return ret;
 	}
-
+*/
 	public SynapseSoA buildSynapseSoA(NeuronBean[] neurons, SynapseBranchSoA branchSoA) {
 	    int totalSynapses = countSynapses(neurons);
 	    SynapseSoA ret = new SynapseSoA(totalSynapses);
@@ -172,7 +219,6 @@ public class SoABuilder {
 	    int N = neurons.length;
 	    int totalBranches = branchSoA.synapseStart.length;
 
-	    // Conta totale dei gruppi (branch per tipo)
 	    int totalGroups = 0;
 	    for (NeuronBean nb : neurons) {
 	        for (List<BranchBean> list : nb.incomingBranches.values()) {
@@ -186,49 +232,40 @@ public class SoABuilder {
 	    int outgoingWrite = 0;
 	    int groupWrite = 0;
 
-	    int branchIndex = 0; // <-- questo è il branchIndex corretto
-
 	    for (int n = 0; n < N; n++) {
 
 	        NeuronBean nb = neurons[n];
 
-	        // --- INCOMING BRANCHES ---
-	        int incomingCount = 0;
-	        for (List<BranchBean> list : nb.incomingBranches.values()) {
-	            incomingCount += list.size();
-	        }
+	        // --- INCOMING ---
+	        int incomingCount = nb.incomingBranches.values()
+	                .stream().mapToInt(List::size).sum();
 
 	        topo.incomingBranchStart[n] = incomingWrite;
 	        topo.incomingBranchCount[n] = incomingCount;
 
 	        for (List<BranchBean> list : nb.incomingBranches.values()) {
 	            for (BranchBean b : list) {
-	                topo.incomingBranches[incomingWrite++] = branchIndex;
-	                branchIndex++;
+	                topo.incomingBranches[incomingWrite++] = b.id;
 	            }
 	        }
 
-	        // --- OUTGOING BRANCHES ---
-	        int outgoingCount = 0;
-	        for (List<BranchBean> list : nb.outgoingBranches.values()) {
-	            outgoingCount += list.size();
-	        }
+	        // --- OUTGOING ---
+	        int outgoingCount = nb.outgoingBranches.values()
+	                .stream().mapToInt(List::size).sum();
 
 	        topo.outgoingBranchStart[n] = outgoingWrite;
 	        topo.outgoingBranchCount[n] = outgoingCount;
 
 	        for (List<BranchBean> list : nb.outgoingBranches.values()) {
 	            for (BranchBean b : list) {
-	                topo.outgoingBranches[outgoingWrite++] = branchIndex;
-	                branchIndex++;
+	                topo.outgoingBranches[outgoingWrite++] = b.id;
 	            }
 	        }
 
-	        // --- GROUPS PER TIPO (flatten) ---
+	        // --- GROUPS ---
 	        for (int t = 0; t < BranchTypeCode.size(); t++) {
 
 	            int groupStartIndex = n * BranchTypeCode.size() + t;
-
 	            topo.branchGroupStart[groupStartIndex] = groupWrite;
 
 	            int countT = 0;
@@ -243,8 +280,7 @@ public class SoABuilder {
 	            for (List<BranchBean> list : nb.incomingBranches.values()) {
 	                for (BranchBean b : list) {
 	                    if (b.type == t) {
-	                        topo.branchGroupIndices[groupWrite++] = branchIndex;
-	                        branchIndex++;
+	                        topo.branchGroupIndices[groupWrite++] = b.id;
 	                    }
 	                }
 	            }
@@ -253,7 +289,6 @@ public class SoABuilder {
 
 	    return topo;
 	}
-
 
 	
 	public DendriticTreeSoA buildDendriticTreeSoA(NeuronBean[] neurons) {
@@ -301,6 +336,29 @@ public class SoABuilder {
 	    }
 	    return count;
 	}
+	
+	/*
+	 
+	 private int countSynapses(NeuronBean[] neurons) {
+	    Set<SynapseBean> synapses = new HashSet<>();
+	    for (NeuronBean n : neurons) {
+	        for (List<BranchBean> list : n.outgoingBranches.values()) {
+	            for (BranchBean b : list) {
+	            	synapses.addAll( b.getSynapses() );
+	            }
+	        }
+	        
+	        for (List<BranchBean> list : n.incomingBranches.values()) {
+	            for (BranchBean b : list) {
+	            	synapses.addAll( b.getSynapses() );
+	            }
+	        }
+	    }
+	    return synapses.size();
+	}
+	 
+	
+	 */
 	
 	private int countBranches(NeuronBean[] neurons) {
 	    int count = 0;

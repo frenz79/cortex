@@ -68,7 +68,7 @@ public class DiscreteAdaptiveStabilizer {
 		this.emisphere = emisphere;
 		this.layerStats = new LayerStats[ emisphere.getAllLayers().size() ];
 		this.ema = new StatsEMA[emisphere.getAllLayers().size()];
-
+/*
 		EventBus.addListener(EventType.LAYER_STATS,  new EventListener() {
 
 			@Override
@@ -81,6 +81,7 @@ public class DiscreteAdaptiveStabilizer {
 				}
 			}
 		});
+	*/
 	}
 
 	public void stabilize(LayerStats stats) {

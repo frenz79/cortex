@@ -67,15 +67,24 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 	    for (int bi = inStart; bi < inStart + inCount; bi++) {
 
 	        int b = neuronTopologySoA.incomingBranches[bi];
-
+	        if (b < 0 || b >= synBranchSoA.synapseStart.length) {
+	            System.err.println(
+	                "INVALID BRANCH ID: neuron=" + neuronIndex +
+	                " b=" + b +
+	                " incomingStart=" + inStart +
+	                " incomingCount=" + inCount +
+	                " layer=" + neuronSoA.getLayerId(neuronIndex)
+	            );
+	            throw new RuntimeException("Invalid branch ID");
+	        }
+	        
 	        int synStart = synBranchSoA.synapseStart[b];
 	        int synCount = synBranchSoA.synapseCount[b];
 
 	        synBranchSoA.branchPotential[b] = 0f;
 	        boolean branchStayActive = false;
 
-	        for (int si = synStart; si < synStart + synCount; si++) {
-
+	        for (int si = synStart; si < synStart + synCount; si++) {	        	
 	            int synId = synTopologySoA.synapseIndex[si];
 
 	            // Spike present?

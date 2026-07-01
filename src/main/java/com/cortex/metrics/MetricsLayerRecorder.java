@@ -19,8 +19,8 @@ public class MetricsLayerRecorder {
 	private final Abstract3DLayer layer;
 
 	private final LongAdder spikeCounter = new LongAdder();
-//	private final Set<AbstractNeuron> activeNeurons = ConcurrentHashMap.newKeySet();
-//	private Set<AbstractNeuron> prevActive = ConcurrentHashMap.newKeySet();
+	private final Set<Integer> activeNeurons = ConcurrentHashMap.newKeySet();
+	private Set<Integer> prevActive = ConcurrentHashMap.newKeySet();
 	
 	private final DoubleAdder absWeightSum = new DoubleAdder();
 	private final DoubleAdder sumWeights = new DoubleAdder();
@@ -31,14 +31,14 @@ public class MetricsLayerRecorder {
 	public MetricsLayerRecorder(Abstract3DLayer layer) {
 		this.layer = layer;
 	}
-	/*
-	MetricsLayerRecorder neuronFired(AbstractNeuron neuron) {
+	
+	MetricsLayerRecorder neuronFired(int neuronIdx) {
 		spikeCounter.increment();
-		activeNeurons.add(neuron);
+		activeNeurons.add(neuronIdx);
 		return this;
 	}
 
-	MetricsLayerRecorder updateSynapticStatistics(Synapse source, SynapseUpdatedData data) {
+	MetricsLayerRecorder updateSynapticStatistics( SynapseUpdatedData data) {
 		// Fast exit when no data changes 
 		if (data.newValue() == data.oldValue()) return this;
 		
@@ -66,7 +66,7 @@ public class MetricsLayerRecorder {
 		if (!oldMax && newMax) saturatedMax.increment();
 		return this;
 	}
-	*/
+	
 	public LayerStats getStatsAndReset() {
 		//long start = System.nanoTime();
 		long spikesCount = spikeCounter.sumThenReset();

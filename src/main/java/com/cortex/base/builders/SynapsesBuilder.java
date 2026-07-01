@@ -76,7 +76,7 @@ public final class SynapsesBuilder {
 		*/
 	}
 	
-	public void buildInternalSynapses( Abstract3DLayer layer ) {
+	public int buildInternalSynapses( Abstract3DLayer layer ) {
 		long startTime = System.nanoTime();
 		NeuronBean[] neurons = layer.getNeurons();		
 		int len = layer.getNeuronsLen();
@@ -179,7 +179,7 @@ public final class SynapsesBuilder {
 			connectionsCount,
 			TimeUnit.NANOSECONDS.toMicros(endTime - startTime) + " micros"
 		);
-		return;
+		return connectionsCount;
 	}	
 
 	// Generate Synapses between layers	

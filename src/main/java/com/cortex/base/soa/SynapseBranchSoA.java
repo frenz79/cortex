@@ -8,6 +8,9 @@ import com.cortex.base.soa.constants.DirectionCode;
 @SerializableClass
 public final class SynapseBranchSoA {
 
+	@SerializableAttribute
+    public final int[] branchId;
+	
 	// dynamic state
 	@SerializableAttribute
     public final float[] branchPotential;
@@ -38,6 +41,7 @@ public final class SynapseBranchSoA {
 	public final int totalBranches;       
 
     public SynapseBranchSoA(int totalBranches) {
+    	branchId		= new int[totalBranches];
         branchPotential = new float[totalBranches];
         branchActivity  = new float[totalBranches];
         inhibition      = new float[totalBranches];

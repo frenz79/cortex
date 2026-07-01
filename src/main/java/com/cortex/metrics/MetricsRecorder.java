@@ -7,6 +7,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.layers.Abstract3DLayer;
+import com.cortex.base.soa.NeuronSoA;
+import com.cortex.base.soa.SynapseSoA;
 import com.cortex.brain.Brain;
 import com.cortex.globals.EventBus;
 import com.cortex.globals.EventBus.EventListener;
@@ -23,43 +25,32 @@ public class MetricsRecorder {
 	private final long dumpStatsTimeNanos;
 	private long lastDumpTimeNanos = System.nanoTime();
 	
-	public MetricsRecorder( Brain brain, long dumpStatsTimeMillis ) {
+	public MetricsRecorder( Brain brain, long dumpStatsTimeMillis, NeuronSoA neuronSoA, SynapseSoA synSoA ) {
 		this.brain = brain;
 		this.dumpStatsTimeNanos = TimeUnit.MILLISECONDS.toNanos(dumpStatsTimeMillis);
 		
 		EventBus.addListener(EventType.NEURON_FIRED,  new EventListener() {
 			
 			@Override
-			public void onEvent(EventType type, long time, Object source, Object data) {
-				/*
-				AbstractNeuron n =(AbstractNeuron)source;
-				int layerId = n.getLayerId();
-				
+			public void onEvent(EventType type, long time, int sourceIdx, Object data) {
+				int layerId = neuronSoA.getLayerId(sourceIdx);
 				if (layerId<0) return;
 		        layersStats.computeIfAbsent(layerId, 
-		        	k -> new MetricsLayerRecorder(brain.getEmisphere(0).getLayer(layerId)))
-		        		.neuronFired(n);
-		        		*/
+			       	k -> new MetricsLayerRecorder(brain.getEmisphere(0).getLayer(layerId)))
+			        	.neuronFired(sourceIdx);
 			}
 		});
 		
 		EventBus.addListener(EventType.SYNAPSE_UPDATED,  new EventListener() {
 			
 			@Override
-			public void onEvent(EventType type, long time, Object source, Object data) {
-				/*
-				try {
-					Synapse s =(Synapse)source;
-					int layerId = s.getSource().getLayerId();
-					if (layerId<0) return;
-					
-			        layersStats.computeIfAbsent(layerId, 
-			           	k -> new MetricsLayerRecorder(brain.getEmisphere(0).getLayer(layerId)))
-			        		.updateSynapticStatistics( (Synapse)source, (SynapseUpdatedData)data);
-				} catch (Exception ex) {
-					logger.error("Handled Exception:", ex);
-				}
-				*/
+			public void onEvent(EventType type, long time, int sourceIdx, Object data) {
+				int neuronIdx = synSoA.sourceNeuronId[sourceIdx];
+				int layerId = neuronSoA.getLayerId(neuronIdx);
+				if (layerId<0) return;
+		        layersStats.computeIfAbsent(layerId, 
+			        k -> new MetricsLayerRecorder(brain.getEmisphere(0).getLayer(layerId)))
+			        	.updateSynapticStatistics( (SynapseUpdatedData)data);
 			}
 		});
 	}
@@ -79,7 +70,7 @@ public class MetricsRecorder {
     		lastDumpTimeNanos = time;
     	}
     	
-    	EventBus.fire(EventType.LAYER_STATS, time, this, stats);
+    	EventBus.fire(EventType.LAYER_STATS, time, layerId, stats);
     }
     
 	private void dumpStats(long time) {

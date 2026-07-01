@@ -55,11 +55,11 @@ public final class NeuronBean {
 		map.compute( branchType, (k,v) -> {
 			if (v==null) {
 				v = new CopyOnWriteArrayList<>();
-				v.add(new BranchBean( branchType ));
+				v.add(new BranchBean( branchType, incoming ));
 			}
 			BranchBean last = v.getLast();
 			if (last.size()>=16/*TODO get from config*/) {
-				last = new BranchBean( branchType );
+				last = new BranchBean( branchType, incoming );
 				v.add(last);
 			}
 			if (incoming)

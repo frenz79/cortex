@@ -12,6 +12,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.layers.MultiLayersConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
+import com.cortex.base.soa.NeuronSoA;
+import com.cortex.base.soa.SynapseSoA;
 import com.cortex.brain.Brain;
 import com.cortex.brain.Hemisphere;
 import com.cortex.globals.DiscreteAdaptiveStabilizer;
@@ -142,7 +144,12 @@ public class Boostrap {
 				.build()
 		);
 		
-		MetricsRecorder metricsRecorder = new MetricsRecorder(brain, 5000l);
+		MetricsRecorder metricsRecorder = new MetricsRecorder(
+			brain, 
+			5000l,
+			emisphere.getNeuronSoA(), 
+			emisphere.getSynapseSoA()
+		);
 		
 		// =======================================================================================
 		// This is the main processing loop

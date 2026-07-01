@@ -52,16 +52,16 @@ public class EventBus {
 		}
 	}
 
-	public static void fire( EventType type, long time, Object source, Object data ) {
+	public static void fire( EventType type, long time, int sourceIdx, Object data ) {
 		try {
 			var list = listeners.get(type);
 			if (list == null || list.isEmpty()) return;
 			if (list.size()==1) {
-				list.get(0).onEvent(type, time, source, data);
+				list.get(0).onEvent(type, time, sourceIdx, data);
 			} else {
 				for (EventListener l : list) {
 					try {
-						l.onEvent(type, time, source, data);
+						l.onEvent(type, time, sourceIdx, data);
 					} catch (Exception ex) {
 						logger.error("EventBus listener error:", ex);
 					}
@@ -88,6 +88,6 @@ public class EventBus {
 	}	
 
 	public static interface EventListener {
-		public void onEvent( EventType type, long time, Object source, Object data );
+		public void onEvent( EventType type, long time, int sourceIdx, Object data );
 	}
 }

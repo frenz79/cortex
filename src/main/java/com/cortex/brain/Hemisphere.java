@@ -541,4 +541,12 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	public int getHemisphereId() {
 		return hemisphereId;
 	}
+
+	public NeuronSoA getNeuronSoA() {
+		return neuronSoA;
+	}
+
+	public SynapseSoA getSynapseSoA() {
+		return synapseSoA;
+	}
 }
