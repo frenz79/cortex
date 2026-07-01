@@ -21,14 +21,15 @@ public class CorticalNeuronsConfig {
 	
 	public int MAX_SYNAPSES_PER_BRANCH = 32;
 	
-	public DendriticCompetitionStrategiesConfig DENDIRITIC_COMPETITION_STRATEGIES_CONFIG;
+//	public DendriticCompetitionStrategiesConfig DENDIRITIC_COMPETITION_STRATEGIES_CONFIG;
 	
-	public final Map<BranchType,IDendriticCompetitionStrategy> DENDIRITIC_COMPETITION_STRATEGIES = new EnumMap<>(BranchType.class);
+//	public final Map<BranchType,IDendriticCompetitionStrategy> DENDIRITIC_COMPETITION_STRATEGIES = new EnumMap<>(BranchType.class);
 
 	public long INHIBITION_TAU_NANOS = 50_000_000L; // 50 ms
 	public float INHIBITION_DECAY_PER_WINDOW = 0.95f;
 
 	private CorticalNeuronsConfig() {
+		/*
 		DENDIRITIC_COMPETITION_STRATEGIES_CONFIG = DendriticCompetitionStrategiesConfig.newBuilder().build();
 		
 		DENDIRITIC_COMPETITION_STRATEGIES.put(
@@ -43,6 +44,7 @@ public class CorticalNeuronsConfig {
 		    BranchType.LAYER_FEEDFORWARD,
 		    new NormalizedCompetition(DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.NORMALIZED_CONFIG)
 		);
+		*/
 		// No competition for EXTERNAL
 	}
 	
@@ -72,12 +74,12 @@ public class CorticalNeuronsConfig {
 			cfg.FIRING_THRESHOLD = FIRING_THRESHOLD;
 			return this;
 		}
-
+/*
 		public Builder withDendriticCompetitionStrategiesConfig(DendriticCompetitionStrategiesConfig DENDIRITIC_COMPETITION_STRATEGIES) {
 			cfg.DENDIRITIC_COMPETITION_STRATEGIES_CONFIG = DENDIRITIC_COMPETITION_STRATEGIES;
 			return this;
 		}
-		
+*/		
 		public Builder withInhibitionDecay( long INHIBITION_TAU_NANOS, float INHIBITION_DECAY_PER_WINDOW ) {		
 			cfg.INHIBITION_TAU_NANOS = INHIBITION_TAU_NANOS;
 			cfg.INHIBITION_DECAY_PER_WINDOW = INHIBITION_DECAY_PER_WINDOW;
@@ -100,6 +102,7 @@ public class CorticalNeuronsConfig {
 
 		public CorticalNeuronsConfig build() {
 			validate();
+			/*
 			 // Rebuild strategies based on the final config
 	        cfg.DENDIRITIC_COMPETITION_STRATEGIES.clear();
 	        cfg.DENDIRITIC_COMPETITION_STRATEGIES.put(
@@ -114,6 +117,7 @@ public class CorticalNeuronsConfig {
 	            BranchType.LAYER_FEEDFORWARD,
 	            new NormalizedCompetition(cfg.DENDIRITIC_COMPETITION_STRATEGIES_CONFIG.NORMALIZED_CONFIG)
 	        );
+	        */
 			return cfg;
 		}
 	}

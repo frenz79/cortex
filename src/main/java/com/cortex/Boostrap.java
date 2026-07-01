@@ -12,14 +12,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.layers.MultiLayersConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
-import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
-import com.cortex.base.plasticity.InhibitorySynapticPlasticityConfig;
 import com.cortex.brain.Brain;
-import com.cortex.brain.CorticalNeuronsConfig;
 import com.cortex.brain.Hemisphere;
-import com.cortex.externals.sensors.retina.Retina;
-import com.cortex.externals.sensors.retina.RetinaConfig;
-import com.cortex.externals.sensors.retina.RetinaNeuronConfig;
 import com.cortex.globals.DiscreteAdaptiveStabilizer;
 import com.cortex.globals.DiscreteAdaptiveStabilizerConfig;
 import com.cortex.globals.DiscreteAdaptiveStabilizerConfig.LayerAdaptiveParams;
@@ -77,13 +71,13 @@ public class Boostrap {
 	public static void main(String[] args) throws Exception { 
 		int totalNeurons = 40_000;
 		int connScale = 50;
-
-		Retina retina = new Retina(
+/*
+		RetinaLogic retina = new RetinaLogic(
 			RetinaConfig.newBuilder(70, 70).build(),
 			RetinaNeuronConfig.newBuilder().build()
 		);
 		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
-		
+*/		
 		MultiLayersConfig layersCfg = new MultiLayersConfig();	
 		Hemisphere<?> emisphere =  Hemisphere.newBuilder(0)
 			.addLayerConfig(layersCfg.l0_config((int)(totalNeurons*0.15f), 5*connScale,  7*connScale, 0.60f))
@@ -94,7 +88,7 @@ public class Boostrap {
 			.addLayerConfig(layersCfg.l5_config((int)(totalNeurons*0.08f), 8*connScale, 12*connScale, 0.10f))
 			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
 			.withTotalNeurons(totalNeurons)
-			.attachSensor(retina)
+//			.attachSensor(retina)
 			.build(	layersCfg );
 				
 		// Create Brain
@@ -104,7 +98,7 @@ public class Boostrap {
 		
 		logger.info("Number of Neurons:{} ",brain.getNeuronsCount());
 		logger.info("Number of Synapses:{}",brain.getSynapsesCount());
-		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
+//		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
 		
 		// Create sensors
 		
@@ -173,14 +167,14 @@ public class Boostrap {
 
 		// Open UI
 		if (args.length>0 && args[0].equals("+ui")) {
-			PointMeshViewerFX.launchViewer(brain, retina);
+			PointMeshViewerFX.launchViewer(brain/*, retina*/);
 		}
 		
 		// ..give the life!
 		engine.start();
 		Thread.sleep(200); // breve delay per garantire che il thinker sia operativo
 
-		retina.start();
+//		retina.start();
 
 		keepAlive.await();
 		logger.info("Main exiting");

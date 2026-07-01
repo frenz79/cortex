@@ -6,8 +6,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Synapse;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.brain.Brain;
 import com.cortex.globals.EventBus;
@@ -33,6 +31,7 @@ public class MetricsRecorder {
 			
 			@Override
 			public void onEvent(EventType type, long time, Object source, Object data) {
+				/*
 				AbstractNeuron n =(AbstractNeuron)source;
 				int layerId = n.getLayerId();
 				
@@ -40,6 +39,7 @@ public class MetricsRecorder {
 		        layersStats.computeIfAbsent(layerId, 
 		        	k -> new MetricsLayerRecorder(brain.getEmisphere(0).getLayer(layerId)))
 		        		.neuronFired(n);
+		        		*/
 			}
 		});
 		
@@ -47,6 +47,7 @@ public class MetricsRecorder {
 			
 			@Override
 			public void onEvent(EventType type, long time, Object source, Object data) {
+				/*
 				try {
 					Synapse s =(Synapse)source;
 					int layerId = s.getSource().getLayerId();
@@ -58,6 +59,7 @@ public class MetricsRecorder {
 				} catch (Exception ex) {
 					logger.error("Handled Exception:", ex);
 				}
+				*/
 			}
 		});
 	}

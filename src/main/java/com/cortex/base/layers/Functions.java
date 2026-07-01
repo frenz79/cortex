@@ -12,7 +12,6 @@ import com.cortex.base.utils.IntFloatPair;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Maths;
 import com.cortex.base.utils.Point3f;
-import com.cortex.base.utils.SpatialHash;
 
 public class Functions {
 	

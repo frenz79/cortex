@@ -8,8 +8,6 @@ import java.util.concurrent.atomic.LongAdder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.base.AbstractNeuron;
-import com.cortex.base.Synapse;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.plasticity.ExcitatorySynapticPlasticityConfig;
 import com.cortex.base.utils.Maths;
@@ -21,8 +19,8 @@ public class MetricsLayerRecorder {
 	private final Abstract3DLayer layer;
 
 	private final LongAdder spikeCounter = new LongAdder();
-	private final Set<AbstractNeuron> activeNeurons = ConcurrentHashMap.newKeySet();
-	private Set<AbstractNeuron> prevActive = ConcurrentHashMap.newKeySet();
+//	private final Set<AbstractNeuron> activeNeurons = ConcurrentHashMap.newKeySet();
+//	private Set<AbstractNeuron> prevActive = ConcurrentHashMap.newKeySet();
 	
 	private final DoubleAdder absWeightSum = new DoubleAdder();
 	private final DoubleAdder sumWeights = new DoubleAdder();
@@ -33,7 +31,7 @@ public class MetricsLayerRecorder {
 	public MetricsLayerRecorder(Abstract3DLayer layer) {
 		this.layer = layer;
 	}
-	
+	/*
 	MetricsLayerRecorder neuronFired(AbstractNeuron neuron) {
 		spikeCounter.increment();
 		activeNeurons.add(neuron);
@@ -68,11 +66,11 @@ public class MetricsLayerRecorder {
 		if (!oldMax && newMax) saturatedMax.increment();
 		return this;
 	}
-	
+	*/
 	public LayerStats getStatsAndReset() {
 		//long start = System.nanoTime();
 		long spikesCount = spikeCounter.sumThenReset();
-		int activeCount = activeNeurons.size();
+		int activeCount = 0;//activeNeurons.size();
 		int totalNeurons = layer.getNeuronsCount();
 
 		double avgFiringRateActive = activeCount == 0 ? 0.0 :
@@ -101,6 +99,7 @@ public class MetricsLayerRecorder {
 		//  STABILITÀ ATTIVAZIONE
 		// ---------------------------------------------------------
 		int overlap = 0;
+		/*
 		for (AbstractNeuron n : activeNeurons) {
 			if (prevActive.contains(n)) overlap++;
 		}
@@ -111,7 +110,7 @@ public class MetricsLayerRecorder {
 		prevActive.clear();
 		prevActive.addAll(activeNeurons);
 		activeNeurons.clear();
-
+	*/
 		//long end = System.nanoTime();
 		//logger.info("Layer:{} metrics recorded in:{}micros", layer.getLayerId(), TimeUnit.NANOSECONDS.toMicros(end-start));
 		return new LayerStats(
@@ -126,7 +125,7 @@ public class MetricsLayerRecorder {
 			sparsity,
 			saturatedMinRatio,
 			saturatedMaxRatio,
-			activationStability,
+			0,//activationStability,
 			totalPlasticity,
 			energy
 		);

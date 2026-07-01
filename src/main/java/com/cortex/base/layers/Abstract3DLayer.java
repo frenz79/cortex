@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.utils.IntList;
 import com.cortex.base.utils.Point3f;
-import com.cortex.base.utils.SpatialHash;
 
 public abstract class Abstract3DLayer {
 
@@ -52,10 +51,6 @@ public abstract class Abstract3DLayer {
 		);
 	}
 
-	public IntList getSpatialHashCell( NeuronBean n ) {
-		return this.spatialHash.getSpatialHashCell(n);
-	}
-	
 	public LayerConfig getConfig() {
 		return config;
 	}

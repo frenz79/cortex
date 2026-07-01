@@ -15,10 +15,6 @@ import com.cortex.base.beans.NeuronBean;
 import com.cortex.base.builders.SoABuilder;
 import com.cortex.base.builders.SoABuilder.SoABuilderResult;
 import com.cortex.base.builders.SynapsesBuilder;
-import com.cortex.base.externals.IActuator;
-import com.cortex.base.externals.IClassifier;
-import com.cortex.base.externals.ISensor;
-import com.cortex.base.externals.ISupervisor;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.base.layers.LayerConfig;
 import com.cortex.base.layers.LayerConnConfig;
@@ -65,19 +61,21 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	private MultiLayersConnConfig multiLayersConnConfig;
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnConfig> layersConnConfigs = new ArrayList<>();
-	
+	/*
 	private final List<ISensor> sensors;
 	private final List<IActuator> actuators;
 	private final List<IClassifier<?>> classifiers;
 	private final List<ISupervisor<?>> supervisors;
-		
+	*/	
 	public Hemisphere( int hemisphereId ) {
 		this.hemisphereId = hemisphereId;
 		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
+		/*
 		this.sensors = new CopyOnWriteArrayList<>();
 		this.actuators = new CopyOnWriteArrayList<>();
 		this.classifiers = new CopyOnWriteArrayList<>();
 		this.supervisors = new CopyOnWriteArrayList<>();
+		*/
 	}
 	
 	private NeuronBean[] hemisphereNeurons;
@@ -436,6 +434,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		return neurons;
 	}
 */
+	/*
 	public List<ISensor> getSensors() {
 		return sensors;
 	}
@@ -451,7 +450,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	public List<ISupervisor<?>> getSupervisors() {
 		return supervisors;
 	}
-	
+	*/
 	public List<L> getAllLayers() {
 		return layers;
 	}
@@ -486,7 +485,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			emisphere.totalNeurons = totalNeurons;
 			return this;
 		}	
-		
+		/*
 		public Builder<L>  attachSensor(ISensor s) {
 			logger.info("Sensor attached:{}",s );
 			emisphere.sensors.add(Objects.requireNonNull(s));	
@@ -510,7 +509,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			emisphere.supervisors.add(Objects.requireNonNull(s));
 			return this;
 		}
-
+	*/
 		private void validate() {
 
 		}

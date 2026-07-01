@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.cortex.base.beans.NeuronBean;
-import com.cortex.base.externals.ISensor;
 import com.cortex.base.utils.Point3f;
 import com.cortex.brain.Brain;
 
@@ -36,7 +35,7 @@ import javafx.stage.Stage;
 public class PointMeshViewerFX extends Application {
 
 	private static Brain brain;
-	private static ISensor retina;
+//	private static ISensor retina;
 
 	private double mouseOldX, mouseOldY;
 	private final Rotate rotateX = new Rotate(0, Rotate.X_AXIS);
@@ -62,9 +61,9 @@ public class PointMeshViewerFX extends Application {
 
 	private Map<Integer, MeshView> layerMeshes = new HashMap<>();
 
-	public static void launchViewer(Brain b, ISensor r) {
+	public static void launchViewer(Brain b/*, ISensor r*/) {
 		brain = b;
-		retina = r;		
+	//	retina = r;		
 		new Thread(() -> Application.launch(PointMeshViewerFX.class)).start();
 	}
 
