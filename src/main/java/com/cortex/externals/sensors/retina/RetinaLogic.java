@@ -33,12 +33,11 @@ public final class RetinaLogic implements IExternalLogic {
 	private long lastSaccadeTime = 0;
 
 	public RetinaLogic(
-			RetinaSoA retinaSoA,
-			SpikeRingBufferLogic spikeBufferLogic,
-			ExternalModuleSynTopologySoA synTopologySoA,
-			SynapseBranchSoA synBranchSoA,
-			RetinaConfig retinaConfig
-			) {
+		RetinaSoA retinaSoA,
+		SpikeRingBufferLogic spikeBufferLogic,
+		ExternalModuleSynTopologySoA synTopologySoA,
+		RetinaConfig retinaConfig
+	) {
 		this.retinaSoA = retinaSoA;
 		this.spikeBufferLogic = spikeBufferLogic;
 		this.synTopologySoA = synTopologySoA;
@@ -196,6 +195,18 @@ public final class RetinaLogic implements IExternalLogic {
 	@Override
 	public String getExternalModuleId() {
 		return SENSOR_ID;
+	}
+
+	@Override
+	public long getLastProcessTime() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean isActive() {
+		// TODO Auto-generated method stub
+		return true;
 	}
 }
 

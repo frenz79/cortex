@@ -12,10 +12,15 @@ import org.apache.logging.log4j.Logger;
 
 import com.cortex.base.layers.MultiLayersConfig;
 import com.cortex.base.layers.MultiLayersConnConfig;
-import com.cortex.base.soa.NeuronSoA;
-import com.cortex.base.soa.SynapseSoA;
+import com.cortex.base.soa.SynapseBranchSoA;
+import com.cortex.base.soa.logic.SpikeRingBufferLogic;
 import com.cortex.brain.Brain;
 import com.cortex.brain.Hemisphere;
+import com.cortex.externals.ExternalModuleSynTopologySoA;
+import com.cortex.externals.sensors.retina.RetinaConfig;
+import com.cortex.externals.sensors.retina.RetinaLogic;
+import com.cortex.externals.sensors.retina.RetinaNeuronConfig;
+import com.cortex.externals.sensors.retina.RetinaSoA;
 import com.cortex.globals.DiscreteAdaptiveStabilizer;
 import com.cortex.globals.DiscreteAdaptiveStabilizerConfig;
 import com.cortex.globals.DiscreteAdaptiveStabilizerConfig.LayerAdaptiveParams;
@@ -73,13 +78,10 @@ public class Boostrap {
 	public static void main(String[] args) throws Exception { 
 		int totalNeurons = 40_000;
 		int connScale = 50;
-/*
-		RetinaLogic retina = new RetinaLogic(
-			RetinaConfig.newBuilder(70, 70).build(),
-			RetinaNeuronConfig.newBuilder().build()
-		);
-		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
-*/		
+
+		
+
+		
 		MultiLayersConfig layersCfg = new MultiLayersConfig();	
 		Hemisphere<?> emisphere =  Hemisphere.newBuilder(0)
 			.addLayerConfig(layersCfg.l0_config((int)(totalNeurons*0.15f), 5*connScale,  7*connScale, 0.60f))
@@ -90,9 +92,18 @@ public class Boostrap {
 			.addLayerConfig(layersCfg.l5_config((int)(totalNeurons*0.08f), 8*connScale, 12*connScale, 0.10f))
 			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
 			.withTotalNeurons(totalNeurons)
-//			.attachSensor(retina)
+			.attachSensor(retina)
 			.build(	layersCfg );
-				
+			
+		RetinaLogic retina = new RetinaLogic(
+			new RetinaSoA(70*70),
+			emisphere.getSpikeBufferLogic(),
+			new ExternalModuleSynTopologySoA(),
+			
+			RetinaConfig.newBuilder(70, 70).build()
+		);
+		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
+			
 		// Create Brain
 		Brain brain = Brain.newBuilder()
 			.addEmisphere(emisphere)
@@ -100,7 +111,7 @@ public class Boostrap {
 		
 		logger.info("Number of Neurons:{} ",brain.getNeuronsCount());
 		logger.info("Number of Synapses:{}",brain.getSynapsesCount());
-//		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
+		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
 		
 		// Create sensors
 		

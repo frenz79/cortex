@@ -8,4 +8,8 @@ public interface IExternalLogic {
 
 	String getExternalModuleId();
 
+	long getLastProcessTime();
+
+	boolean isActive();
+
 }

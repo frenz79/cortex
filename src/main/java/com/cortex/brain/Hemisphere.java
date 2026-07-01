@@ -44,6 +44,7 @@ import com.cortex.base.soa.logic.InhibitoryPlasticityLogic;
 import com.cortex.base.soa.logic.SpikeRingBufferLogic;
 import com.cortex.base.soa.logic.SynapseBranchLogic;
 import com.cortex.base.soa.logic.SynapseLogic;
+import com.cortex.externals.IExternalLogic;
 
 public class Hemisphere<L extends Abstract3DLayer> {
 
@@ -61,21 +62,21 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	private MultiLayersConnConfig multiLayersConnConfig;
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnConfig> layersConnConfigs = new ArrayList<>();
-	/*
-	private final List<ISensor> sensors;
-	private final List<IActuator> actuators;
-	private final List<IClassifier<?>> classifiers;
-	private final List<ISupervisor<?>> supervisors;
-	*/	
+
+	private final List<IExternalLogic> sensors;
+	private final List<IExternalLogic> actuators;
+	private final List<IExternalLogic> classifiers;
+	private final List<IExternalLogic> supervisors;
+
 	public Hemisphere( int hemisphereId ) {
 		this.hemisphereId = hemisphereId;
 		// CopyOnWriteArrayList is ideal when attaches are rare and reads are frequent
-		/*
+	
 		this.sensors = new CopyOnWriteArrayList<>();
 		this.actuators = new CopyOnWriteArrayList<>();
 		this.classifiers = new CopyOnWriteArrayList<>();
 		this.supervisors = new CopyOnWriteArrayList<>();
-		*/
+	
 	}
 	
 	private volatile NeuronBean[] hemisphereNeurons;
@@ -436,15 +437,15 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		return neurons;
 	}
 */
-	/*
-	public List<ISensor> getSensors() {
+
+	public List<IExternalLogic> getSensors() {
 		return sensors;
 	}
 
-	public List<IActuator> getActuators() {
+	public List<IExternalLogic> getActuators() {
 		return actuators;
 	}
-
+/*
 	public List<IClassifier<?>> getClassifiers() {
 		return classifiers;
 	}
@@ -487,13 +488,13 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			emisphere.totalNeurons = totalNeurons;
 			return this;
 		}	
-		/*
-		public Builder<L>  attachSensor(ISensor s) {
+		
+		public Builder<L>  attachSensor(IExternalLogic s) {
 			logger.info("Sensor attached:{}",s );
 			emisphere.sensors.add(Objects.requireNonNull(s));	
 			return this;
 		}
-
+/*
 		public Builder<L>  attachActuator(IActuator a) {
 			logger.info("Actuator attached:{}",a );
 			emisphere.actuators.add(Objects.requireNonNull(a));
@@ -548,5 +549,9 @@ public class Hemisphere<L extends Abstract3DLayer> {
 
 	public SynapseSoA getSynapseSoA() {
 		return synapseSoA;
+	}
+
+	public SpikeRingBufferLogic getSpikeBufferLogic() {
+		return spikeBufferLogic;
 	}
 }
