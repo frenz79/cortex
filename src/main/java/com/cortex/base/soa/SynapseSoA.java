@@ -58,9 +58,9 @@ public final class SynapseSoA {
     public final int totalSynapses;
     
     public SynapseSoA(int totalSynapses) {
-        sourceNeuronId      = new int[totalSynapses];
-        targetNeuronId     = new int[totalSynapses];
-        targetBranchId     = new int[totalSynapses];
+        sourceNeuronId   = new int[totalSynapses];
+        targetNeuronId   = new int[totalSynapses];
+        targetBranchId   = new int[totalSynapses];
         length           = new float[totalSynapses];
         baseSpeed        = new float[totalSynapses];
         

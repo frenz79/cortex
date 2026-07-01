@@ -88,10 +88,7 @@ public final class SynapsesBuilder {
 		long baseSpeed = SYNAPSE_SPEED.FAST.getBaseSpeed();
 
 		Map<NeuronBean, List<Neighbor>> neighbors = new ConcurrentHashMap<>((int)(len*1.2f));
-		//Arrays.stream(neurons,start,len).parallel().forEach( n -> {
-			
-		for (int i=0; i<len; i++) {
-			NeuronBean n = neurons[i+start];	
+		Arrays.stream(neurons,start,start+len).parallel().forEach( n -> {
 			try {
 				List<Neighbor> local = new ArrayList<>(
 					Functions.findNearestNeurons(neurons, start, len, n, localCount, layer.getConfig().CONNECTION_FILTER)
@@ -105,7 +102,7 @@ public final class SynapsesBuilder {
 			} catch(Exception ex) {
 				ex.printStackTrace();
 			}
-		};
+		});
 
 		for (int round = 0; round < layer.getConfig().MAX_CONNECTIONS; round++) {
 			for (int i=0; i<len; i++) {
@@ -233,7 +230,7 @@ public final class SynapsesBuilder {
 
 		// Precalcolo vicini per ogni sorgente
 		Map<NeuronBean, List<Neighbor>> neighbors = new ConcurrentHashMap<>(N*2);
-		Arrays.stream(srcs, sourceLayer.getNeuronsStart(), sourceLayer.getNeuronsLen()).parallel().forEach( src -> {
+		Arrays.stream(srcs, sourceLayer.getNeuronsStart(), sourceLayer.getNeuronsStart()+sourceLayer.getNeuronsLen()).parallel().forEach( src -> {
 			neighbors.put(src, new ArrayList<>(
 				Functions.findNearestNeurons(dsts, targetLayer.getNeuronsStart(), targetLayer.getNeuronsLen(), src, maxConn, filter)
 			));
@@ -246,7 +243,7 @@ public final class SynapsesBuilder {
 		// Round-robin
 		for (int round = 0; round < maxConn; round++) {
 			//for (AbstractNeuron src : srcs) {
-			Arrays.stream(srcs, sourceLayer.getNeuronsStart(), sourceLayer.getNeuronsLen()).parallel().forEach( src -> {
+			Arrays.stream(srcs, sourceLayer.getNeuronsStart(), sourceLayer.getNeuronsStart()+sourceLayer.getNeuronsLen()).parallel().forEach( src -> {
 				List<Neighbor> neigh = neighbors.get(src);
 				if (!neigh.isEmpty()) {
 

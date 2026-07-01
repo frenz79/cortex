@@ -12,7 +12,7 @@ public final class SynapseTopologySoA {
 
     // For each branch: how many synapses it has
 	@SerializableAttribute
-    public final int[] synapseCount;
+    public final byte[] synapseCount;
 
     // Optional: contiguous index list
 	@SerializableAttribute
@@ -20,7 +20,7 @@ public final class SynapseTopologySoA {
 
     public SynapseTopologySoA(int totalBranches, int totalSynapses) {
         synapseStart = new int[totalBranches];
-        synapseCount = new int[totalBranches];
+        synapseCount = new byte[totalBranches];
         synapseIndex = new int[totalSynapses];
     }
 }

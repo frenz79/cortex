@@ -292,11 +292,11 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	        float cellSize = (float)Math.cbrt(target / rho);
 	        // celle per asse
 	        int cells = (int)Math.ceil(cfg.DIMENSION / cellSize);
-	        ret.initLayer(layer, cellSize, cells, cells, cells);
+	        ret.initLayer(layer, cellSize, cells, cells, cells, R);
 	    }
 
 	    // Inserisci neuroni
-	    for (int neuronId = 0; neuronId < neurons.length; neuronId++) {
+	    for (int neuronId = 0; neuronId < neurons.length; neuronId++) {	    	
 	        ret.insertNeuron(neuronId);
 	    }
 
