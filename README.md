@@ -51,28 +51,78 @@ The retina converts an image into spikes using a biologically-inspired mechanism
 ## Brain (Core SNN)
 
 ### Spatial Structure
-- Neurons arranged on multiple nested **3D spherical surface** using a golden spiral using a Fibonacci sphere approximation to distribute points uniformly.
+- Neurons arranged on multiple nested **3D spherical shells** (golden spiral) using a Fibonacci sphere approximation to distribute points uniformly.
 - Different shapes other than sphere are supported.
 - Connections are **local and distance-based**.
-- **Multiple Hemisphere** are supported
 
-### Synapses
+## Functional Hemispheres
+The engine supports multiple functional hemispheres with different topological and hierarchical structure.
+
+Example:
+
+E0 → Visual processing
+E1 → Physical sensors
+E2 → Integration and decision making
+
+Each hemisphere can have:
+
+- independent stabilization
+- distinct plasticity parameters
+- dedicated connectivity policies
+
+### Synapses and Synaptic Branches
 - Transmit spikes with **propagation delays** calculated using 3D neuronal distance 
 - Apply **plasticity rules** with **homeostasis** and **eligibility**
-- Each synapse has its own **weight**, **myelin factor** (condictivity speed modifier), a **delay factor** and a **conductivity decay time**
-- Synpases are arranged into **synaptic branches** and partitioned into 5 categories: **NEAR**, **FAR**, **FEEDFORWARD**, **FEEDBACK**, **EXTERNAL**
+- Each synapse has its own **weight**, **myelin factor** (conductivity speed modifier), a **delay factor** and a **conductivity decay time**
+- Synapses are arranged into **synaptic branches** and partitioned into 5 categories: **NEAR**, **FAR**, **FEEDFORWARD**, **FEEDBACK**, **EXTERNAL**
 - Each Synaptic branch is split into sub-branches when there are more than N synapses
 - Each Synaptic branch has its own **potential**, **activity counter**, **inhibition** and **gain**
-- **Dendritic competition** strategies are applied on synaptic branches: **WinnerTakeTheMost**, **Continuos** and **Normalized** strategies are supported
+
+### Dendritic Computation
+Incoming synapses are organized into synaptic branches.
+
+Each branch maintains:
+
+- local potential
+- local activity
+- gain
+- inhibition
+
+Competition between branches can be:
+
+- Normalized
+- Continuous
+- Winner-Take-Most
+
 
 ### Neurons
 - **Cortical Neurons** firing is computed evaluating synaptic branches potential
-- **Inhibitory** and **Excitatory** randomic distribution across layers
+- Stochastic distribution of **excitatory** and **inhibitory** neurons
 - Configurable **refractory** period
-- **Inhibition**: **Lateral** and **Topological** with blending between the two stratgies 
+- **Inhibition**: **Lateral** and **Topological** with blending between the two strategies 
+
+
+### Neuronal Processing Pipeline
+
+Each cortical neuron processes information through multiple stages:
+
+Spike Input
+    ↓
+Synaptic Integration
+    ↓
+Branch Potential
+    ↓
+Dendritic Competition
+    ↓
+Gain / Inhibition Modulation
+    ↓
+Soma Integration
+    ↓
+Spike Generation
+
 
 ### Multidimensional Spikes
-- Each spike has an **amplitude** , **counter** and **requency** (modelling bursts), **saliency** and **error** flags, and **typology** (A,B or C)
+- Each spike has an **amplitude** , **counter** and **frequency** (modelling bursts), **saliency** and **error** flags, and **typology** (A,B or C)
 
 ### Execution Model
 - Fully **event-driven**
