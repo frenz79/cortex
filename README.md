@@ -173,6 +173,21 @@ This allows:
 
 ---
 
+## Data-Oriented Architecture
+
+The engine internally uses a Structure of Arrays (SoA) memory layout.
+
+Neuron and synapse state are stored in contiguous arrays rather than object-centric structures, improving:
+
+- cache locality
+- sparse processing efficiency
+- SIMD compatibility
+- parallel execution
+- scalability
+
+This design was chosen to support large-scale event-driven simulations with minimal memory and CPU overhead.
+
+---
 ## OCR Classifier
 
 The system performs character recognition using:
