@@ -51,14 +51,18 @@ The retina converts an image into spikes using a biologically-inspired mechanism
 ## Brain (Core SNN)
 
 ### Spatial Structure
-- Neurons arranged on a **3D spherical surface**
-- Distributed using **Fibonacci sphere**
-- Connections are **local and distance-based**
+- Neurons arranged on multiple nested **3D spherical surface** using a golden spiral using a Fibonacci sphere approximation to distribute points uniformly.
+- Different shapes other than sphere are supported.
+- Connections are **local and distance-based**.
 
 ### Synapses
-- Transmit spikes with **propagation delays**
-- Maintain spike queues (event-driven)
+- Transmit spikes with **propagation delays** calculated using 3D neuronal distance 
 - Apply **plasticity rules**
+- Each synapse has its own **weight**, **myelin factor** (condictivity speed modifier), a **delay factor** and a **conductivity decay time**
+- Synpases are arranged into **synaptic branches** and partitioned into 5 categories: **NEAR**, **FAR**, **FEEDFORWARD**, **FEEDBACK**, **EXTERNAL**
+- Each Synaptic branch is split into sub-branches when there are more than N synapses
+- Each Synaptic branch has its own **potential**, **activity counter**, **inhibition** and **gain**
+- **Dendritic competition** strategies are applied on synaptic branches: **WinnerTakeTheMost**, **Conitnuos** and **Normalized** strategies are supported
 
 ### Execution Model
 - Fully **event-driven**
