@@ -204,7 +204,7 @@ confidence = bestScore / sum(allScores)
 
 ---
 
-## 🎓 Supervisor (Reinforcement Learning)
+## Supervisor (Reinforcement Learning)
 
 The supervisor evaluates the classifier output and generates a reward signal.
 
@@ -244,18 +244,16 @@ A built-in controller continuously regulates the network:
 ---
 
 ## Metrics & Observability
+The engine includes a dedicated JavaFX-based visualization framework for real-time inspection of neural activity and network dynamics.
+Features include:
 
-The system tracks:
-
-- firing rate (active & global)
-- sparsity
-- synaptic weight distribution
-- saturation ratios
-- plasticity magnitude
-- energy proxy
-- activation stability
-
-These metrics drive the stabilizer.
+- 3D visualization of cortical layers and hemispheres
+- Live neuron activity monitoring
+- Synaptic connectivity inspection
+- Firing-rate visualization
+- Plasticity and weight evolution tracking
+- Stabilizer metrics monitoring
+- Spatial topology exploration
 
 ---
 
