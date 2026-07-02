@@ -26,14 +26,90 @@ The system integrates:
 ---
 
 ## High-Level Architecture
-[ Retina (input) ]
-↓
-[ Cortical Layers (Spherical, 3D) ]
-↓
-[ OCR Classifier Neurons ]
-↓
-[ Supervisor (Reward / RL) ]
+```mermaid
+flowchart LR
 
+    Retina["👁️ Retina"]
+
+    subgraph Cortex["🧠 Cortical Brain"]
+        E0["E0<br/>Vision"]
+        E1["E1<br/>Sensors"]
+        E2["E2<br/>Integration"]
+    end
+
+    OCR["🔤 OCR<br/>Classifier"]
+
+    RL["🎓 Supervisor<br/>Reward Engine"]
+
+    Retina --> E0
+
+    E0 --> E2
+    E1 --> E2
+
+    E2 --> OCR
+
+    OCR --> RL
+
+    RL -. Reward .-> E2
+    RL -. Neuromodulation .-> E0
+    RL -. Neuromodulation .-> E1
+```
+
+
+```mermaid
+flowchart LR
+
+    subgraph NearIn["NEAR (IN)"]
+        NI1["Synapse"]
+        NI2["Synapse"]
+        NI3["Synapse"]
+    end
+
+    subgraph FarIn["FAR (IN)"]
+        FI1["Synapse"]
+        FI2["Synapse"]
+        FI3["Synapse"]
+    end
+
+    subgraph Feedback["FEEDBACK (IN)"]
+        FB1["Synapse"]
+        FB2["Synapse"]
+    end
+
+    subgraph Soma["Cortical Neuron"]
+        N["Soma"]
+    end
+
+    subgraph NearOut["NEAR (OUT)"]
+        NO1["Synapse"]
+        NO2["Synapse"]
+    end
+
+    subgraph FarOut["FAR (OUT)"]
+        FO1["Synapse"]
+        FO2["Synapse"]
+    end
+
+    subgraph FeedForward["FEEDFORWARD (OUT)"]
+        FF1["Synapse"]
+        FF2["Synapse"]
+    end
+
+    subgraph External["EXTERNAL (IN/OUT)"]
+        EX1["Synapse"]
+        EX2["Synapse"]
+    end
+
+    NearIn --> N
+    FarIn --> N
+    Feedback --> N
+
+    N --> NearOut
+    N --> FarOut
+    N --> FeedForward
+
+    N <--> External
+```
 ---
 
 ## Retina (Input Encoding)
@@ -75,7 +151,7 @@ Each hemisphere can have:
 - Transmit spikes with **propagation delays** calculated using 3D neuronal distance 
 - Apply **plasticity rules** with **homeostasis** and **eligibility**
 - Each synapse has its own **weight**, **myelin factor** (conductivity speed modifier), a **delay factor** and a **conductivity decay time**
-- Synapses are arranged into **synaptic branches** and partitioned into 5 categories: **NEAR**, **FAR**, **FEEDFORWARD**, **FEEDBACK**, **EXTERNAL**
+- Synapses are arranged into **synaptic branches** and partitioned into 5 categories: **NEAR** (incoming and ooutgoing), **FAR** (incoming and ooutgoing), **FEEDFORWARD** (outgoing), **FEEDBACK** (incoming), **EXTERNAL** (incoming or ooutgoing)
 - Each Synaptic branch is split into sub-branches when there are more than N synapses
 - Each Synaptic branch has its own **potential**, **activity counter**, **inhibition** and **gain**
 
