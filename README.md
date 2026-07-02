@@ -54,15 +54,25 @@ The retina converts an image into spikes using a biologically-inspired mechanism
 - Neurons arranged on multiple nested **3D spherical surface** using a golden spiral using a Fibonacci sphere approximation to distribute points uniformly.
 - Different shapes other than sphere are supported.
 - Connections are **local and distance-based**.
+- **Multiple Hemisphere** are supported
 
 ### Synapses
 - Transmit spikes with **propagation delays** calculated using 3D neuronal distance 
-- Apply **plasticity rules**
+- Apply **plasticity rules** with **homeostasis** and **eligibility**
 - Each synapse has its own **weight**, **myelin factor** (condictivity speed modifier), a **delay factor** and a **conductivity decay time**
 - Synpases are arranged into **synaptic branches** and partitioned into 5 categories: **NEAR**, **FAR**, **FEEDFORWARD**, **FEEDBACK**, **EXTERNAL**
 - Each Synaptic branch is split into sub-branches when there are more than N synapses
 - Each Synaptic branch has its own **potential**, **activity counter**, **inhibition** and **gain**
-- **Dendritic competition** strategies are applied on synaptic branches: **WinnerTakeTheMost**, **Conitnuos** and **Normalized** strategies are supported
+- **Dendritic competition** strategies are applied on synaptic branches: **WinnerTakeTheMost**, **Continuos** and **Normalized** strategies are supported
+
+### Neurons
+- **Cortical Neurons** firing is computed evaluating synaptic branches potential
+- **Inhibitory** and **Excitatory** randomic distribution across layers
+- Configurable **refractory** period
+- **Inhibition**: **Lateral** and **Topological** with blending between the two stratgies 
+
+### Multidimensional Spikes
+- Each spike has an **amplitude** , **counter** and **requency** (modelling bursts), **saliency** and **error** flags, and **typology** (A,B or C)
 
 ### Execution Model
 - Fully **event-driven**
