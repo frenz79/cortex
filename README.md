@@ -1,5 +1,6 @@
 # Spiking Neural Engine
-### A biologically-inspired, event-driven neural system with reinforcement learning
+### A biologically-inspired, event-driven neural system with reinforcement learning.
+### The engine combines biologically-inspired computation with data-oriented design principles to achieve both expressive neural dynamics and computational efficiency.
 
 ---
 
