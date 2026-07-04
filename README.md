@@ -1,5 +1,6 @@
 # Spiking Neural Engine
-### A biologically-inspired, event-driven neural system with reinforcement learning
+### A biologically-inspired, event-driven neural system with reinforcement learning.
+### The engine combines biologically-inspired computation with data-oriented design principles to achieve both expressive neural dynamics and computational efficiency.
 
 ---
 
@@ -25,14 +26,90 @@ The system integrates:
 ---
 
 ## High-Level Architecture
-[ Retina (input) ]
-↓
-[ Cortical Layers (Spherical, 3D) ]
-↓
-[ OCR Classifier Neurons ]
-↓
-[ Supervisor (Reward / RL) ]
+```mermaid
+flowchart LR
 
+    Retina["👁️ Retina"]
+
+    subgraph Cortex["🧠 Cortical Brain"]
+        E0["E0<br/>Vision"]
+        E1["E1<br/>Sensors"]
+        E2["E2<br/>Integration"]
+    end
+
+    OCR["🔤 OCR<br/>Classifier"]
+
+    RL["🎓 Supervisor<br/>Reward Engine"]
+
+    Retina --> E0
+
+    E0 --> E2
+    E1 --> E2
+
+    E2 --> OCR
+
+    OCR --> RL
+
+    RL -. Reward .-> E2
+    RL -. Neuromodulation .-> E0
+    RL -. Neuromodulation .-> E1
+```
+
+
+```mermaid
+flowchart LR
+
+    subgraph NearIn["NEAR (IN)"]
+        NI1["Synapse"]
+        NI2["Synapse"]
+        NI3["Synapse"]
+    end
+
+    subgraph FarIn["FAR (IN)"]
+        FI1["Synapse"]
+        FI2["Synapse"]
+        FI3["Synapse"]
+    end
+
+    subgraph Feedback["FEEDBACK (IN)"]
+        FB1["Synapse"]
+        FB2["Synapse"]
+    end
+
+    subgraph Soma["Cortical Neuron"]
+        N["Soma"]
+    end
+
+    subgraph NearOut["NEAR (OUT)"]
+        NO1["Synapse"]
+        NO2["Synapse"]
+    end
+
+    subgraph FarOut["FAR (OUT)"]
+        FO1["Synapse"]
+        FO2["Synapse"]
+    end
+
+    subgraph FeedForward["FEEDFORWARD (OUT)"]
+        FF1["Synapse"]
+        FF2["Synapse"]
+    end
+
+    subgraph External["EXTERNAL (IN/OUT)"]
+        EX1["Synapse"]
+        EX2["Synapse"]
+    end
+
+    NearIn --> N
+    FarIn --> N
+    Feedback --> N
+
+    N --> NearOut
+    N --> FarOut
+    N --> FeedForward
+
+    N <--> External
+```
 ---
 
 ## Retina (Input Encoding)
@@ -51,14 +128,78 @@ The retina converts an image into spikes using a biologically-inspired mechanism
 ## Brain (Core SNN)
 
 ### Spatial Structure
-- Neurons arranged on a **3D spherical surface**
-- Distributed using **Fibonacci sphere**
-- Connections are **local and distance-based**
+- Neurons arranged on multiple nested **3D spherical shells** (golden spiral) using a Fibonacci sphere approximation to distribute points uniformly.
+- Different shapes other than sphere are supported.
+- Connections are **local and distance-based**.
 
-### Synapses
-- Transmit spikes with **propagation delays**
-- Maintain spike queues (event-driven)
-- Apply **plasticity rules**
+## Functional Hemispheres
+The engine supports multiple functional hemispheres with different topological and hierarchical structure.
+
+Example:
+
+E0 → Visual processing
+E1 → Physical sensors
+E2 → Integration and decision making
+
+Each hemisphere can have:
+
+- independent stabilization
+- distinct plasticity parameters
+- dedicated connectivity policies
+
+### Synapses and Synaptic Branches
+- Transmit spikes with **propagation delays** calculated using 3D neuronal distance 
+- Apply **plasticity rules** with **homeostasis** and **eligibility**
+- Each synapse has its own **weight**, **myelin factor** (conductivity speed modifier), a **delay factor** and a **conductivity decay time**
+- Synapses are arranged into **synaptic branches** and partitioned into 5 categories: **NEAR** (incoming and ooutgoing), **FAR** (incoming and ooutgoing), **FEEDFORWARD** (outgoing), **FEEDBACK** (incoming), **EXTERNAL** (incoming or ooutgoing)
+- Each Synaptic branch is split into sub-branches when there are more than N synapses
+- Each Synaptic branch has its own **potential**, **activity counter**, **inhibition** and **gain**
+
+### Dendritic Computation
+Incoming synapses are organized into synaptic branches.
+
+Each branch maintains:
+
+- local potential
+- local activity
+- gain
+- inhibition
+
+Competition between branches can be:
+
+- Normalized
+- Continuous
+- Winner-Take-Most
+
+
+### Neurons
+- **Cortical Neurons** firing is computed evaluating synaptic branches potential
+- Stochastic distribution of **excitatory** and **inhibitory** neurons
+- Configurable **refractory** period
+- **Inhibition**: **Lateral** and **Topological** with blending between the two strategies 
+
+
+### Neuronal Processing Pipeline
+
+Each cortical neuron processes information through multiple stages:
+
+Spike Input
+    ↓
+Synaptic Integration
+    ↓
+Branch Potential
+    ↓
+Dendritic Competition
+    ↓
+Gain / Inhibition Modulation
+    ↓
+Soma Integration
+    ↓
+Spike Generation
+
+
+### Multidimensional Spikes
+- Each spike has an **amplitude** , **counter** and **frequency** (modelling bursts), **saliency** and **error** flags, and **typology** (A,B or C)
 
 ### Execution Model
 - Fully **event-driven**
@@ -109,6 +250,21 @@ This allows:
 
 ---
 
+## Data-Oriented Architecture
+
+The engine internally uses a Structure of Arrays (SoA) memory layout.
+
+Neuron and synapse state are stored in contiguous arrays rather than object-centric structures, improving:
+
+- cache locality
+- sparse processing efficiency
+- SIMD compatibility
+- parallel execution
+- scalability
+
+This design was chosen to support large-scale event-driven simulations with minimal memory and CPU overhead.
+
+---
 ## OCR Classifier
 
 The system performs character recognition using:
@@ -124,7 +280,7 @@ confidence = bestScore / sum(allScores)
 
 ---
 
-## 🎓 Supervisor (Reinforcement Learning)
+## Supervisor (Reinforcement Learning)
 
 The supervisor evaluates the classifier output and generates a reward signal.
 
@@ -164,18 +320,16 @@ A built-in controller continuously regulates the network:
 ---
 
 ## Metrics & Observability
+The engine includes a dedicated JavaFX-based visualization framework for real-time inspection of neural activity and network dynamics.
+Features include:
 
-The system tracks:
-
-- firing rate (active & global)
-- sparsity
-- synaptic weight distribution
-- saturation ratios
-- plasticity magnitude
-- energy proxy
-- activation stability
-
-These metrics drive the stabilizer.
+- 3D visualization of cortical layers and hemispheres
+- Live neuron activity monitoring
+- Synaptic connectivity inspection
+- Firing-rate visualization
+- Plasticity and weight evolution tracking
+- Stabilizer metrics monitoring
+- Spatial topology exploration
 
 ---
 
