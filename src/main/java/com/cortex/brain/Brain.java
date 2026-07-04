@@ -6,6 +6,8 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.cortex.externals.AbstractExternalModuleLogic;
+
 public class Brain {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
@@ -78,5 +80,10 @@ public class Brain {
 			ret += e.getTotalSynapses();		
 		}
 		return ret;
+	}
+
+	public void attachExternalModule(AbstractExternalModuleLogic extLogic) {
+		getEmisphere(extLogic.getTargetHemisphereId())
+			.attachExternalModule(extLogic);
 	}
 }

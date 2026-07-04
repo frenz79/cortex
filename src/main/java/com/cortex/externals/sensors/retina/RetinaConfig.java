@@ -8,22 +8,26 @@ public class RetinaConfig {
 	public int RECEPTIVE_RADIUS = 2;
 	public final int RETINA_W;
 	public final int RETINA_H;
-
-	RetinaConfig(int RETINA_W, int RETINA_H) {
+	public final int TARGET_HEMISPHERE_ID;
+	public final int TARGET_LAYER_ID;
+	
+	RetinaConfig(int RETINA_W, int RETINA_H, int TARGET_HEMISPHERE_ID, int TARGET_LAYER_ID) {
 		super();
 		this.RETINA_W = RETINA_W;
 		this.RETINA_H = RETINA_H;
+		this.TARGET_HEMISPHERE_ID = TARGET_HEMISPHERE_ID;
+		this.TARGET_LAYER_ID = TARGET_LAYER_ID;
 	}
 
-	public static Builder newBuilder(int retinaW, int retinaH) {
-		return new Builder(retinaW, retinaH);
+	public static Builder newBuilder(int retinaW, int retinaH, int TARGET_HEMISPHERE_ID, int TARGET_LAYER_ID) {
+		return new Builder(retinaW, retinaH, TARGET_HEMISPHERE_ID, TARGET_LAYER_ID );
 	}	
 
 	public static class Builder {
 		private final RetinaConfig cfg;
 
-		public Builder(int retinaW, int retinaH) {
-			this.cfg = new RetinaConfig( retinaW, retinaH);
+		public Builder(int retinaW, int retinaH, int TARGET_HEMISPHERE_ID, int TARGET_LAYER_ID) {
+			this.cfg = new RetinaConfig( retinaW, retinaH, TARGET_HEMISPHERE_ID, TARGET_LAYER_ID );
 		}
 
 		public Builder withMicrosaccade(long MICROSACCADE_PERIOD_NANOS, float MICROSACCADE_AMPLITUDE) {

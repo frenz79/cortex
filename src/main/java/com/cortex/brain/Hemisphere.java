@@ -44,7 +44,7 @@ import com.cortex.base.soa.logic.InhibitoryPlasticityLogic;
 import com.cortex.base.soa.logic.SpikeRingBufferLogic;
 import com.cortex.base.soa.logic.SynapseBranchLogic;
 import com.cortex.base.soa.logic.SynapseLogic;
-import com.cortex.externals.IExternalLogic;
+import com.cortex.externals.AbstractExternalModuleLogic;
 
 public class Hemisphere<L extends Abstract3DLayer> {
 
@@ -63,10 +63,10 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnConfig> layersConnConfigs = new ArrayList<>();
 
-	private final List<IExternalLogic> sensors;
-	private final List<IExternalLogic> actuators;
-	private final List<IExternalLogic> classifiers;
-	private final List<IExternalLogic> supervisors;
+	private final List<AbstractExternalModuleLogic> sensors;
+	private final List<AbstractExternalModuleLogic> actuators;
+	private final List<AbstractExternalModuleLogic> classifiers;
+	private final List<AbstractExternalModuleLogic> supervisors;
 
 	public Hemisphere( int hemisphereId ) {
 		this.hemisphereId = hemisphereId;
@@ -93,8 +93,8 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		//ExcitatorySynapticPlasticityConfig excitatorySynapticPlasticityConfig,
 		//InhibitorySynapticPlasticityConfig inhibitorySynapticPlasticityConfig 
 		
-		generateSoA(
-		);
+		generateSoA( );
+		
 		return this;
 	}
 	
@@ -346,14 +346,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		logger.info("Generating layer to layer connections");
 		var layersConnConfig = this.multiLayersConnConfig.getLayersConnectionsConfig(layers);
 		bld.buildLayersSynapses(layersConnConfig);
-		/*
-		logger.info("Generating external synapses to layer connections");
-		for ( ISensor s : sensors ) {
-			int synapses = bld.buildExternalSynapses( s, layers.get(s.getExternalConnConfig().LINKED_LAYER_ID) );
-			logger.info("ISensor:{} -> L{} : created {} synapses", 
-				s.getId(), s.getExternalConnConfig().LINKED_LAYER_ID, synapses);
-		}		
-		*/
+		
 		bld.build();
 	}
 	
@@ -375,56 +368,6 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	    spikeBufferLogic.pollAndProcess(now);
 	}
 	
-	/*
-	public void process(long now) {
-		if (neurons == null) return;
-		CorticalNeuron[] snapshot = neurons;
-	    
-		
-	    // PHASE 1 — Spike propagation
-	    Arrays.stream(snapshot).parallel().forEach(n -> {
-	        if (n.isPendingFire()) {
-	            n.delayedFire(now);
-	        }
-	    });
-
-	    // PHASE 2 — Integration
-	    Arrays.stream(snapshot).parallel().forEach(n -> {
-	        if (n.isActive()) {
-	            boolean stay = false;
-				try {
-					stay = n.process(now);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-	            n.setActive(stay);
-	        }
-	    });
-	   
-		
-		// Faster iteration
-		int N = totalNeurons;
-		IntStream.range(0, N).parallel().forEach(i -> {
-		    CorticalNeuron n = neurons[i];
-		    if (neuronsStatesBuff.pendingFire[i]) {
-		        n.delayedFire(now);
-		    }
-		});
-
-		IntStream.range(0, N).parallel().forEach(i -> {
-		    CorticalNeuron n = neurons[i];
-		    if (neuronsStatesBuff.isActive[i]) {
-		        boolean stay = false;
-				try {
-					stay = n.process(now);
-				} catch (InterruptedException ex) {
-					logger.error("Handled Exception:", ex);
-				}
-		        neuronsStatesBuff.isActive[i] = stay;
-		    }
-		});
-	}
-	*/
 	public Abstract3DLayer getSensorsTargetLayer() {
 		return getLayer(SENSORS_TARGET_LAYER);
 	}
@@ -438,11 +381,11 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	}
 */
 
-	public List<IExternalLogic> getSensors() {
+	public List<AbstractExternalModuleLogic> getSensors() {
 		return sensors;
 	}
 
-	public List<IExternalLogic> getActuators() {
+	public List<AbstractExternalModuleLogic> getActuators() {
 		return actuators;
 	}
 /*
@@ -460,6 +403,21 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	
 	public L getLayer(int index) {
 		return layers.get(index);
+	}
+	
+	public Hemisphere<L> attachExternalModule(AbstractExternalModuleLogic ext) {
+		logger.info("External Module Logic attached:{}", ext );
+		sensors.add(Objects.requireNonNull(ext));
+		
+		logger.info("Generating synapses");
+		
+		int synapses = bld.buildExternalSynapses( s, layers.get(s.getExternalConnConfig().LINKED_LAYER_ID) );
+		logger.info("IExternalLogic:{} -> L{} : created {} synapses",
+			ext.getModuleId(), 
+			ext.getTargetLayerId(),
+			synapses);
+				
+		return this;
 	}
 	
 	public static Builder newBuilder( int hemisphereId ) {
@@ -488,13 +446,13 @@ public class Hemisphere<L extends Abstract3DLayer> {
 			emisphere.totalNeurons = totalNeurons;
 			return this;
 		}	
-		
+		/*	
 		public Builder<L>  attachSensor(IExternalLogic s) {
 			logger.info("Sensor attached:{}",s );
 			emisphere.sensors.add(Objects.requireNonNull(s));	
 			return this;
 		}
-/*
+
 		public Builder<L>  attachActuator(IActuator a) {
 			logger.info("Actuator attached:{}",a );
 			emisphere.actuators.add(Objects.requireNonNull(a));

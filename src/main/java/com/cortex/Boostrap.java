@@ -78,9 +78,6 @@ public class Boostrap {
 	public static void main(String[] args) throws Exception { 
 		int totalNeurons = 40_000;
 		int connScale = 50;
-
-		
-
 		
 		MultiLayersConfig layersCfg = new MultiLayersConfig();	
 		Hemisphere<?> emisphere =  Hemisphere.newBuilder(0)
@@ -92,28 +89,33 @@ public class Boostrap {
 			.addLayerConfig(layersCfg.l5_config((int)(totalNeurons*0.08f), 8*connScale, 12*connScale, 0.10f))
 			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
 			.withTotalNeurons(totalNeurons)
-			.attachSensor(retina)
 			.build(	layersCfg );
-			
-		RetinaLogic retina = new RetinaLogic(
-			new RetinaSoA(70*70),
-			emisphere.getSpikeBufferLogic(),
-			new ExternalModuleSynTopologySoA(),
-			
-			RetinaConfig.newBuilder(70, 70).build()
-		);
-		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
-			
+	
+	
+		
+		ExternalModuleSynTopologySoA externalModuleSynTopologySoA = new ExternalModuleSynTopologySoA();
+		
+		retina.setSynTopologySoA(externalModuleSynTopologySoA);
+		
 		// Create Brain
 		Brain brain = Brain.newBuilder()
 			.addEmisphere(emisphere)
 			.build();
 		
+		// Create sensors
+		RetinaLogic retina = new RetinaLogic(
+			new RetinaSoA(70*70),
+			emisphere.getSpikeBufferLogic(),			
+			RetinaConfig.newBuilder(70, 70, 0,0).build()
+		);
+		retina.setImage( loadImage("src/main/resources/Letter-A.png"));
+
+		brain.attachExternalModule(retina);
+			 
+		
 		logger.info("Number of Neurons:{} ",brain.getNeuronsCount());
 		logger.info("Number of Synapses:{}",brain.getSynapsesCount());
 		logger.info("Number of Retina Synapses:{}",retina.getSynapsesCount());
-		
-		// Create sensors
 		
 		// Connect OCR Classifier to L4
 //		ISupervisor<OCRCharacterNeuron> ocrSupervisor = buildAndConnectOCR( brain );		

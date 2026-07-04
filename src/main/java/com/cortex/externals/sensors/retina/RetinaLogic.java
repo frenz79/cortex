@@ -3,20 +3,15 @@ package com.cortex.externals.sensors.retina;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.cortex.base.soa.SynapseBranchSoA;
 import com.cortex.base.soa.logic.SpikeRingBufferLogic;
 import com.cortex.base.utils.Maths;
-import com.cortex.externals.ExternalModuleSynTopologySoA;
-import com.cortex.externals.IExternalLogic;
+import com.cortex.externals.AbstractExternalModuleLogic;
 
-public final class RetinaLogic implements IExternalLogic {
+public final class RetinaLogic extends AbstractExternalModuleLogic {
 
 	private static final String SENSOR_ID = "RETINA";
 	
 	private final RetinaSoA retinaSoA;
-	private final SpikeRingBufferLogic spikeBufferLogic;
-	private final ExternalModuleSynTopologySoA synTopologySoA;
-
 	private final RetinaConfig retinaConfig;
 
 	// sorgente luminanza
@@ -35,12 +30,10 @@ public final class RetinaLogic implements IExternalLogic {
 	public RetinaLogic(
 		RetinaSoA retinaSoA,
 		SpikeRingBufferLogic spikeBufferLogic,
-		ExternalModuleSynTopologySoA synTopologySoA,
 		RetinaConfig retinaConfig
 	) {
+		super(SENSOR_ID, retinaConfig.SAMPLING_PERIOD_NANOS, retinaConfig.TARGET_HEMISPHERE_ID, retinaConfig.TARGET_LAYER_ID, spikeBufferLogic);
 		this.retinaSoA = retinaSoA;
-		this.spikeBufferLogic = spikeBufferLogic;
-		this.synTopologySoA = synTopologySoA;
 		this.retinaConfig = retinaConfig;
 	}
 
@@ -54,7 +47,7 @@ public final class RetinaLogic implements IExternalLogic {
 	}
 	
 	@Override
-	public void process(long now) {
+	public void processInternal(long now) {
 		if (sourceLuminance == null)
 			return;
 
@@ -85,21 +78,7 @@ public final class RetinaLogic implements IExternalLogic {
 				if (spikeCount == 0)
 					continue;
 
-				// Propagazione spike retina→L0
-				int sStart = synTopologySoA.synapseStart[idx];
-				int sCount = synTopologySoA.synapseCount[idx];
-
-				for (int si = sStart; si < sStart + sCount; si++) {
-				    int synId = synTopologySoA.synapseIndex[si];
-
-				    spikeBufferLogic.addSpike(
-				        now,
-				        synId,
-				        raw,
-				        delta < 0,
-				        now
-				    );
-				}
+				fire(now, idx, raw, delta < 0);
 			}
 		}
 	}
@@ -137,11 +116,6 @@ public final class RetinaLogic implements IExternalLogic {
 		float C = (x1 > 0) ? integral[x1 - 1][y2] : 0;
 		float D = integral[x2][y2];
 		return D - B - C + A;
-	}
-
-	@Override
-	public long getWaitTimeNanos() {
-		return retinaConfig.SAMPLING_PERIOD_NANOS;
 	}
 
 	public void setImage(BufferedImage image) {
@@ -190,23 +164,6 @@ public final class RetinaLogic implements IExternalLogic {
 		int blue  = (color >>>  0) & 0xFF;
 		// calc luminance in range 0.0 to 1.0; using SRGB luminance constants
 		return (red * 0.2126f + green * 0.7152f + blue * 0.0722f) / 255.0f;
-	}
-
-	@Override
-	public String getExternalModuleId() {
-		return SENSOR_ID;
-	}
-
-	@Override
-	public long getLastProcessTime() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public boolean isActive() {
-		// TODO Auto-generated method stub
-		return true;
 	}
 }
 
