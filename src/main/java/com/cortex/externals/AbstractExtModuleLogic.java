@@ -2,9 +2,12 @@ package com.cortex.externals;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.cortex.base.beans.NeuronBean;
+import com.cortex.base.soa.constants.DirectionCode;
 import com.cortex.base.soa.logic.SpikeRingBufferLogic;
+import com.cortex.base.utils.Point3f;
 
-public abstract class AbstractExternalModuleLogic {
+public abstract class AbstractExtModuleLogic {
 
 	private final String moduleId;
 	private final long waitTimeNanos;
@@ -15,11 +18,15 @@ public abstract class AbstractExternalModuleLogic {
 	private final AtomicBoolean active = new AtomicBoolean(false);
 	
 	private final SpikeRingBufferLogic spikeBufferLogic;
-	private ExternalModuleSynTopologySoA synTopologySoA;
+	private ExtSynapseSoA synapseSoA;
+	private ExtNeuronSoA neuronSoA;
+	
+	private NeuronBean[] neurons;
 	
 	protected abstract void processInternal(long now);
+	protected abstract int getDirection();
 	
-	public AbstractExternalModuleLogic(String moduleId, long waitTimeNanos, int targetLayerId, int targetHemisphereId, SpikeRingBufferLogic spikeBufferLogic) {
+	public AbstractExtModuleLogic(String moduleId, long waitTimeNanos, int targetLayerId, int targetHemisphereId, SpikeRingBufferLogic spikeBufferLogic) {
 		super();
 		this.moduleId = moduleId;
 		this.waitTimeNanos = waitTimeNanos;
@@ -53,6 +60,10 @@ public abstract class AbstractExternalModuleLogic {
 		}
 	}
 
+	public Point3f getPluginSite() {
+		return new Point3f(0.0f,0.0f,0.0f);
+	}
+	
 	public int getTargetHemisphereId() {
 		return targetHemisphereId;
 	}
@@ -84,16 +95,32 @@ public abstract class AbstractExternalModuleLogic {
 	public String getModuleId() {
 		return moduleId;
 	}
-
-	public ExternalModuleSynTopologySoA getSynTopologySoA() {
-		return synTopologySoA;
-	}
-
-	public void setSynTopologySoA(ExternalModuleSynTopologySoA synTopologySoA) {
-		this.synTopologySoA = synTopologySoA;
-	}
 	
 	public int getSynapsesCount() {
-		return synTopologySoA.getTotalSynapses();
+		return synapseSoA.totalSynapses;
+	}
+
+	public int getNeuronsCount() {
+		return neurons.length;
+	}
+	
+	public NeuronBean[] getNeurons() {
+		return neurons;
+	}
+
+	public ExtSynapseSoA getSynapseSoA() {
+		return synapseSoA;
+	}
+
+	public void setSynapseSoA(ExtSynapseSoA synapseSoA) {
+		this.synapseSoA = synapseSoA;
+	}
+
+	public ExtNeuronSoA getNeuronSoA() {
+		return neuronSoA;
+	}
+
+	public void setNeuronSoA(ExtNeuronSoA neuronSoA) {
+		this.neuronSoA = neuronSoA;
 	}
 }

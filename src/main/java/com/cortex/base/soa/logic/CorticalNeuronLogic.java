@@ -65,7 +65,6 @@ public final class CorticalNeuronLogic extends AbstractNeuronLogic {
 	    int inCount = neuronTopologySoA.incomingBranchCount[neuronIndex];
 
 	    for (int bi = inStart; bi < inStart + inCount; bi++) {
-
 	        int b = neuronTopologySoA.incomingBranches[bi];
 	        if (b < 0 || b >= synBranchSoA.synapseStart.length) {
 	            System.err.println(

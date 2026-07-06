@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 import com.cortex.base.layers.Abstract3DLayer;
 import com.cortex.brain.Brain;
 import com.cortex.brain.Hemisphere;
-import com.cortex.externals.AbstractExternalModuleLogic;
+import com.cortex.externals.AbstractExtModuleLogic;
 import com.cortex.metrics.MetricsRecorder;
 
 public class NeuralEngine {
@@ -88,7 +88,7 @@ public class NeuralEngine {
 			try {
 				 for (Hemisphere<?> em : brain.getEmispheres()) {
 					
-					for (AbstractExternalModuleLogic s : em.getSensors()) {
+					for (AbstractExtModuleLogic s : em.getSensors()) {
 						if (s.isActive() && (now - s.getLastProcessTime()) > s.getWaitTimeNanos()) {
 							s.process(now);
 						}

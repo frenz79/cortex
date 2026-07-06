@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cortex.externals.AbstractExternalModuleLogic;
+import com.cortex.externals.AbstractExtModuleLogic;
 
 public class Brain {
 
@@ -82,7 +82,7 @@ public class Brain {
 		return ret;
 	}
 
-	public void attachExternalModule(AbstractExternalModuleLogic extLogic) {
+	public void attachExternalModule(AbstractExtModuleLogic extLogic) {
 		getEmisphere(extLogic.getTargetHemisphereId())
 			.attachExternalModule(extLogic);
 	}

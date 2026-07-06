@@ -44,7 +44,7 @@ import com.cortex.base.soa.logic.InhibitoryPlasticityLogic;
 import com.cortex.base.soa.logic.SpikeRingBufferLogic;
 import com.cortex.base.soa.logic.SynapseBranchLogic;
 import com.cortex.base.soa.logic.SynapseLogic;
-import com.cortex.externals.AbstractExternalModuleLogic;
+import com.cortex.externals.AbstractExtModuleLogic;
 
 public class Hemisphere<L extends Abstract3DLayer> {
 
@@ -63,10 +63,10 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	private final List<LayerConfig> layersConfigs = new ArrayList<>();
 	private final List<LayerConnConfig> layersConnConfigs = new ArrayList<>();
 
-	private final List<AbstractExternalModuleLogic> sensors;
-	private final List<AbstractExternalModuleLogic> actuators;
-	private final List<AbstractExternalModuleLogic> classifiers;
-	private final List<AbstractExternalModuleLogic> supervisors;
+	private final List<AbstractExtModuleLogic> sensors;
+	private final List<AbstractExtModuleLogic> actuators;
+	private final List<AbstractExtModuleLogic> classifiers;
+	private final List<AbstractExtModuleLogic> supervisors;
 
 	public Hemisphere( int hemisphereId ) {
 		this.hemisphereId = hemisphereId;
@@ -346,8 +346,6 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		logger.info("Generating layer to layer connections");
 		var layersConnConfig = this.multiLayersConnConfig.getLayersConnectionsConfig(layers);
 		bld.buildLayersSynapses(layersConnConfig);
-		
-		bld.build();
 	}
 	
 	public void process(long now) {
@@ -375,28 +373,15 @@ public class Hemisphere<L extends Abstract3DLayer> {
 	public Abstract3DLayer getClassifiersSourceLayer() {
 		return getLayer(CLASSIFIERS_TARGET_LAYER);
 	}
-/*
-	public AbstractNeuron[] getAllNeurons() {
-		return neurons;
-	}
-*/
 
-	public List<AbstractExternalModuleLogic> getSensors() {
+	public List<AbstractExtModuleLogic> getSensors() {
 		return sensors;
 	}
 
-	public List<AbstractExternalModuleLogic> getActuators() {
+	public List<AbstractExtModuleLogic> getActuators() {
 		return actuators;
 	}
-/*
-	public List<IClassifier<?>> getClassifiers() {
-		return classifiers;
-	}
 
-	public List<ISupervisor<?>> getSupervisors() {
-		return supervisors;
-	}
-	*/
 	public List<L> getAllLayers() {
 		return layers;
 	}
@@ -405,7 +390,7 @@ public class Hemisphere<L extends Abstract3DLayer> {
 		return layers.get(index);
 	}
 	
-	public Hemisphere<L> attachExternalModule(AbstractExternalModuleLogic ext) {
+	public Hemisphere<L> attachExternalModule(AbstractExtModuleLogic ext) {
 		logger.info("External Module Logic attached:{}", ext );
 		sensors.add(Objects.requireNonNull(ext));
 		

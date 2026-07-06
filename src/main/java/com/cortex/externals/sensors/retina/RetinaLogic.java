@@ -3,11 +3,12 @@ package com.cortex.externals.sensors.retina;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.cortex.base.soa.constants.DirectionCode;
 import com.cortex.base.soa.logic.SpikeRingBufferLogic;
 import com.cortex.base.utils.Maths;
-import com.cortex.externals.AbstractExternalModuleLogic;
+import com.cortex.externals.AbstractExtModuleLogic;
 
-public final class RetinaLogic extends AbstractExternalModuleLogic {
+public final class RetinaLogic extends AbstractExtModuleLogic {
 
 	private static final String SENSOR_ID = "RETINA";
 	
@@ -164,6 +165,11 @@ public final class RetinaLogic extends AbstractExternalModuleLogic {
 		int blue  = (color >>>  0) & 0xFF;
 		// calc luminance in range 0.0 to 1.0; using SRGB luminance constants
 		return (red * 0.2126f + green * 0.7152f + blue * 0.0722f) / 255.0f;
+	}
+
+	@Override
+	protected int getDirection() {
+		return DirectionCode.OUTGOING;
 	}
 }
 

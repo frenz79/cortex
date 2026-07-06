@@ -16,7 +16,7 @@ import com.cortex.base.soa.SynapseBranchSoA;
 import com.cortex.base.soa.logic.SpikeRingBufferLogic;
 import com.cortex.brain.Brain;
 import com.cortex.brain.Hemisphere;
-import com.cortex.externals.ExternalModuleSynTopologySoA;
+import com.cortex.externals.ExtSynapseTopologySoA;
 import com.cortex.externals.sensors.retina.RetinaConfig;
 import com.cortex.externals.sensors.retina.RetinaLogic;
 import com.cortex.externals.sensors.retina.RetinaNeuronConfig;
@@ -90,10 +90,8 @@ public class Boostrap {
 			.addMultiLayersConnConfig( new MultiLayersConnConfig(connScale) )
 			.withTotalNeurons(totalNeurons)
 			.build(	layersCfg );
-	
-	
 		
-		ExternalModuleSynTopologySoA externalModuleSynTopologySoA = new ExternalModuleSynTopologySoA();
+		ExtSynapseTopologySoA externalModuleSynTopologySoA = new ExtSynapseTopologySoA();
 		
 		retina.setSynTopologySoA(externalModuleSynTopologySoA);
 		
